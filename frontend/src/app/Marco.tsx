@@ -70,7 +70,10 @@ export function Marco() {
         <nav aria-label="Principal" className={estilos.navegacion}>
           <EnlacesNavegacion clase={estilos.destino} />
         </nav>
-        <div className={estilos.temaEscritorio}><SelectorTema /></div>
+        <div className={estilos.temaEscritorio}>
+          <SelectorTema />
+          <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso del veedor</Link>
+        </div>
         <DialogTrigger>
           <Button className={estilos.menu}>Menú</Button>
           <Popover className={estilos.menuPopover} placement="bottom end">
@@ -79,6 +82,7 @@ export function Marco() {
                 <EnlacesNavegacion clase={estilos.menuDestino} />
               </nav>
               <SelectorTema />
+              <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso del veedor</Link>
             </Dialog>
           </Popover>
         </DialogTrigger>
