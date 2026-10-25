@@ -5,6 +5,7 @@ import { Button } from 'react-aria-components'
 import { api, normalizarError } from '../../api/cliente'
 import { MAXIMO_BARRIOS_POR_AVISO, MENSAJE_NEUTRO, pedirAvisos, type ResultadoAlta } from '../../api/avisos'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
+import { Icono, type NombreIcono } from '../../componentes/Icono'
 import { MarcaRecibido } from '../../componentes/MarcaRecibido'
 import { SelectorBarrio } from '../../componentes/SelectorBarrio'
 import botones from '../../componentes/Botones.module.css'
@@ -48,15 +49,25 @@ function estadoDe(sector: Sector | undefined): EstadoServicio | null {
   return estado === 'CON_SERVICIO' || estado === 'SIN_SERVICIO' || estado === 'PRESION_BAJA' || estado === 'CORTE_PROGRAMADO' ? estado : null
 }
 
-/** `identidad.md` §4.1: los pasos se leen de un vistazo; el detalle de cada uno cabe en una línea. */
+const PASOS: { icono: NombreIcono; titulo: string; detalle: string }[] = [
+  { icono: 'ubicacion', titulo: 'Eliges tus barrios', detalle: 'Los que quieras, sin cuenta ni contraseña.' },
+  { icono: 'correo', titulo: 'Confirmas desde el correo', detalle: 'Abrir el enlace no basta: pulsas «Confirmar avisos». Vence en 48 horas.' },
+  { icono: 'campana', titulo: 'Te escribimos cuando cambie el agua', detalle: 'Cada correo trae un enlace para darte de baja.' },
+]
+
+/** `identidad.md` §4.1 y ADR-104: los pasos se leen de un vistazo, cada uno en su tarjeta con icono. */
 export function ComoFunciona() {
   return (
     <aside className={estilos.explicacion} aria-labelledby="titulo-como-funciona">
       <h2 id="titulo-como-funciona">Así funciona</h2>
-      <ol className={estilos.pasos}>
-        <li><strong>Eliges tus barrios</strong><span>Sin cuenta y sin contraseña.</span></li>
-        <li><strong>Confirmas desde el correo</strong><span>Hasta entonces no te llega ningún aviso. El enlace vence en 48 horas.</span></li>
-        <li><strong>Te escribimos cuando cambie el agua</strong><span>Cada correo trae un enlace para darte de baja.</span></li>
+      <ol className={`${estilos.pasos} ${estilos.conIconos}`}>
+        {PASOS.map((paso) => (
+          <li key={paso.titulo}>
+            <span className={estilos.circulo}><Icono nombre={paso.icono} tamano={20} /></span>
+            <strong>{paso.titulo}</strong>
+            <span>{paso.detalle}</span>
+          </li>
+        ))}
       </ol>
       {botValido && <a href={`https://t.me/${botValido}`} target="_blank" rel="noreferrer" className={estilos.enlace}>También por Telegram</a>}
     </aside>
@@ -121,43 +132,51 @@ export function Avisos() {
         ) : (
           <form className={estilos.tarea} onSubmit={(evento) => void enviar(evento)} noValidate>
             <fieldset className={estilos.grupo}>
-              <legend>Tus barrios</legend>
+              <legend className={estilos.paso}><span className={estilos.numero} aria-hidden="true">1</span>Elige tus barrios</legend>
               {barrios.isPending ? <output className={estilos.nota}>Cargando barrios…</output> : barrios.isError ? (
                 <p role="alert">No pudimos cargar los barrios. <button type="button" className={estilos.enlace} onClick={() => void barrios.refetch()}>Volver a intentar</button></p>
               ) : (
                 <>
+                  <SelectorBarrio key={elegidosValidos.join(',')} forma="pastilla"
+                    sectores={disponibles.filter((barrio) => !elegidosValidos.includes(barrio.id ?? ''))}
+                    etiqueta={elegidosValidos.length ? 'Agregar otro barrio' : 'Busca tu barrio'}
+                    alCambiar={(id) => { if (id && !elegidos.includes(id)) setElegidos([...elegidosValidos, id]) }} />
                   {elegidosValidos.length > 0 && (
                     <ul className={estilos.elegidos} aria-label="Barrios elegidos">
                       {elegidosValidos.map((id) => {
                         const estado = estadoDe(porId.get(id))
                         return (
-                          <li key={id}>
+                          <li key={id} className={estilos.chip}>
                             <span className={estilos.barrio}>{nombreDe(id)}</span>
                             <span className={estilos.estado}>
                               {estado ? <><GlifoEstado estado={estado} tamano={16} />{presentarEstado(estado).texto}</> : 'Sin datos verificados'}
                             </span>
                             <button type="button" className={estilos.quitar} aria-label={`Quitar ${nombreDe(id)}`}
-                              onClick={() => setElegidos(elegidosValidos.filter((elegido) => elegido !== id))}>Quitar</button>
+                              onClick={() => setElegidos(elegidosValidos.filter((elegido) => elegido !== id))}>
+                              <Icono nombre="quitar" tamano={16} />
+                            </button>
                           </li>
                         )
                       })}
                     </ul>
                   )}
-                  <SelectorBarrio key={elegidosValidos.join(',')}
-                    sectores={disponibles.filter((barrio) => !elegidosValidos.includes(barrio.id ?? ''))}
-                    etiqueta={elegidosValidos.length ? 'Agregar otro barrio' : 'Busca tu barrio'}
-                    alCambiar={(id) => { if (id && !elegidos.includes(id)) setElegidos([...elegidosValidos, id]) }} />
                   {barrioDesconocido && <p role="alert">El barrio del enlace no está disponible. Elige uno de la lista.</p>}
                 </>
               )}
             </fieldset>
             <label className={estilos.campo}>
-              Tu correo
-              <input type="email" autoComplete="email" required value={correo} onChange={(evento) => setCorreo(evento.target.value)} />
+              <span className={estilos.paso}><span className={estilos.numero} aria-hidden="true">2</span>Tu correo</span>
+              <span className={estilos.caja}>
+                <Icono nombre="correo" tamano={18} />
+                <input type="email" autoComplete="email" required placeholder="nombre@correo.com" value={correo} onChange={(evento) => setCorreo(evento.target.value)} />
+              </span>
             </label>
-            <Button type="submit" className={botones.principal} isDisabled={enviando || !barrios.isSuccess}>
-              {enviando ? 'Enviando…' : <>Enviar enlace de confirmación <span className={botones.flecha} aria-hidden="true">→</span></>}
-            </Button>
+            <div className={estilos.envio}>
+              <Button type="submit" className={`${botones.principal} ${botones.ancho}`} isDisabled={enviando || !barrios.isSuccess}>
+                {enviando ? 'Enviando…' : <>Enviar enlace de confirmación <span className={botones.flecha} aria-hidden="true">→</span></>}
+              </Button>
+              <p className={estilos.nota}>El enlace vence en 48 horas. Sin confirmarlo no te llega ningún aviso.</p>
+            </div>
             {errorLocal && <p role="alert" className={estilos.alerta}>{errorLocal}</p>}
             {resultado && (
               <output className={estilos.alerta}>
