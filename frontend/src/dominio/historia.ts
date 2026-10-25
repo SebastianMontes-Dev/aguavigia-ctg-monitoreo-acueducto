@@ -92,6 +92,17 @@ export function rangoDiasValido(desde?: string, hasta?: string): boolean {
   return !desde || !hasta || desde <= hasta
 }
 
+/** Solo http(s): la URL llega de una fuente externa y no debe poder abrir `javascript:` ni otro esquema. */
+export function enlaceExterno(url?: string | null): string | null {
+  if (!url) return null
+  try {
+    const { protocol } = new URL(url)
+    return protocol === 'https:' || protocol === 'http:' ? url : null
+  } catch {
+    return null
+  }
+}
+
 const PREFIJO_IMAGEN = 'https://www.acuacar.com/wp-content/uploads/'
 
 export function imagenDeBitacora(url?: string | null): string | null {

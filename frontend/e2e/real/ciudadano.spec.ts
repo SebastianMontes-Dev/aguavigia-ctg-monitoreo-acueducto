@@ -78,6 +78,10 @@ test('debeAbrirElMapaConLos211BarriosYElCanalEnVivoSinRecursosExternos', async (
 test('debeReportarEnDosToquesYRecibirUn201', async ({ page }) => {
   await page.goto('/sectores/zona-industrial')
   await expect(page.getByRole('heading', { level: 1, name: 'Zona Industrial' })).toBeVisible()
+  // ADR-102: una sola línea de frescura y el punto «En vivo» con el canal real; sin la hora del listado de toda la ciudad.
+  const registro = page.getByRole('region', { name: 'Registro del dato' })
+  await expect(registro.getByText('En vivo')).toBeVisible()
+  await expect(page.getByText(/Listado generado/)).toHaveCount(0)
 
   const respuesta = page.waitForResponse((valor) => valor.url().endsWith('/api/reportes') && valor.request().method() === 'POST')
   await abrirReporte(page, 'No tengo agua')

@@ -188,6 +188,27 @@ export function useConteosBitacora(filtros: Omit<FiltrosBitacora, 'tipo'>, tipos
 }
 
 /**
+ * Último aviso detectado en un boletín o nota para este barrio. El contrato no enlaza la fuente de un corte concreto
+ * (`CorteRespuesta` no trae URL y estos eventos llegan sin `corteId`), así que se enlaza el aviso más reciente del
+ * barrio con su fecha, sin afirmar que fue el que anunció un corte en particular.
+ */
+export function useUltimoAviso(sectorId: string) {
+  return useQuery({
+    queryKey: ['ultimo-aviso', sectorId],
+    enabled: Boolean(sectorId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/bitacora', {
+        params: { query: { sectorId, tipo: 'CORTE_DETECTADO_POR_INGESTA', pagina: 0, tamano: 1 } },
+        signal,
+      }).catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return (data as components['schemas']['EventoBitacoraRespuesta'][])[0] ?? null
+    },
+    staleTime: 60_000,
+  })
+}
+
+/**
  * La pestaña «Todos»: el total sin filtrar por tipo. No sale de sumar las demás, porque cinco tipos de evento se ven en
  * la lista pero la API no los deja filtrar (solo acepta cuatro).
  */

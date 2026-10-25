@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { descripcionLegible, esTipoBitacora, esTipoEvento, FILTRO_TIPO, imagenDeBitacora, limiteDiaCartagena, NOMBRE_TIPO, rangoDiasValido, TIPOS_BITACORA, TIPOS_EVENTO } from './historia'
+import { descripcionLegible, enlaceExterno, esTipoBitacora, esTipoEvento, FILTRO_TIPO, imagenDeBitacora, limiteDiaCartagena, NOMBRE_TIPO, rangoDiasValido, TIPOS_BITACORA, TIPOS_EVENTO } from './historia'
 import { claveDiaCartagena, etiquetaDia } from './tiempo'
+
+describe('enlaceExterno', () => {
+  it('debeAceptarSoloEnlacesHttpYHttps', () => {
+    expect(enlaceExterno('https://www.acuacar.com/boletin/1')).toBe('https://www.acuacar.com/boletin/1')
+    expect(enlaceExterno('http://ejemplo.test/a')).toBe('http://ejemplo.test/a')
+  })
+
+  it('noDebeDejarAbrirOtrosEsquemasNiTextoQueNoSeaUnaUrl', () => {
+    for (const url of ['javascript:alert(1)', 'data:text/html,x', 'file:///etc/passwd', 'acuacar.com/boletin', '', null, undefined]) {
+      expect(enlaceExterno(url)).toBeNull()
+    }
+  })
+})
 
 describe('tipos de la bitácora', () => {
   const NUEVE = [

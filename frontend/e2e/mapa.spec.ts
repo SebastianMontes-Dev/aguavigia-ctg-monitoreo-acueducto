@@ -102,6 +102,41 @@ test('debeDecirQueUnCorteExpiradoOAnuladoNoTieneHoraReal', async ({ page }) => {
   await expect(historial.getByText(/Prometieron/)).toHaveCount(1)
 })
 
+const AVISO = { id: 'a1', tipo: 'CORTE_DETECTADO_POR_INGESTA', sectorId: 'armenia', timestamp: '2026-09-25T16:00:00Z', fuente: 'ACUACAR', descripcion: 'Aviso' }
+
+function bitacoraConAviso(urlOriginal: string) {
+  return (route: import('@playwright/test').Route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify([{ ...AVISO, urlOriginal }]),
+    headers: { 'X-Total-Count': '1', 'X-Total-Pages': '1', 'X-Page': '0', 'X-Page-Size': '1' },
+  })
+}
+
+test('debeOfrecerUnBotonALaFuenteDelUltimoAvisoSinAfirmarQueFueElDeUnCorte', async ({ page }) => {
+  await simularApi(page, { bitacora: bitacoraConAviso('https://www.acuacar.com/boletin/ejemplo') })
+  await page.goto('/sectores/armenia')
+  const enlace = page.getByRole('link', { name: /Ver el boletín de Acuacar/ })
+  await expect(enlace).toHaveAttribute('href', 'https://www.acuacar.com/boletin/ejemplo')
+  await expect(enlace).toHaveAttribute('target', '_blank')
+  await expect(enlace).toHaveAttribute('rel', /noopener/)
+  await expect(page.getByText(/Último aviso sobre este barrio/)).toBeVisible()
+})
+
+test('noDebeOfrecerElBotonSiLaUrlNoEsHttpNiHayAviso', async ({ page }) => {
+  await simularApi(page, { bitacora: bitacoraConAviso('javascript:alert(1)') })
+  await page.goto('/sectores/armenia')
+  await expect(page.getByRole('heading', { level: 1, name: 'Armenia' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Ver (el boletín|la nota|la fuente)/ })).toHaveCount(0)
+})
+
+test('debeDarUnaSolaLineaDeFrescuraSinRepetirVerificadoNiElListadoDeLaCiudad', async ({ page }) => {
+  await simularApi(page)
+  await page.goto('/sectores/armenia')
+  await expect(page.getByRole('region', { name: 'Registro del dato' }).getByText(/Actualizado hace \d+ min/)).toBeVisible()
+  await expect(page.getByText(/Listado generado/)).toHaveCount(0)
+  await expect(page.getByText(/verificado hace/i)).toHaveCount(0)
+  await expect(page.getByText(/Estado registrado/)).toHaveCount(0)
+})
+
 test('debeContarUnCorteCerradoConFechasYHorasYSinLaPalabraVeedor', async ({ page }) => {
   await simularApi(page)
   await page.goto('/sectores/armenia')

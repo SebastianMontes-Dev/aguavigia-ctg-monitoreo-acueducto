@@ -1,16 +1,19 @@
 import { Link, useParams } from '@tanstack/react-router'
 import { lazy, Suspense, useMemo } from 'react'
 import { useAhora } from '../../app/ahora'
-import { useCortes, useListado } from '../../app/datos'
+import type { LecturaCanal } from '../../api/canal-en-vivo'
+import { useCortes, useListado, useUltimoAviso } from '../../app/datos'
 import { CorteAbierto } from '../../componentes/CorteAbierto'
 import { CortesCerrados, CortesSinHoraReal } from '../../componentes/CortesCerrados'
-import { EstadoListado } from '../../componentes/EstadoListado'
+import { EnVivo, EstadoListado } from '../../componentes/EstadoListado'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
 import { estaAbierto, estaCerrado, sinHoraRealEnPalabras } from '../../dominio/cortes'
 import { presentarEstado } from '../../dominio/estados'
 import { sinVerificacionReciente } from '../../dominio/frescura'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
-import { haceCuanto } from '../../dominio/tiempo'
+import { enlaceExterno } from '../../dominio/historia'
+import { haceCuanto, momento } from '../../dominio/tiempo'
+import botones from '../../componentes/Botones.module.css'
 import estilos from './Panel.module.css'
 
 const numero = new Intl.NumberFormat('es-CO')
@@ -21,13 +24,39 @@ function Volver() {
   return <Link to="/" className={estilos.volver}><span aria-hidden="true">←</span> Cartagena ahora</Link>
 }
 
-function Registro({ sector, ahora }: { sector: Sector; ahora: Date }) {
-  if (!sector.actualizadoEn) return <p className={estilos.nota}>Sin fecha de registro.</p>
+/**
+ * ADR-102: una sola línea de frescura. «Verificado hace…» solo importa cuando pasan 24 horas sin verificar y entonces lo dice
+ * la advertencia del encabezado; «Listado generado…» es de toda la ciudad y solo se dice cuando la lectura es guardada.
+ */
+function Registro({ sector, lectura, ahora, reintentar }: { sector: Sector; lectura: LecturaCanal; ahora: Date; reintentar: () => void }) {
+  if (lectura.error || lectura.estado === 'sin-red') return <EstadoListado lectura={lectura} ahora={ahora} reintentar={reintentar} />
   return (
     <p className={estilos.nota}>
-      Estado registrado <time dateTime={sector.actualizadoEn}>{haceCuanto(sector.actualizadoEn, ahora)}</time>
-      {sector.verificadoEn && <> · verificado <time dateTime={sector.verificadoEn}>{haceCuanto(sector.verificadoEn, ahora)}</time></>}
+      {sector.actualizadoEn
+        ? <>Actualizado <time dateTime={sector.actualizadoEn} title={momento(sector.actualizadoEn, ahora)}>{haceCuanto(sector.actualizadoEn, ahora)}</time></>
+        : 'Sin fecha de registro.'}
+      {lectura.estado === 'en-vivo' && <> · <EnVivo /></>}
     </p>
+  )
+}
+
+/** Un botón a la fuente: la persona puede comprobar por sí misma lo que dice la ficha. */
+function FuenteDelAviso({ sector, ahora }: { sector: Sector; ahora: Date }) {
+  const { data: aviso } = useUltimoAviso(sector.id ?? '')
+  const enlace = enlaceExterno(aviso?.urlOriginal)
+  if (!aviso || !enlace) return null
+  const origen = aviso.fuente === 'PRENSA' ? 'la nota de prensa' : aviso.fuente === 'ACUACAR' ? 'el boletín de Acuacar' : 'la fuente del aviso'
+  return (
+    <section aria-label="Fuente del aviso" className={estilos.bloque}>
+      <a href={enlace} target="_blank" rel="noopener noreferrer" className={botones.secundario}>
+        Ver {origen} <span className={botones.flecha} aria-hidden="true">↗</span>
+      </a>
+      {aviso.timestamp && (
+        <p className={estilos.nota}>
+          Último aviso sobre este barrio: <time dateTime={aviso.timestamp}>{momento(aviso.timestamp, ahora)}</time> · se abre en otra pestaña
+        </p>
+      )}
+    </section>
   )
 }
 
@@ -143,9 +172,10 @@ export function FichaSector() {
       <Horario sector={sector} ahora={ahora} />
 
       <section aria-label="Registro del dato" className={estilos.bloque}>
-        <Registro sector={sector} ahora={ahora} />
-        <EstadoListado lectura={lectura} ahora={ahora} reintentar={reintentar} />
+        <Registro sector={sector} lectura={lectura} ahora={ahora} reintentar={reintentar} />
       </section>
+
+      <FuenteDelAviso sector={sector} ahora={ahora} />
 
       <section aria-label="Qué puedes hacer" className={`${estilos.bloque} ${estilos.acciones}`}>
         <Suspense fallback={<span className={estilos.reservaBoton} aria-hidden="true" />}>
