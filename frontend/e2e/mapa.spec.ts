@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { problema, simularApi } from './api-simulada'
+import { listado, problema, simularApi } from './api-simulada'
 
 test('debeResponderElEstadoYElFinPrometidoDeUnBarrioBuscado', async ({ page }) => {
   await simularApi(page)
@@ -229,4 +229,22 @@ test('noDebeDesbordarLaPaginaHaciaLosLados', async ({ page }) => {
   await page.goto('/sectores/armenia')
   await expect(page.getByRole('heading', { level: 1, name: 'Armenia' })).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
+
+test('debeExplicarEnLaLeyendaLaMarcaDeLosBarriosEnDisputaSoloSiHayAlguno', async ({ page }) => {
+  await simularApi(page)
+  await page.goto('/')
+  const leyenda = page.getByRole('list', { name: 'Leyenda del mapa' })
+  await expect(leyenda.getByText('En disputa o por confirmar')).toBeVisible()
+
+  await simularApi(page, {
+    sectores: (route) => {
+      const datos = listado()
+      for (const sector of datos.sectores) Object.assign(sector, { enDisputa: false, reportesEnContra: 0 })
+      return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(datos) })
+    },
+  })
+  await page.reload()
+  await expect(leyenda.getByText('Con servicio')).toBeVisible()
+  await expect(leyenda.getByText('En disputa o por confirmar')).toHaveCount(0)
 })

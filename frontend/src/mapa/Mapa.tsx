@@ -64,6 +64,7 @@ export default function Mapa({ geometria, sectores, seleccionado, alElegir }: Pr
   const [sinWebGl, setSinWebGl] = useState(false)
   const esquema = useSyncExternalStore(suscribirEsquema, leerEsquema)
   const datos = useMemo(() => unirSectores(geometria, sectores), [geometria, sectores])
+  const conMarca = datos.features.some((feature) => feature.properties.marcado)
   const ultimo = useRef({ datos, seleccionado, alElegir })
   ultimo.current = { datos, seleccionado, alElegir }
 
@@ -171,7 +172,7 @@ export default function Mapa({ geometria, sectores, seleccionado, alElegir }: Pr
   return (
     <div className={estilos.marco}>
       <section ref={contenedor} className={estilos.lienzo} aria-label="Mapa de barrios por estado del agua" />
-      <Leyenda />
+      <Leyenda conMarca={conMarca} />
       <div className={estilos.zoom}>
         <button type="button" aria-label="Acercar" onClick={() => mapa.current?.zoomIn()}>+</button>
         <button type="button" aria-label="Alejar" onClick={() => mapa.current?.zoomOut()}>−</button>

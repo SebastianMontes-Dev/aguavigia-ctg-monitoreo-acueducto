@@ -44,6 +44,14 @@
     white-space: nowrap;
   }
 
+  /* La misma marca del mapa: borde punteado de tinta, sin color nuevo. */
+  .muestraMarca {
+    width: 16px;
+    height: 12px;
+    border: 2px dashed var(--tinta);
+    border-radius: 2px;
+  }
+
   .zoom {
     right: var(--espacio-3);
     bottom: var(--espacio-3);
