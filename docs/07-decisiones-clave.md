@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5) es el siguiente número libre que se usó.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5) y el **ADR-101** (§6) son los últimos usados.
 
 ## 1. Decisiones que se conservan
 
@@ -525,3 +525,18 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
   (`ParidadMongoPostgresIT`) que compara cortes variados —parciales, anulados, expirados, antiguos, de fin de mes y con fracciones de segundo— en las dos bases.
 - **Se revierte** quitando el servicio, el paquete `persistence/sql` y las rutas `/api/analitica/**`; Mongo no se entera.
 - **Pendiente (fases 2 y 3, [09](09-postgresql-fase-1.md) §10):** el vigilante completo de integridad, la bitácora inmutable con respaldo restaurable y las vistas de datos abiertos.
+
+## 6. Lectura del cumplimiento en la ficha del barrio (2026-10-25)
+
+### ADR-101 — Cada corte cerrado se cuenta con fechas y horas, y al público el veedor se le llama «revisor de AguaVigía»
+
+- **Contexto.** La prueba de los cinco segundos (ADR-079) sobre la ficha de un barrio la hizo Yordy con la mirada de quien no conoce la app. El mapa se entendió a la primera; el bloque «Cortes cerrados»
+  no: «Prometieron 42 horas · Fueron 45 horas y 15 minutos» obliga a restar, la leyenda de tres muestras es un código y «registrado por un veedor» no significa nada fuera del proyecto.
+- **Decisión.** Cada corte cerrado dice primero el veredicto («El agua tardó 3 horas y 15 minutos más de lo prometido») y debajo las dos marcas con fecha y hora de Cartagena: «Prometieron que el agua volvía
+  el 25 de julio a las 3:00 p. m.» y «Volvió el 26 de julio a las 6:15 p. m.». Se quitan la barra y su leyenda (ADR-079 §4.1: una sola forma por dato). Una diferencia menor de 15 minutos se dice «a la hora
+  prometida». Un cierre provisional dice «Por confirmar». El rol `VEEDOR` se nombra al público «revisor de AguaVigía»; «veedor» queda en el panel.
+- **Alcance.** Solo la ficha (`CortesCerrados`). `/cumplimiento` y `DESIGN.md` M6 siguen con «prometido frente a real» porque ahí la comparación es el titular; el cambio de nombre del rol sí vale en todo el texto público.
+- **Gana.** Una frase que se entiende sin contexto y que usa solo campos del contrato (`inicio`, `finPrometido`, `cierres[]`). **Pierde.** El vistazo de la barra a varios cortes a la vez; se reconsidera si la ficha
+  pasa a mostrar muchos cortes juntos.
+- **Se revierte** restaurando `CortesCerrados` y `compararCorte` del commit anterior.
+
