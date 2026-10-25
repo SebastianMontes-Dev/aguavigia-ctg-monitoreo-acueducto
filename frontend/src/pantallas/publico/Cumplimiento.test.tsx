@@ -4,7 +4,7 @@ import { cumplimientoDeEjemplo, serieDeEjemplo } from '../../pruebas/datos/histo
 import { sectoresDeEjemplo } from '../../pruebas/datos/sectores'
 import { Cumplimiento } from './Cumplimiento'
 
-const estado = vi.hoisted(() => ({ sinCortes: false, barrioDesconocido: false, sinSerie: false }))
+const estado = vi.hoisted(() => ({ sinCortes: false, barrioDesconocido: false, sinSerie: false, solidez: {} as object }))
 
 vi.mock('@tanstack/react-router', () => ({
   useSearch: () => estado.barrioDesconocido ? { sector: 'desconocido' } : {},
@@ -14,14 +14,17 @@ vi.mock('../../app/datos', () => ({
   useListado: () => ({ sectores: sectoresDeEjemplo.sectores, lectura: { error: false, listado: sectoresDeEjemplo }, reintentar: vi.fn<() => void>() }),
   useIndiceCumplimiento: () => estado.sinCortes
     ? { isPending: false, isSuccess: false, isError: true, error: { estado: 400 }, data: undefined }
-    : { isPending: false, isSuccess: true, isError: false, error: null, data: cumplimientoDeEjemplo },
+    : { isPending: false, isSuccess: true, isError: false, error: null, data: { ...cumplimientoDeEjemplo, ...estado.solidez } },
+  useCalidadCumplimiento: (_sector: string | undefined, habilitado: boolean) => ({
+    data: habilitado ? { cierresMedidos: 0, cierresProvisionales: 0, porcentajeProvisional: 0, cortesSinCierreConfirmado: 12, cortesAnulados: 0 } : undefined,
+  }),
   useSerieCumplimiento: () => estado.sinSerie
     ? { isPending: false, isError: true, data: undefined, refetch: vi.fn<() => void>() }
     : { isPending: false, isError: false, data: [serieDeEjemplo[2], serieDeEjemplo[0]] },
 }))
 
 describe('Cumplimiento', () => {
-  afterEach(() => { estado.sinCortes = false; estado.barrioDesconocido = false; estado.sinSerie = false })
+  afterEach(() => { estado.sinCortes = false; estado.barrioDesconocido = false; estado.sinSerie = false; estado.solidez = {} })
 
   it('debeTitularConElVeredictoYPromediarPorCorte', () => {
     render(<Cumplimiento />)
@@ -45,7 +48,21 @@ describe('Cumplimiento', () => {
     estado.sinCortes = true
     render(<Cumplimiento />)
     expect(screen.getByText(/Aún no hay cortes cerrados para medir/)).toBeInTheDocument()
+    expect(screen.getByText('Hay 12 cortes vencidos sin cierre confirmado: nadie confirmó cuándo volvió el agua.')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Promedio por corte' })).not.toBeInTheDocument()
+  })
+
+  it('debeDeclararLaSolidezJuntoAlIndiceSoloCuandoAlgoLoDebilita', () => {
+    const { unmount } = render(<Cumplimiento />)
+    expect(screen.queryByText(/aún puede corregirse/)).not.toBeInTheDocument()
+    unmount()
+
+    estado.solidez = { porcentajeProvisional: 30, cortesSinCierreConfirmado: 2, cortesAnulados: 0 }
+    render(<Cumplimiento />)
+    const respuesta = screen.getByRole('region', { name: 'Promedio por corte' })
+    expect(respuesta).toHaveTextContent('El 30% de los cierres solo lo reportaron vecinos y aún puede corregirse.')
+    expect(respuesta).toHaveTextContent('2 cortes vencidos sin cierre confirmado no entran en la medición.')
+    expect(respuesta).not.toHaveTextContent('anulado')
   })
 
   it('debeDistinguirUnBarrioDesconocidoDeLaAusenciaDeCortes', () => {

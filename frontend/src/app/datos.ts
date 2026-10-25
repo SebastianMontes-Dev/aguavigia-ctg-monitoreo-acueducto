@@ -6,7 +6,7 @@ import { almacenIndexedDb, cargarGeometria } from '../api/geometria'
 import { leerPaginacion } from '../api/paginacion'
 import type { Corte } from '../dominio/cortes'
 import type { Sector } from '../dominio/sectores'
-import type { Indice, PuntoSerie } from '../dominio/cumplimiento'
+import type { Calidad, Indice, PuntoSerie } from '../dominio/cumplimiento'
 import type { TipoBitacora } from '../dominio/historia'
 import type { components } from '../api/generado/esquema'
 
@@ -113,6 +113,37 @@ export function useIndiceCumplimiento(sectorId?: string) {
       return data as Indice
     },
     staleTime: 5_000,
+  })
+}
+
+/** F4: responde siempre, también cuando el índice da 400; solo se pide entonces, porque el índice ya trae su solidez. */
+export function useCalidadCumplimiento(sectorId: string | undefined, habilitado: boolean) {
+  return useQuery({
+    queryKey: ['cumplimiento-calidad', sectorId ?? 'global'],
+    enabled: habilitado,
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/cumplimiento/calidad', { params: { query: { sectorId } }, signal })
+        .catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return data as Calidad
+    },
+    staleTime: 5_000,
+  })
+}
+
+/** El índice de un corte entero; se pide al abrir su detalle. `409` = el corte aún no tiene todos sus barrios cerrados. */
+export function useIndiceCorte(corteId: string, habilitado: boolean) {
+  return useQuery({
+    queryKey: ['cumplimiento-corte', corteId],
+    enabled: habilitado && Boolean(corteId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/cumplimiento/cortes/{corteId}', { params: { path: { corteId } }, signal })
+        .catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return data as Indice
+    },
+    retry: (fallos, error) => fallos < 2 && ![404, 409].includes((error as { estado?: number }).estado ?? 0),
+    staleTime: 60_000,
   })
 }
 

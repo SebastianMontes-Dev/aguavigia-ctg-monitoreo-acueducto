@@ -3,6 +3,38 @@ import { formatearNumero, formatearPorcentaje } from './formato'
 
 export type Indice = components['schemas']['IndiceCumplimientoRespuesta']
 export type PuntoSerie = components['schemas']['PuntoSerieRespuesta']
+export type Calidad = components['schemas']['CalidadDelCumplimientoRespuesta']
+
+function contar(cantidad: number, singular: string, plural: string): string {
+  return `${formatearNumero(cantidad)} ${cantidad === 1 ? singular : plural}`
+}
+
+/**
+ * F4: el índice es tan sólido como lo que lo sostiene. Junto al número se declara, solo si es más que cero, cuántos
+ * cierres podrían corregirse todavía y qué cortes quedaron fuera; no se esconde ni se cuenta a favor o en contra.
+ */
+export function solidezIndice(indice: Pick<Indice, 'porcentajeProvisional' | 'cortesSinCierreConfirmado' | 'cortesAnulados'>): string[] {
+  const frases: string[] = []
+  const provisional = indice.porcentajeProvisional ?? 0
+  if (provisional > 0) frases.push(`El ${formatearPorcentaje(provisional)} de los cierres solo lo reportaron vecinos y aún puede corregirse.`)
+  const sinCierre = indice.cortesSinCierreConfirmado ?? 0
+  if (sinCierre > 0) frases.push(`${contar(sinCierre, 'corte vencido', 'cortes vencidos')} sin cierre confirmado no ${sinCierre === 1 ? 'entra' : 'entran'} en la medición.`)
+  const anulados = indice.cortesAnulados ?? 0
+  if (anulados > 0) frases.push(`${contar(anulados, 'corte anulado', 'cortes anulados')} por error no ${anulados === 1 ? 'cuenta' : 'cuentan'}.`)
+  return frases
+}
+
+/** Cuando el índice da 400 no hay un solo cierre que medir; la calidad dice con cifras qué hay en su lugar. */
+export function faltanteEnPalabras(calidad: Calidad | undefined): string | null {
+  if (!calidad) return null
+  const sinCierre = calidad.cortesSinCierreConfirmado ?? 0
+  const anulados = calidad.cortesAnulados ?? 0
+  const frases = [
+    sinCierre > 0 ? `Hay ${contar(sinCierre, 'corte vencido', 'cortes vencidos')} sin cierre confirmado: nadie confirmó cuándo volvió el agua.` : '',
+    anulados > 0 ? `${contar(anulados, 'corte se anuló', 'cortes se anularon')} por error.` : '',
+  ].filter(Boolean)
+  return frases.length ? frases.join(' ') : null
+}
 
 export function indiceCompleto(indice: Indice | undefined): indice is Indice & {
   duracionPrometidaSegundos: number

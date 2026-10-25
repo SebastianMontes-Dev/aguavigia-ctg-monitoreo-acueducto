@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
-import { useIndiceCumplimiento, useListado, useSerieCumplimiento } from '../../app/datos'
+import { useCalidadCumplimiento, useIndiceCumplimiento, useListado, useSerieCumplimiento } from '../../app/datos'
 import { SelectorBarrio } from '../../componentes/SelectorBarrio'
 import {
   conclusionCumplimiento,
   diferenciaEnPalabras,
   diferenciaMensualPorCorte,
   duracionCorta,
+  faltanteEnPalabras,
   indiceCompleto,
   mesEnPalabras,
   ordenarSerie,
   periodoEnPalabras,
   resumirCumplimiento,
   significadoIndice,
+  solidezIndice,
   titularVeredicto,
   type Indice,
   type PuntoSerie,
@@ -25,7 +27,13 @@ import estilos from './Cumplimiento.module.css'
 
 const MESES_VISIBLES = 6
 
-function Respuesta({ resumen }: { resumen: ResumenCumplimiento }) {
+/** F4: la solidez va junto al número, en la misma nota; si nada lo debilita, no se dice nada. */
+function Solidez({ indice }: { indice: Indice }) {
+  const frases = solidezIndice(indice)
+  return frases.length ? <p className={estilos.nota}>{frases.join(' ')}</p> : null
+}
+
+function Respuesta({ resumen, indice }: { resumen: ResumenCumplimiento; indice: Indice }) {
   return (
     <section className={estilos.respuesta} aria-label="Promedio por corte">
       <dl className={estilos.cifras}>
@@ -36,6 +44,7 @@ function Respuesta({ resumen }: { resumen: ResumenCumplimiento }) {
       <p className={estilos.nota}>
         Promedio por corte. <strong>Índice {formatearPorcentaje(resumen.porcentaje)}</strong>: {significadoIndice(resumen.porcentaje)}.
       </p>
+      <Solidez indice={indice} />
       <details className={estilos.comoSeMide}>
         <summary>Cómo se mide</summary>
         <p>
@@ -54,6 +63,7 @@ function RespuestaSinSerie({ indice }: { indice: Indice }) {
     <section className={estilos.respuesta} aria-label="Total de los cortes cerrados">
       <p className={estilos.nota}>{conclusionCumplimiento(indice)}</p>
       <p className={estilos.nota}><strong>Índice {formatearPorcentaje(indice.porcentajeCumplimiento)}</strong>: {significadoIndice(indice.porcentajeCumplimiento)}.</p>
+      <Solidez indice={indice} />
     </section>
   )
 }
@@ -129,6 +139,7 @@ export function Cumplimiento() {
   const serie = useSerieCumplimiento({ sectorId: buscar.sector }, !barrioNoEncontrado)
   const errorIndice = indice.error as { estado?: number } | null
   const sinCortes = indice.isError && errorIndice?.estado === 400
+  const faltante = faltanteEnPalabras(useCalidadCumplimiento(buscar.sector, sinCortes && !barrioNoEncontrado).data)
   const resumen = resumirCumplimiento(indice.data, serie.data)
   const barrio = sector ? nombreLegible(sector.nombre) : undefined
   const periodo = resumen && periodoEnPalabras(resumen.primerMes, resumen.ultimoMes)
@@ -158,14 +169,17 @@ export function Cumplimiento() {
       {barrioNoEncontrado && <p className={estilos.vacio}>No encontramos este barrio.</p>}
       {cargando && <output className={estilos.esqueleto}>Consultando el cumplimiento…<span /><span /><span /></output>}
       {!barrioNoEncontrado && sinCortes && (
-        <p className={estilos.vacio}>Aún no hay cortes cerrados para medir{barrio ? ` en ${barrio}` : ''}. Un corte abierto todavía no se puede medir.</p>
+        <div className={estilos.vacio}>
+          <p>Aún no hay cortes cerrados para medir{barrio ? ` en ${barrio}` : ''}. Un corte abierto todavía no se puede medir.</p>
+          {faltante && <p>{faltante}</p>}
+        </div>
       )}
       {!barrioNoEncontrado && indice.isError && !sinCortes && (
         <p role="alert">No pudimos consultar el cumplimiento. Revisa tu conexión e inténtalo otra vez. <button type="button" className={estilos.accion} onClick={() => void indice.refetch()}>Reintentar</button></p>
       )}
       {!barrioNoEncontrado && indice.data && !cargando && (
         <div className={estilos.columnas}>
-          {resumen ? <Respuesta resumen={resumen} /> : <RespuestaSinSerie indice={indice.data} />}
+          {resumen ? <Respuesta resumen={resumen} indice={indice.data} /> : <RespuestaSinSerie indice={indice.data} />}
           {serie.isError && <p role="alert">No pudimos consultar el mes a mes. <button type="button" className={estilos.accion} onClick={() => void serie.refetch()}>Reintentar</button></p>}
           {serie.data && serie.data.length > 0 && <MesAMes puntos={serie.data} csv={csv} />}
         </div>

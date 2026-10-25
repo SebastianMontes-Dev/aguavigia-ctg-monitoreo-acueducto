@@ -62,6 +62,8 @@ interface Opciones {
   bitacora?: (route: Route) => Promise<void>
   sustento?: (route: Route) => Promise<void>
   modo?: 'REAL' | 'SIMULACION'
+  calidad?: (route: Route) => Promise<void>
+  indiceCorte?: (route: Route) => Promise<void>
 }
 
 /** Simula la API pública para las E2E que corren sin backend (CI). Devuelve los cuerpos de los reportes y confirmaciones. */
@@ -87,6 +89,15 @@ export async function simularApi(page: Page, opciones: Opciones = {}) {
   })))
   await page.route(/\/api\/cumplimiento(?:\/sectores\/[^/?]+)?(?:\?|$)/, opciones.cumplimiento ?? ((route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(cumplimientoDeEjemplo),
+  })))
+  await page.route(/\/api\/cumplimiento\/calidad(?:\?|$)/, opciones.calidad ?? ((route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ cierresMedidos: 10, cierresProvisionales: 0, porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 }),
+  })))
+  await page.route(/\/api\/cumplimiento\/cortes\/[^/?]+$/, opciones.indiceCorte ?? ((route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ duracionPrometidaSegundos: 14_400, duracionRealSegundos: 18_000, desviacionSegundos: 3600, porcentajeCumplimiento: 80,
+      porcentajeProvisional: 50, cortesSinCierreConfirmado: 0, cortesAnulados: 0 }),
   })))
   await page.route(/\/api\/bitacora\/[^/]+\/sustento/, opciones.sustento ?? ((route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(['reporte-1', 'reporte-2']),

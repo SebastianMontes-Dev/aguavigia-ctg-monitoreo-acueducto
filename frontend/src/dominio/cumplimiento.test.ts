@@ -6,10 +6,12 @@ import {
   diferenciaMensualPorCorte,
   duracionAcumulada,
   duracionCorta,
+  faltanteEnPalabras,
   ordenarSerie,
   periodoEnPalabras,
   resumirCumplimiento,
   significadoIndice,
+  solidezIndice,
   titularVeredicto,
   veredicto,
 } from './cumplimiento'
@@ -72,5 +74,28 @@ describe('cumplimiento', () => {
   it('debeOrdenarLaSerieSinInventarMesesVacios', () => {
     const serie = ordenarSerie([serieDeEjemplo[2]!, serieDeEjemplo[0]!])
     expect(serie.map((punto) => punto.periodo)).toEqual(['2026-04', '2026-06'])
+  })
+
+  it('debeDeclararJuntoAlIndiceSoloLoQueLoDebilitaYEsMayorQueCero', () => {
+    expect(solidezIndice({ porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 })).toEqual([])
+    expect(solidezIndice({})).toEqual([])
+    expect(solidezIndice({ porcentajeProvisional: 25, cortesSinCierreConfirmado: 12, cortesAnulados: 1 })).toEqual([
+      'El 25% de los cierres solo lo reportaron vecinos y aún puede corregirse.',
+      '12 cortes vencidos sin cierre confirmado no entran en la medición.',
+      '1 corte anulado por error no cuenta.',
+    ])
+    expect(solidezIndice({ cortesSinCierreConfirmado: 1, cortesAnulados: 3 })).toEqual([
+      '1 corte vencido sin cierre confirmado no entra en la medición.',
+      '3 cortes anulados por error no cuentan.',
+    ])
+  })
+
+  it('debeDecirConCifrasQueFaltaCuandoNoHayUnSoloCierre', () => {
+    expect(faltanteEnPalabras(undefined)).toBeNull()
+    expect(faltanteEnPalabras({ cierresMedidos: 0, cierresProvisionales: 0, porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 })).toBeNull()
+    expect(faltanteEnPalabras({ cierresMedidos: 0, cortesSinCierreConfirmado: 12, cortesAnulados: 2 }))
+      .toBe('Hay 12 cortes vencidos sin cierre confirmado: nadie confirmó cuándo volvió el agua. 2 cortes se anularon por error.')
+    expect(faltanteEnPalabras({ cortesSinCierreConfirmado: 1, cortesAnulados: 1 }))
+      .toBe('Hay 1 corte vencido sin cierre confirmado: nadie confirmó cuándo volvió el agua. 1 corte se anuló por error.')
   })
 })

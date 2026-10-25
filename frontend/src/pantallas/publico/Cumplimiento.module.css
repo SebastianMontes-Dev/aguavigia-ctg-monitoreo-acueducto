@@ -50,7 +50,7 @@
   .tablaContenedor th:first-child, .tablaContenedor td:first-child { padding-left: 0; }
   .csv { display: inline-block; margin: var(--espacio-3) 0; font-size: var(--texto-s); font-weight: 600; color: var(--tinta); text-decoration-color: var(--laton); }
 
-  .vacio { border-top: 1px solid var(--tinta); padding: var(--espacio-5) 0; }
+  .vacio { display: grid; gap: var(--espacio-2); border-top: 1px solid var(--tinta); padding: var(--espacio-5) 0; }
   .esqueleto { display: grid; gap: var(--espacio-3); color: var(--tinta-2); }
   .esqueleto span { display: block; height: 50px; border-bottom: 1px solid var(--linea); }
 
