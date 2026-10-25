@@ -4,10 +4,11 @@ import { duracionEnPalabras } from './tiempo'
 export type Corte = components['schemas']['CorteRespuesta']
 
 // ADR-006: solo se atribuye lo que el origen sostiene. INGESTA_IA es una propuesta del colector que un veedor aprobó.
+// Al público el veedor se le nombra «revisor de AguaVigía»: «veedor» es el nombre del rol en el panel y no se entiende afuera.
 const ORIGENES: Record<string, string> = {
   OFICIAL_ACUACAR: 'Aviso oficial de Acuacar',
-  VEEDOR: 'Registrado por un veedor',
-  INGESTA_IA: 'Tomado de una publicación y aprobado por un veedor',
+  VEEDOR: 'Registrado por un revisor de AguaVigía',
+  INGESTA_IA: 'Tomado de una publicación y aprobado por un revisor de AguaVigía',
 }
 
 export function origenEnPalabras(origen: string | undefined): string | null {
@@ -19,8 +20,8 @@ export type Cierre = components['schemas']['CierreRespuesta']
 // ADR-006 y OrigenEstado (cambios-para-frontend F1): `fuente` de cierres y eventos tiene cinco valores y ninguno se inventa.
 const FUENTES: Record<string, string> = {
   ACUACAR: 'Aviso oficial de Acuacar',
-  PRENSA: 'Nota de prensa aprobada por un veedor',
-  VEEDOR: 'Registrado por un veedor',
+  PRENSA: 'Nota de prensa aprobada por un revisor de AguaVigía',
+  VEEDOR: 'Registrado por un revisor de AguaVigía',
   VECINOS: 'Reportes de vecinos',
   SENSOR: 'Un sensor de la red',
 }
@@ -28,6 +29,21 @@ const FUENTES: Record<string, string> = {
 /** `SENSOR` existe en el contrato pero no se produce: basta un texto genérico. Un valor desconocido no se atribuye. */
 export function fuenteEnPalabras(fuente: string | null | undefined): string | null {
   return fuente ? FUENTES[fuente] ?? null : null
+}
+
+// Cómo se supo que el agua volvió a un barrio. Un cierre provisional es el único que no lo confirmó nadie más que vecinos.
+const CIERRES: Record<string, string> = {
+  ACUACAR: 'Confirmado por un aviso de Acuacar',
+  PRENSA: 'Confirmado por una nota de prensa',
+  VEEDOR: 'Confirmado por un revisor de AguaVigía',
+  VECINOS: 'Según reportes de vecinos',
+  SENSOR: 'Medido por un sensor de la red',
+}
+
+export function cierreEnPalabras(fuente: string | null | undefined, provisional: boolean): string | null {
+  const texto = fuente ? CIERRES[fuente] : undefined
+  if (!texto) return null
+  return provisional ? `${texto}. Un revisor de AguaVigía aún no lo confirma` : texto
 }
 
 /** Estados en los que el corte ya no está abierto; EXPIRADO y ANULADO, además, no tienen hora real. */
@@ -51,7 +67,7 @@ export function horaReal(corte: Corte, sectorId?: string): string | null {
   return horas.reduce<string | null>((ultima, hora) => (ultima === null || Date.parse(hora) > Date.parse(ultima) ? hora : ultima), null)
 }
 
-/** `true` si el cierre de ese barrio lo sostienen solo vecinos y un veedor o un boletín aún no lo confirma. */
+/** `true` si el cierre de ese barrio lo sostienen solo vecinos y un revisor o un boletín aún no lo confirma. */
 export function cierreProvisional(corte: Corte, sectorId: string): boolean {
   return cierreDe(corte, sectorId)?.provisional === true
 }
@@ -82,24 +98,28 @@ export function promesaVencida(corte: Corte, ahora: Date, sectorId?: string): bo
 export interface Comparacion {
   /** Verdadero si el cierre solo lo sostienen los vecinos: «por confirmar». */
   provisional: boolean
-  prometidoMs: number
-  realMs: number
-  prometido: string
-  real: string
-  diferencia: string
+  /** La frase que responde: «El agua tardó 3 horas y 15 minutos más de lo prometido». */
+  veredicto: string
+  /** Las dos marcas se muestran como fecha y hora, no como duraciones que haya que restar. */
+  prometidoEn: string
+  realEn: string
 }
 
-/** Guía §5.2: la diferencia se dice en palabras; «Terminó X antes» cuando duró menos de lo prometido. */
+/** Menos que esto se dice «a la hora prometida»: ±15 min es ruido del aviso, no un incumplimiento. */
+const TOLERANCIA_MS = 15 * 60_000
+
+/** Guía §5.2: se dice quién prometió qué hora y cuándo volvió de verdad; el veredicto va primero y en palabras. */
 export function compararCorte(corte: Corte, sectorId?: string): Comparacion | null {
   const fin = horaReal(corte, sectorId)
-  if (!fin || !estaCerrado(corte, sectorId)) return null
-  const inicio = new Date(corte.inicio!).getTime()
-  const prometidoMs = new Date(corte.finPrometido!).getTime() - inicio
+  if (!fin || !corte.inicio || !corte.finPrometido || !estaCerrado(corte, sectorId)) return null
+  const inicio = new Date(corte.inicio).getTime()
+  const prometidoMs = new Date(corte.finPrometido).getTime() - inicio
   const realMs = new Date(fin).getTime() - inicio
   if (prometidoMs <= 0 || realMs < 0) return null
   const exceso = realMs - prometidoMs
-  const diferencia = Math.abs(exceso) < 15 * 60_000 ? 'Duró lo prometido'
-    : exceso > 0 ? `Se pasó ${duracionEnPalabras(exceso)}` : `Terminó ${duracionEnPalabras(exceso)} antes`
+  const veredicto = Math.abs(exceso) < TOLERANCIA_MS ? 'El agua volvió a la hora prometida'
+    : exceso > 0 ? `El agua tardó ${duracionEnPalabras(exceso)} más de lo prometido`
+      : `El agua volvió ${duracionEnPalabras(exceso)} antes de lo prometido`
   const provisional = sectorId ? cierreProvisional(corte, sectorId) : (corte.cierres ?? []).some((cierre) => cierre.provisional)
-  return { provisional, prometidoMs, realMs, prometido: duracionEnPalabras(prometidoMs), real: duracionEnPalabras(realMs), diferencia }
+  return { provisional, veredicto, prometidoEn: corte.finPrometido, realEn: fin }
 }

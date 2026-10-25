@@ -102,6 +102,20 @@ test('debeDecirQueUnCorteExpiradoOAnuladoNoTieneHoraReal', async ({ page }) => {
   await expect(historial.getByText(/Prometieron/)).toHaveCount(1)
 })
 
+test('debeContarUnCorteCerradoConFechasYHorasYSinLaPalabraVeedor', async ({ page }) => {
+  await simularApi(page)
+  await page.goto('/sectores/armenia')
+  const historial = page.getByRole('region', { name: /Cortes cerrados en Armenia/ })
+  await expect(historial.getByText('Lo que Acuacar anunció frente a lo que pasó, corte por corte.')).toBeVisible()
+  // El fixture promete 2 h y el veedor cerró 6 h después de lo prometido.
+  await expect(historial.getByText('El agua tardó 6 horas más de lo prometido')).toBeVisible()
+  await expect(historial.getByText('Prometieron')).toBeVisible()
+  await expect(historial.getByText(/que el agua volvía .* a las/)).toBeVisible()
+  await expect(historial.getByText('Volvió', { exact: true })).toBeVisible()
+  await expect(historial.getByText(/Registrado y cerrado por un revisor de AguaVigía\./)).toBeVisible()
+  await expect(page.getByText(/veedor/i)).toHaveCount(0)
+})
+
 test('debeExplicarElCupoAgotadoSinReintentarSolo', async ({ page }) => {
   const { reportes } = await simularApi(page, {
     reporte: (route) => route.fulfill(problema(429, 'limite-reportes-excedido', 'Límite de reportes')),

@@ -1,5 +1,5 @@
 import {
-  compararCorte, cierreProvisional, estaAbierto, estaCerrado, fuenteEnPalabras, horaReal, origenEnPalabras, promesaVencida,
+  cierreEnPalabras, compararCorte, cierreProvisional, estaAbierto, estaCerrado, fuenteEnPalabras, horaReal, origenEnPalabras, promesaVencida,
   sinHoraRealEnPalabras, type Corte,
 } from './cortes'
 
@@ -72,12 +72,29 @@ describe('horaReal', () => {
 })
 
 describe('compararCorte', () => {
-  it('debeCompararLoPrometidoConLoQueDuroEnPalabras', () => {
-    const cierre = (hora: string) => [{ sectorId: 'armenia', hora, fuente: 'VEEDOR', provisional: false }]
+  const cierre = (hora: string) => [{ sectorId: 'armenia', hora, fuente: 'VEEDOR', provisional: false }]
+
+  it('debeDecirElVeredictoEnPalabrasYDarLasDosMarcasComoFechas', () => {
     const pasado = compararCorte({ ...abierto, finPrometido: '2026-09-26T13:00:00Z', estado: 'RESTABLECIDO', cierres: cierre('2026-09-26T19:00:00Z') })
-    expect(pasado).toMatchObject({ prometido: '2 horas', real: '8 horas', diferencia: 'Se pasó 6 horas', provisional: false })
+    expect(pasado).toEqual({
+      provisional: false,
+      veredicto: 'El agua tardó 6 horas más de lo prometido',
+      prometidoEn: '2026-09-26T13:00:00Z',
+      realEn: '2026-09-26T19:00:00Z',
+    })
+  })
+
+  it('debeDecirCuantoAntesVolvioElAgua', () => {
     const antes = compararCorte({ ...abierto, finPrometido: '2026-09-26T15:00:00Z', estado: 'RESTABLECIDO', cierres: cierre('2026-09-26T14:30:00Z') })
-    expect(antes?.diferencia).toBe('Terminó 30 minutos antes')
+    expect(antes?.veredicto).toBe('El agua volvió 30 minutos antes de lo prometido')
+  })
+
+  it('debeDarPorCumplidoLoQueDifiereMenosDe15Minutos', () => {
+    const justo = compararCorte({ ...abierto, finPrometido: '2026-09-26T15:00:00Z', estado: 'RESTABLECIDO', cierres: cierre('2026-09-26T15:10:00Z') })
+    expect(justo?.veredicto).toBe('El agua volvió a la hora prometida')
+  })
+
+  it('noDebeCompararUnCorteQueSigueAbierto', () => {
     expect(compararCorte(abierto)).toBeNull()
   })
 
@@ -86,13 +103,27 @@ describe('compararCorte', () => {
       { sectorId: 'armenia', hora: '2026-09-26T13:00:00Z', fuente: 'VEEDOR', provisional: false },
       { sectorId: 'manga', hora: '2026-09-26T19:00:00Z', fuente: 'VECINOS', provisional: true },
     ])
-    expect(compararCorte(corte, 'armenia')).toMatchObject({ real: '2 horas', provisional: false })
-    expect(compararCorte(corte, 'manga')).toMatchObject({ real: '8 horas', provisional: true })
+    expect(compararCorte(corte, 'armenia')).toMatchObject({ veredicto: 'El agua volvió 1 hora antes de lo prometido', provisional: false })
+    expect(compararCorte(corte, 'manga')).toMatchObject({ veredicto: 'El agua tardó 5 horas más de lo prometido', provisional: true })
     expect(compararCorte(corte)).toBeNull()
   })
 })
 
 describe('textos', () => {
+  it('noDebeUsarLaPalabraVeedorEnNingunTextoQueVeElPublico', () => {
+    const textos = [
+      origenEnPalabras('VEEDOR'), origenEnPalabras('INGESTA_IA'), fuenteEnPalabras('VEEDOR'), fuenteEnPalabras('PRENSA'),
+      cierreEnPalabras('VEEDOR', false), cierreEnPalabras('VECINOS', true),
+    ]
+    for (const texto of textos) expect(texto).not.toMatch(/veedor/i)
+  })
+
+  it('debeDecirComoSeSupoQueVolvioElAguaYAvisarSiNadieMasLoConfirmo', () => {
+    expect(cierreEnPalabras('VEEDOR', false)).toBe('Confirmado por un revisor de AguaVigía')
+    expect(cierreEnPalabras('VECINOS', true)).toBe('Según reportes de vecinos. Un revisor de AguaVigía aún no lo confirma')
+    expect(cierreEnPalabras('OTRA', false)).toBeNull()
+  })
+
   it('debeAtribuirSoloLosOrigenesConocidos', () => {
     expect(origenEnPalabras('OFICIAL_ACUACAR')).toBe('Aviso oficial de Acuacar')
     expect(origenEnPalabras('OTRO')).toBeNull()
