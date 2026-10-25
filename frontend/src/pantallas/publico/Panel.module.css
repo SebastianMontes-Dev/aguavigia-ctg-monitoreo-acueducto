@@ -418,4 +418,8 @@
   .esqueleto span:nth-child(odd) {
     width: 70%;
   }
+
+  .sinCorte {
+    white-space: nowrap;
+  }
 }

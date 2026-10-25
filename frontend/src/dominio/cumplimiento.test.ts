@@ -81,13 +81,10 @@ describe('cumplimiento', () => {
     expect(solidezIndice({})).toEqual([])
     expect(solidezIndice({ porcentajeProvisional: 25, cortesSinCierreConfirmado: 12, cortesAnulados: 1 })).toEqual([
       'El 25% de los cierres solo lo reportaron vecinos y aún puede corregirse.',
-      '12 cortes vencidos sin cierre confirmado no entran en la medición.',
-      '1 corte anulado por error no cuenta.',
+      'Quedan fuera 12 cortes vencidos sin cierre confirmado y 1 anulado.',
     ])
-    expect(solidezIndice({ cortesSinCierreConfirmado: 1, cortesAnulados: 3 })).toEqual([
-      '1 corte vencido sin cierre confirmado no entra en la medición.',
-      '3 cortes anulados por error no cuentan.',
-    ])
+    expect(solidezIndice({ cortesSinCierreConfirmado: 1 })).toEqual(['Queda fuera 1 corte vencido sin cierre confirmado.'])
+    expect(solidezIndice({ cortesAnulados: 3 })).toEqual(['Quedan fuera 3 cortes anulados.'])
   })
 
   it('debeDecirConCifrasQueFaltaCuandoNoHayUnSoloCierre', () => {

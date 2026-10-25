@@ -13,7 +13,7 @@ import { presentarEstado } from '../../dominio/estados'
 import { formatearNumero } from '../../dominio/formato'
 import { sinVerificacionReciente } from '../../dominio/frescura'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
-import { diaConFecha, formatearHora, haceCuanto, momento } from '../../dominio/tiempo'
+import { diaConFecha, diaRelativo, fechaCorta, formatearHora, haceCuanto, momento } from '../../dominio/tiempo'
 import estilos from './Panel.module.css'
 
 // El cajón del reporte solo se necesita al tocar el botón: no pesa en la primera respuesta.
@@ -42,6 +42,20 @@ function Registro({ sector, lectura, ahora, reintentar }: { sector: Sector; lect
         : <span>Sin fecha de registro.</span>}
       {lectura.estado === 'en-vivo' && <EnVivo />}
     </p>
+  )
+}
+
+/**
+ * «para hoy a las 7:30 p. m.», «para mañana a las…» o «para el sáb 24 oct a las…»: se lee seguido, dentro de la frase.
+ * La hora no se parte entre líneas y ya termina en punto («p. m.»), así que la frase no lleva otro.
+ */
+function ParaCuando({ valor, ahora, vencida }: { valor: string; ahora: Date; vencida: boolean }) {
+  const dia = diaRelativo(valor, ahora)
+  const cuando = dia === 'hoy' || dia === 'mañana' ? dia : `el ${fechaCorta(valor, ahora)}`
+  return (
+    <time dateTime={valor}>
+      para {cuando} a las <span className={estilos.sinCorte}>{formatearHora(valor)}</span>{vencida && ' (hora ya pasada).'}
+    </time>
   )
 }
 
@@ -94,8 +108,12 @@ function EstadoActual({ sector, lectura, ahora, reintentar }: { sector: Sector; 
         )}
         {finPrometido ? (
           <p className={estilos.lineaEstado}>
-            Regreso prometido para las <time dateTime={finPrometido}>{formatearHora(finPrometido)}, {diaConFecha(finPrometido, ahora)}</time>
-            {!sector.restablecimientoPorConfirmar && new Date(finPrometido).getTime() < ahora.getTime() && ' (hora ya pasada)'}.
+            Regreso prometido{' '}
+            <ParaCuando
+              valor={finPrometido}
+              ahora={ahora}
+              vencida={!sector.restablecimientoPorConfirmar && new Date(finPrometido).getTime() < ahora.getTime()}
+            />
           </p>
         ) : sinTarjeta && <p className={estilos.lineaEstado}>Hora de restablecimiento no informada.</p>}
         {enContra > 0 && (

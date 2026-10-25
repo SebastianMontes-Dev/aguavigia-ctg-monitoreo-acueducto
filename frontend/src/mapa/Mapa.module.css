@@ -46,10 +46,8 @@
 
   /* La misma marca del mapa: borde punteado de tinta, sin color nuevo. */
   .muestraMarca {
-    width: 16px;
-    height: 12px;
-    border: 2px dashed var(--tinta);
-    border-radius: 2px;
+    flex: none;
+    color: var(--tinta);
   }
 
   .zoom {

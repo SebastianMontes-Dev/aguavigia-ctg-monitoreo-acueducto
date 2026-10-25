@@ -61,7 +61,7 @@ describe('Cumplimiento', () => {
     render(<Cumplimiento />)
     const respuesta = screen.getByRole('region', { name: 'Promedio por corte' })
     expect(respuesta).toHaveTextContent('El 30% de los cierres solo lo reportaron vecinos y aún puede corregirse.')
-    expect(respuesta).toHaveTextContent('2 cortes vencidos sin cierre confirmado no entran en la medición.')
+    expect(respuesta).toHaveTextContent('Quedan fuera 2 cortes vencidos sin cierre confirmado.')
     expect(respuesta).not.toHaveTextContent('anulado')
   })
 

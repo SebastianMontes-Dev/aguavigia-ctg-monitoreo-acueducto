@@ -92,7 +92,7 @@ describe('FichaSector: encabezado y estado', () => {
   it('debeDecirElRegresoPrometidoDelBarrioCuandoNingunCorteAbiertoLoMuestra', () => {
     prueba.sector = { ...BASE, ventanaPrometida: { inicio: '2026-09-25T17:00:00Z', fin: '2026-09-26T03:00:00Z' } }
     render(<FichaSector />)
-    expect(estadoActual()).toHaveTextContent(/Regreso prometido para las 10:00 p\. m\., Hoy/)
+    expect(estadoActual()).toHaveTextContent('Regreso prometido para hoy a las 10:00 p. m.')
     expect(estadoActual()).not.toHaveTextContent('hora ya pasada')
     expect(estadoActual()).not.toHaveTextContent('Hora de restablecimiento no informada.')
   })
@@ -100,7 +100,7 @@ describe('FichaSector: encabezado y estado', () => {
   it('debeAdvertirQueLaHoraPrometidaYaPasoSinRepetirloSiYaEstaPorConfirmar', () => {
     prueba.sector = { ...BASE, ventanaPrometida: { inicio: '2026-09-25T13:00:00Z', fin: '2026-09-25T18:00:00Z' } }
     const { unmount } = render(<FichaSector />)
-    expect(estadoActual()).toHaveTextContent(/Regreso prometido para las 1:00 p\. m\., Hoy.*\(hora ya pasada\)\./)
+    expect(estadoActual()).toHaveTextContent('Regreso prometido para hoy a las 1:00 p. m. (hora ya pasada).')
     unmount()
 
     prueba.sector = { ...prueba.sector, restablecimientoPorConfirmar: true }

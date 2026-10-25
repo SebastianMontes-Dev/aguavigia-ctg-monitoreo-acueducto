@@ -18,9 +18,12 @@ export function solidezIndice(indice: Pick<Indice, 'porcentajeProvisional' | 'co
   const provisional = indice.porcentajeProvisional ?? 0
   if (provisional > 0) frases.push(`El ${formatearPorcentaje(provisional)} de los cierres solo lo reportaron vecinos y aún puede corregirse.`)
   const sinCierre = indice.cortesSinCierreConfirmado ?? 0
-  if (sinCierre > 0) frases.push(`${contar(sinCierre, 'corte vencido', 'cortes vencidos')} sin cierre confirmado no ${sinCierre === 1 ? 'entra' : 'entran'} en la medición.`)
   const anulados = indice.cortesAnulados ?? 0
-  if (anulados > 0) frases.push(`${contar(anulados, 'corte anulado', 'cortes anulados')} por error no ${anulados === 1 ? 'cuenta' : 'cuentan'}.`)
+  const fuera = [
+    sinCierre > 0 ? `${contar(sinCierre, 'corte vencido', 'cortes vencidos')} sin cierre confirmado` : '',
+    anulados > 0 ? (sinCierre > 0 ? contar(anulados, 'anulado', 'anulados') : contar(anulados, 'corte anulado', 'cortes anulados')) : '',
+  ].filter(Boolean)
+  if (fuera.length) frases.push(`${fuera.length === 1 && (sinCierre || anulados) === 1 ? 'Queda' : 'Quedan'} fuera ${fuera.join(' y ')}.`)
   return frases
 }
 

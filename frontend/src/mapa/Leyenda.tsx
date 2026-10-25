@@ -14,7 +14,9 @@ export function Leyenda({ conMarca = false }: { conMarca?: boolean }) {
       ))}
       {conMarca && (
         <li>
-          <span className={estilos.muestraMarca} aria-hidden="true" />
+          <svg className={estilos.muestraMarca} width="16" height="12" viewBox="0 0 16 12" aria-hidden="true">
+            <rect x="1" y="1" width="14" height="10" rx="1" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 2" />
+          </svg>
           En disputa o por confirmar
         </li>
       )}
