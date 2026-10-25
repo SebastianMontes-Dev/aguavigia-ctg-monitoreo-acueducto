@@ -44,7 +44,7 @@ también va en `sessionStorage`.
 ## Pruebas
 
 - e2e simulado: solicitar, olvidé mi clave (mensaje idéntico), registro de vecino, ingreso, perfil, cambio de barrio con aviso, verificación (éxito, fuera del barrio, imprecisa, tercer intento), reportar con sesión.
-- e2e real: registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → reportar → el reporte llega con `CUENTA_VERIFICADA` tras verificar el barrio con una geolocalización simulada por Playwright dentro del polígono.
+- e2e real, con `RATE_LIMIT_FACTOR_CUENTAS=10` (`/api/cuentas/**` admite 10 peticiones cada 10 minutos por IP; sin él la segunda pasada da `429`): registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → reportar → el reporte llega con `CUENTA_VERIFICADA` tras verificar el barrio con una geolocalización simulada por Playwright dentro del polígono.
 
 ## Terminado cuando
 

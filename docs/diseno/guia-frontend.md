@@ -1,6 +1,10 @@
 # Guía de diseño del frontend — AguaVigía CTG
 
-**Fecha:** 2026-09-25, Cartagena · **Decisión:** [ADR-069](../design-decisions.md).
+**Fecha:** 2026-09-25, Cartagena · **Decisión:** ADR-069 (registro histórico: `git show pre-limpieza-docs:docs/design-decisions.md`).
+
+> **Documentos retirados.** Los enlaces de esta guía a `plan-frontend.md`, `brief.md`, `product-requirements.md` y
+> `telegram.md` apuntaban a documentos que la limpieza del 2026-09-29 sacó de `docs/`. Siguen en el historial con
+> `git show pre-limpieza-docs:docs/<ruta>`. El plan vigente del frontend es [`docs/frontend/`](../frontend/README.md).
 
 > **Parte visual reemplazada (`ADR-070`, 2026-09-25):** color, tipografía, componentes y composición (§2–§4) los define
 > ahora la [identidad formal](identidad.md). De esta guía siguen vigentes los datos, las rutas, los estados y los
@@ -8,10 +12,10 @@
 >
 > **Plan del dueño (2026-09-25, `ADR-071`–`ADR-073`):** navegación y tipografía en `identidad.md` §3–§4; la bitácora
 > ya se filtra por barrio, tipo y fecha contra la API, y cada sector trae `verificadoEn` para la advertencia de
-> «Sin verificación reciente» a las 24 horas ([plan §5.2](../ingenieria/plan-frontend.md)). Donde esta guía diga lo
+> «Sin verificación reciente» a las 24 horas (plan §5.2, retirado: `docs/ingenieria/plan-frontend.md` en `pre-limpieza-docs`). Donde esta guía diga lo
 > contrario, ganan esos documentos.
 
-**Aprobado:** el dueño encargó implementar este plan documental para todo el frontend. **Pendiente de aplicación:** las composiciones descritas aquí. **Aplicado:** el acento claro de §2.1 (paso 1 de §7) y la adaptación de los prototipos (paso 2, a la espera de la revisión visual del dueño), ambos el 2026-09-25. **Implementado antes de esta guía:** F0 y los avances de F1 registrados en el [plan de construcción](../ingenieria/plan-frontend.md). Esta entrega no aprueba el prototipo existente, no cierra F1 y no inicia F2.
+**Aprobado:** el dueño encargó implementar este plan documental para todo el frontend. **Pendiente de aplicación:** las composiciones descritas aquí. **Aplicado:** el acento claro de §2.1 (paso 1 de §7) y la adaptación de los prototipos (paso 2, a la espera de la revisión visual del dueño), ambos el 2026-09-25. **Implementado antes de esta guía:** F0 y los avances de F1 registrados en el plan de construcción de entonces (retirado; hoy rige [`docs/frontend/`](../frontend/README.md)). Esta entrega no aprueba el prototipo existente, no cierra F1 y no inicia F2.
 
 ## Índice
 
@@ -33,7 +37,7 @@
 | `main` remoto `9862a1c`; F1 `d366ad9` | F0 fusionado; Sprint 7 y ADR-068 disponibles en la rama de F1, todavía no fusionada a `main` al revisar |
 | Copia local inicial `a4da6e5` | Estaba 26 commits detrás de `main`; sus menciones a un frontend inexistente estaban desactualizadas |
 | Captura del dueño y [prototipo privado F1](https://claude.ai/artifact/G88U8LYbsqwWsZN47B9JAA) | La captura es el muestrario F0. Se inspeccionaron mapa, reporte, cumplimiento y bitácora del prototipo; sus datos y controles de simulación no son funcionalidad de producción |
-| [DESIGN.md](../../DESIGN.md), [brief](../brief.md), [requisitos](../product-requirements.md) | Identidad, destinatarios, lenguaje y mínimos del producto |
+| [DESIGN.md](../../DESIGN.md), brief y requisitos (retirados; `docs/brief.md` y `docs/product-requirements.md` en `pre-limpieza-docs`) | Identidad, destinatarios, lenguaje y mínimos del producto |
 | [Contrato](../../backend/openapi.yaml) y [guías de API](../api/README.md) | Datos y acciones realmente disponibles. Esta revisión fue documental; no constituye una prueba del backend en ejecución |
 
 **Dirección:** interfaz ciudadana sobria, con el turquesa como señal de acción y el estado del agua como información dominante. El mapa permite ubicar; la ficha responde. La persona debe identificar barrio, estado y horario disponible sin desplazarse una vez elegido el sector.
@@ -199,7 +203,7 @@ El panel tiene navegación propia con secciones permitidas y enlace «Volver al 
 
 ## 5. Matriz de pantallas y datos
 
-Las rutas de interfaz siguen el [plan §7](../ingenieria/plan-frontend.md#7-pantallas-y-rutas-del-frontend). Los enlaces de esta matriz apuntan a contratos de comportamiento, no los duplican. Todos los registros de ejemplo se rotulan «Datos de ejemplo» solo en prototipos.
+Las rutas de interfaz son las de esta matriz más las que añade cada fase de [`docs/frontend/`](../frontend/README.md) antes de construirlas. Los enlaces de esta matriz apuntan a contratos de comportamiento, no los duplican. Todos los registros de ejemplo se rotulan «Datos de ejemplo» solo en prototipos.
 
 ### 5.1 Consulta y participación ciudadana
 
@@ -216,7 +220,7 @@ Las rutas de interfaz siguen el [plan §7](../ingenieria/plan-frontend.md#7-pant
 
 **Horarios en ficha:** mostrar cada corte abierto del historial con su propio inicio, fin prometido y origen. No resumir varios cortes en una única hora de vuelta. Si solo hay un corte pertinente y con horario, «Inicio anunciado… / Fin prometido…» mantiene explícita la atribución; con estado proveniente de consenso no inferir que ese corte lo causó. Una promesa vencida sigue diciendo «Fin prometido… (hora ya pasada)»; no declarar restablecimiento sin el dato correspondiente. El estado mostrado siempre es el devuelto por sectores.
 
-Telegram solo aparece como enlace si existe un nombre de bot configurado y utilizable, conforme a la [guía de Telegram](../ingenieria/telegram.md). No mostrar WhatsApp ni botones activos para un canal sin configurar.
+Telegram solo aparece como enlace si existe un nombre de bot configurado y utilizable, conforme a [`datos-de-referencia.md`](../api/datos-de-referencia.md) (el bot está apagado mientras no haya `TELEGRAM_BOT_TOKEN`, y el contrato no expone su nombre: hoy no se muestra). No mostrar WhatsApp ni botones activos para un canal sin configurar.
 
 ### 5.2 Historia pública
 

@@ -1,6 +1,6 @@
 # Identidad visual del frontend — rumbo formal
 
-**Fecha:** 2026-09-25, Cartagena · **Decisiones:** [ADR-070](../design-decisions.md) y ADR-071 · **Prototipo de referencia:**
+**Fecha:** 2026-09-25, Cartagena · **Decisiones:** ADR-070 y ADR-071 (registro histórico: `git show pre-limpieza-docs:docs/design-decisions.md`) · **Prototipo de referencia:**
 [rumbo formal](https://claude.ai/artifact/KzhpRbnun3cVuEe6SSKQ6D) (Artifact privado del dueño).
 
 **Estado:** adoptada por el dueño el 2026-09-25 con su plan «identidad propia y respuestas claras» (`ADR-071`): la
@@ -173,7 +173,7 @@ excepción; el punto «en vivo» queda fijo. Ninguna animación bloquea la inter
 En un solo cambio: `DESIGN.md` §3–§4 pasan a esta paleta y a esta tipografía, `tokens.css` y `tokens.test.ts` adoptan
 los tokens de §2, `contraste.test.ts` fija las cifras de §2, Newsreader se versiona en `frontend/public/fuentes/` con
 su licencia y el muestrario se rehace con esta identidad. Luego se rehacen los prototipos de F1
-(`plan-frontend.md` §10) y F2 arranca sobre esta base después de revisarlos en un teléfono real.
+(`plan-frontend.md` §10, hoy retirado; el plan vigente es [`docs/frontend/`](../frontend/README.md)) y F2 arranca sobre esta base después de revisarlos en un teléfono real.
 
 ## 9. Verificación de cada pantalla
 

@@ -11,7 +11,8 @@ Rama: `feature/fe0-contrato-al-dia`. Esfuerzo: 2 sesiones. Sin pantallas nuevas.
 | Causa | Arreglo |
 |---|---|
 | `api:check` falla: `src/api/generado/esquema.ts` es del 2026-09-29 | `npm run api:sync`, y luego arreglar todo lo que deje de compilar (§2) |
-| El job «backend real» falla al sembrar: `POST /api/dispositivos` → `429` tras unos 4 barrios (límite de 10 por hora por IP) | `scripts/preparar-env-ci.mjs` escribe `RATE_LIMIT_FACTOR=100` en el `.env` del CI. `docker-compose.yml` ya lo pasa al backend (`RATE_LIMIT_FACTOR: ${RATE_LIMIT_FACTOR:-1}`). **Se avisa a Sebastian**: es un script compartido y su `verificar-flujos.mjs` recomienda el mismo valor |
+| ~~El job «backend real» falla al sembrar: `POST /api/dispositivos` → `429`~~ | **Ya resuelto por el backend** (`027bca0`, 2026-10-14): el paso que levanta el backend en `.github/workflows/frontend-ci.yml` pasa `RATE_LIMIT_FACTOR=100`. No hay que tocar `scripts/preparar-env-ci.mjs` |
+| El job «backend real» falla en 4 pruebas de `e2e/real/ciudadano.spec.ts` (`debeReportarEnDosToquesYRecibirUn201`, la del `429`, la del SSE y la de confirmar): esperan `201` y reciben **`401`** (log del CI del 2026-10-15) | Es el `401 dispositivo-invalido` de reportar sin `X-Dispositivo`: se arregla con la identidad del dispositivo (§2). La prueba del cuarto reporte cambia de nombre: ya no hay «huella», el cupo es por dispositivo |
 
 ## 2. Cambios que rompen, uno por uno
 
@@ -54,7 +55,7 @@ Las evidencias son de `main` del 2026-10-06.
 ## Terminado cuando
 
 - Pasa la [puerta](README.md#la-puerta-lo-que-se-comprueba-al-cerrar-cada-fase), incluidos los **dos jobs** del Frontend CI.
-- `grep -rn "finReal\|huella\|image/webp" frontend/src` no devuelve nada, salvo comentarios que expliquen el cambio.
+- `grep -rn "finReal\|huella\|image/webp" frontend/src frontend/e2e` no devuelve nada, salvo comentarios que expliquen el cambio. Hoy `e2e/mapa.spec.ts` y `e2e/real/ciudadano.spec.ts` todavía esperan una `huella`.
 - Un reporte desde la interfaz, con el backend de `docker compose up`, llega a Mongo con su dispositivo y su foto.
 
 ## Prompt para Claude Code
@@ -63,7 +64,7 @@ Las evidencias son de `main` del 2026-10-06.
 Usa la skill disenar-frontend. Lee docs/frontend/README.md y docs/frontend/FE0-contrato-al-dia.md, y las secciones
 F0–F3 y F6 de docs/api/cambios-para-frontend.md y docs/api/reportes.md.
 En una rama feature/fe0-contrato-al-dia desde develop: corre npm run api:sync, adopta cada cambio de la guía en el orden
-de sus tablas (un commit por causa) y arregla el CI (RATE_LIMIT_FACTOR=100 en scripts/preparar-env-ci.mjs).
+de sus tablas (un commit por causa). El RATE_LIMIT_FACTOR del CI ya está resuelto: no toques scripts/preparar-env-ci.mjs.
 No escribas tipos de API a mano. Corre la puerta completa del README (lint, typecheck, api:check, test, build,
 e2e simulado y real con docker compose) y muéstrame la salida. Abre el PR cuando todo esté en verde, no lo fusiones.
 Si usas subagentes, usa model sonnet.

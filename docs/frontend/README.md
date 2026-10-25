@@ -33,6 +33,13 @@ No hay panel, cuentas ni vecino. El ingreso al panel con segundo factor ya está
 [`cambios-para-frontend.md`](../api/cambios-para-frontend.md)). No rompen nada ni cambian FE0–FE4 y FE6; solo suman un bloque a FE5 y una exclusión a FE7. El frontend no ha recibido commits desde el 2026-10-06,
 `esquema.ts` sigue siendo del 2026-09-29 (58 rutas) y el Frontend CI sigue rojo por las dos causas de la tabla.
 
+**Actualización del 2026-10-25 (revisión de Yordy antes de retomar).** El backend está cerrado y se comprobó ejecutándolo:
+- `./mvnw verify` sobre `main`: 2142 pruebas, 0 fallos. `ContratoOpenApiTest` confirma que `backend/openapi.yaml` (81 rutas, 87 operaciones) es lo que expone el código.
+- Con `docker compose up`, `scripts/verificar-flujos.mjs` pasa los 33 flujos y recorre 84 de las 87 operaciones. Las otras 3 son las de PostgreSQL: las dos públicas se probaron a mano (`200`) y la del panel responde `401` sin sesión y la cubren sus pruebas (`AnaliticaControllerTest`).
+- El Frontend CI sigue rojo y **las dos causas son del frontend**. La segunda de la tabla de arriba **ya no aplica**: Sebastian subió `RATE_LIMIT_FACTOR=100` en el job «backend real» (`027bca0`, en `.github/workflows/frontend-ci.yml`) y la siembra ya pasa. Lo que falla hoy es `api:check` y 4 pruebas de `e2e/real/ciudadano.spec.ts` que reciben `401` por reportar sin `X-Dispositivo`. Las dos cosas se arreglan en FE0.
+- `feat/f5-ingreso-panel` va ahora **117 commits** detrás de `main`. Sus dos commits (`95962ad`, `5dda089`) siguen siendo la base de FE2.
+- El frontend no ha recibido commits desde el 2026-09-29 (`f81f6f6`). Ninguna fase FE está empezada.
+
 ## Qué no cambia mientras se trabaja
 
 - **El contrato.** `backend/openapi.yaml` es la fuente de verdad. Si una prueba contra el backend real falla sin que el contrato haya cambiado, es un defecto del backend: se avisa a Sebastian y no se adapta el frontend.
@@ -68,7 +75,9 @@ Desde `frontend/`:
 
 1. `npm run lint`, `npm run typecheck`, `npm run api:check`, `npm test` y `npm run build`, todos en verde.
 2. `npm run test:e2e`: e2e contra la API simulada. Cada pantalla nueva trae su spec.
-3. `npm run test:e2e:real` contra `docker compose up` con el backend de `main` y `RATE_LIMIT_FACTOR=100`. Cada flujo nuevo trae su spec en `e2e/real/`.
+3. `npm run test:e2e:real` contra `docker compose up` con el backend de `main`, `INGESTA_MODO=local` y `RATE_LIMIT_FACTOR=100`. Cada flujo nuevo trae su spec en `e2e/real/`.
+   - **Desde FE2, también `RATE_LIMIT_FACTOR_CUENTAS=10`.** `RATE_LIMIT_FACTOR` no afloja, a propósito, los topes de ingreso, segundo factor, cuentas, suscripciones y cambio de clave: `/api/cuentas/**` admite 10 peticiones cada 10 minutos por IP y `/api/veedor/sesion` 10 cada 5 minutos ([`errores-y-limites.md`](../api/errores-y-limites.md)). Con Docker Desktop todo el equipo comparte una IP, así que una pasada de e2e de cuentas los agota. El 2026-10-25, `verificar-flujos.mjs` falló 3 pasos por `429` con el valor por defecto y pasó entero con 10. En el CI hay que sumar la misma variable al job «backend real» de `frontend-ci.yml` (archivo compartido: se avisa a Sebastian en el PR).
+   - Si el entorno no tiene Docker (una sesión en la nube, por ejemplo), este paso lo corre el job «backend real» del CI del PR. Se dice así en el PR; nunca se da por pasado sin haberlo visto en verde.
 4. **Capturas** en 1440×900, 1024×768, 768×1024 y 390×844, en claro y en oscuro, más una con movimiento reducido:
    - se guardan en `frontend/test-results/capturas/<fase>/`, ignorado por git; no se commitean binarios
    - se miran
@@ -80,7 +89,10 @@ Desde `frontend/`:
 
 - **Una rama por fase** desde `develop`: `feature/fe<n>-<tema>`, por ejemplo `feature/fe0-contrato-al-dia`. Se fusiona a `develop` por PR con la puerta en verde (Gitflow, ver `CLAUDE.md`).
 - **Una fase por sesión** de Claude Code, `/clear` entre fases. Cada guía termina con un prompt listo para pegar. Si se usan subagentes, con Sonnet.
-- **Al cerrar una fase** se marca ✅ en la tabla de abajo, con la fecha y el PR.
+- **Al cerrar una fase** se marca ✅ en la tabla de abajo, con la fecha y el PR. Mientras el PR espera, la fase se marca «PR abierto» con su enlace, para que la sesión siguiente sepa dónde quedó.
+- **Sesiones en la nube:** el prompt de arranque está en [`prompt-sesion-nube.md`](prompt-sesion-nube.md). Sirve para cualquier fase: lee esta tabla y toma la siguiente.
+- **Autoría:** todo commit lleva la identidad de Yordy (`git config user.name "Yordy Pardo"` y su correo de GitHub), sin `Co-Authored-By`. Una sesión en la nube firma por defecto como `Claude <noreply@anthropic.com>`, que es justo lo que `autoria.yml` rechaza (BUG-104). Antes de abrir el PR: `scripts/verificar-autoria.sh origin/main..HEAD`.
+- **Ramas:** ninguna sesión borra ni archiva ramas o etiquetas. Lo hace Yordy a mano, también con `feat/f5-ingreso-panel` al cerrar FE2.
 
 ## Fases
 
@@ -119,10 +131,12 @@ FE0 va primero porque sin él nada compila contra el esquema nuevo y reportar no
 | Riesgo | Mitigación |
 |---|---|
 | **FE0 es grande**: regenerar el esquema rompe la compilación en muchos sitios a la vez (`finReal`, `huella`, tipos de bitácora) | Se hace en una sola rama con commits por causa. La guía de FE0 lista cada punto con su archivo |
-| **La rama `feat/f5-ingreso-panel` está 81 commits atrás** y usa el esquema viejo | Se rebasa **después** de FE0. Solo `router.tsx` cambió en los dos lados. El mayor trabajo es adaptar sus tipos al esquema nuevo |
+| **La rama `feat/f5-ingreso-panel` está 117 commits atrás** (2026-10-25) y usa el esquema viejo | Se trae con `cherry-pick` **después** de FE0. Solo `router.tsx` cambió en los dos lados. El mayor trabajo es adaptar sus tipos al esquema nuevo |
+| **Los topes de cuentas agotan el e2e real** (10 por 10 min en `/api/cuentas/**`, 10 por 5 min en `/api/veedor/sesion`) | `RATE_LIMIT_FACTOR_CUENTAS=10` en local y en el job «backend real» desde FE2 (puerta, paso 3). Nunca se sube en la instancia real |
+| **Una sesión en la nube** puede no tener Docker, ni el `cartagena.pmtiles` (va por Git LFS), ni los MCP locales | Corre la puerta 1, 2 y 4 en su entorno y deja la 3 al CI del PR. `git lfs pull` antes de las capturas: sin él, `frontend/public/mapa/cartagena.pmtiles` es solo el puntero de LFS, la capa base del mapa no carga y las capturas del mapa no sirven. Capturas con Playwright por `npx`, no con un MCP |
 | **El backend cambia mientras se construye el panel** | Los cambios de contrato se avisan en [`cambios-para-frontend.md`](../api/cambios-para-frontend.md). Las pruebas `e2e/real` son además una red de seguridad para Sebastian: si fallan sin cambio de contrato, se le avisa |
 | **El e2e real depende del límite de dispositivos** (10 por hora por IP) | `RATE_LIMIT_FACTOR=100` en el CI y en local (FE0). El cliente pide el token una vez y lo reutiliza |
-| **Los enlaces de los correos de cuenta abren páginas HTML del backend, no la SPA** | Funcionan tal cual. Que el correo apunte a la SPA exige cambiar `MailCuentaAdapter` (backend), que queda **después de R9** y coordinado con Sebastian. FE6 lo deja opcional |
+| **Los enlaces de los correos de cuenta abren páginas HTML del backend, no la SPA** | Funcionan tal cual. Que el correo apunte a la SPA exige cambiar `MailCuentaAdapter` (backend), que queda **después de FE7** (decisión D-C de [`guia-para-yordy.md`](guia-para-yordy.md#8-decisiones-abiertas)) y coordinado con Sebastian. FE6 lo deja opcional |
 | **El panel con 30 000 cuentas sintéticas** | La lista de cuentas filtra `sintetica` y pagina por cabeceras. Nunca se cuentan como personas (frase fija de `cambios-para-frontend.md` F4) |
 | **La guía §5 no define pantallas** de vecino, disputas, vencidos, métricas ni «¿ya volvió el agua?» | Cada fase añade sus filas a §5 antes de construir (regla 3) |
-| **La skill `disenar-frontend` cita archivos retirados** (`docs/ingenieria/plan-frontend.md`, `docs/gestion/sprint-7.md`, skills `registrar-*`) | Su §5 ahora apunta a este README |
+| **Documentos que citaban archivos retirados** (la skill `disenar-frontend`, `guia-frontend.md`, `identidad.md`, `docs/api/README.md`, `escalabilidad-para-el-cliente.md`) | Corregido el 2026-10-25: apuntan a este plan, a `docs/01`, `docs/07` o al historial (`git show pre-limpieza-docs:<ruta>`) |
