@@ -70,5 +70,5 @@ Arquitectura Limpia (puertos y adaptadores), dependencias siempre hacia adentro:
 Vive en `docs/`, una guía por tema (índice en `docs/README.md`). `docs/api/` y `docs/diseno/` son referencia para el frontend.
 La documentación anterior sigue en el historial: `git show pre-limpieza-docs:<ruta>`. Un dato vive en un solo archivo.
 Números de ADR: 087–097 son los de `docs/07` §4; el registro histórico reutiliza 087–089 con otro sentido (citarlos como «histórico ADR-0xx»),
-098–099 los consumió la reducción cancelada y el 100 es PostgreSQL (copia analítica), el 101 la lectura del cumplimiento en la ficha y el siguiente libre es el 102.
+098–099 los consumió la reducción cancelada y el 100 es PostgreSQL (copia analítica), el 101 y el 102 la lectura de la ficha del barrio, y el siguiente libre es el 103.
 Verificar antes de afirmar: si se dice que un endpoint funciona, se prueba.

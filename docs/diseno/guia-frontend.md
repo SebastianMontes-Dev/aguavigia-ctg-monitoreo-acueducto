@@ -210,7 +210,7 @@ Las rutas de interfaz son las de esta matriz más las que añade cada fase de [`
 | Ruta / vista | Jerarquía, texto y datos permitidos | Estados y aceptación específica |
 |---|---|---|
 | `/` mapa | §4.1; [sectores, geometría y SSE](../api/sectores-y-tiempo-real.md). Buscador y lista comparten selección | Primera visita, carga separada de mapa y estado, error parcial, sin WebGL, sin red. La ficha no espera tiles; ninguna selección inicial inventada |
-| `/sectores/:id` ficha | Nombre, estado y registro del sector; histórico de cortes y cumplimiento bajo demanda. «Hora de restablecimiento no informada» cuando falta | `null`, sector inexistente, historial vacío, varios cortes, futuro y vencido. `actualizadoEn` no se convierte en inicio del corte |
+| `/sectores/:id` ficha | Nombre, estado y **una línea de frescura** («Actualizado hace X · En vivo», `ADR-102`); histórico de cortes y cumplimiento bajo demanda; botón «Ver el boletín de Acuacar» al último aviso del barrio, con su fecha. «Hora de restablecimiento no informada» cuando falta | `null`, sector inexistente, historial vacío, varios cortes, futuro y vencido. `actualizadoEn` no se convierte en inicio del corte |
 | Reporte, hoja sobre mapa | «¿Qué pasa con el agua en tu casa?» y «Reportas en [barrio]». Botones «No tengo agua», «Llega poca agua», «Ya volvió el agua»; [reportes](../api/reportes.md) | Con sector conocido: abrir y elegir tipo = dos toques; el segundo envía. Cambiar barrio antes de enviar es una ruta alternativa, sin promesa de dos toques. Sin login ni campos extra |
 | Reporte recibido / foto | «Reporte recibido. Tu reporte cuenta junto con los de tus vecinos». «Añadir foto» después del 201 | Foto fallida no deshace el reporte; mantiene su id. No cambia el estado del mapa de forma optimista. Envío incierto no se presenta como recibido |
 | `/confirmar/:id` | «Confirmar reporte» y botón «Confirmar este reporte»; id recibido en el enlace, [contrato de confirmación](../api/reportes.md) | No ejecutar al abrir. Sin GET público de contenido, no inventar barrio, tipo ni foto. `404`: «Este reporte no está disponible». No crear un listado público de reportes |
@@ -275,8 +275,8 @@ Cada operación respeta [rutas y permisos del panel](../api/panel-veedor.md), co
 
 | Dato | Presentación | Lo que no demuestra |
 |---|---|---|
-| `actualizadoEn` del sector | «Estado registrado hace X»; fecha exacta accesible | No es comienzo físico de la interrupción ni último latido del colector |
-| `generadoEn` del listado | «Listado generado a las…»; visible en detalle y lectura guardada | No actualiza por sí solo el estado de cada barrio |
+| `actualizadoEn` del sector | «Actualizado hace X»; fecha exacta accesible en el `title`. En la ficha es **la única línea de frescura** (`ADR-102`); `verificadoEn` no se repite ahí: pasadas 24 horas sin verificar lo dice la advertencia del encabezado | No es comienzo físico de la interrupción ni último latido del colector |
+| `generadoEn` del listado | «Listado generado a las…» en «Cartagena ahora»; en la ficha de un barrio **solo** cuando la lectura es guardada («Sin conexión. Mostramos el último listado guardado, generado…») | No actualiza por sí solo el estado de cada barrio |
 | Último GET exitoso del cliente | «Última consulta a las…» | No verifica nuevamente la situación del agua |
 | Conectividad observada | «Actualizando», «No pudimos actualizar» o «Sin conexión» cuando se detecta | Un SSE reconectándose normalmente no demuestra caída; tampoco la edad de un estado |
 

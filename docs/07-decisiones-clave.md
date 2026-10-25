@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5) y el **ADR-101** (§6) son los últimos usados.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6) son los últimos usados.
 
 ## 1. Decisiones que se conservan
 
@@ -539,4 +539,16 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Una frase que se entiende sin contexto y que usa solo campos del contrato (`inicio`, `finPrometido`, `cierres[]`). **Pierde.** El vistazo de la barra a varios cortes a la vez; se reconsidera si la ficha
   pasa a mostrar muchos cortes juntos.
 - **Se revierte** restaurando `CortesCerrados` y `compararCorte` del commit anterior.
+
+### ADR-102 — La ficha de un barrio tiene una sola línea de frescura y un botón a la fuente del último aviso
+
+- **Contexto.** La misma prueba de los cinco segundos (ADR-101) encontró redundancia en la ficha: «Estado registrado hace menos de un minuto · verificado hace menos de un minuto» repetía una fecha y, debajo,
+  «En vivo · Listado generado a las 8:34» daba la hora del listado de toda la ciudad, que en la ficha de un barrio no le sirve a nadie y que la portada ya dice.
+- **Decisión.** La ficha dice «Actualizado hace X» (`actualizadoEn`; la fecha exacta, en el `title`) y, si el canal está conectado, el punto «En vivo» en la misma línea. «Verificado hace…» sale solo por la advertencia de
+  24 horas que ya existía; «Listado generado…» sale solo cuando la lectura es guardada o falló. Se añade un botón «Ver el boletín de Acuacar» (o «la nota de prensa») al último aviso detectado para ese barrio
+  (`GET /api/bitacora?sectorId&tipo=CORTE_DETECTADO_POR_INGESTA`), con su fecha, que abre en otra pestaña y solo acepta `http(s)`.
+- **Límite que se dice.** El contrato no enlaza la fuente de un corte concreto: `CorteRespuesta` no trae URL y esos eventos llegan con `corteId` nulo. El botón dice «Último aviso sobre este barrio» y no afirma que fuera el
+  que anunció un corte en particular (ética de datos 4). Para enlazarlo por corte, el backend tendría que ofrecer `urlOriginal` en `CorteRespuesta`; queda anotado para Sebastian en el PR #121.
+- **Gana.** Una línea en vez de tres y una fuente que la persona puede comprobar. **Pierde.** La hora del listado ya no está a la vista cuando todo funciona; sigue en «Cartagena ahora» y aparece si algo falla.
+- **Se revierte** restaurando `Registro` en `FichaSector` y quitando `useUltimoAviso`.
 
