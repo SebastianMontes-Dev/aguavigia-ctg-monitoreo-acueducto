@@ -110,6 +110,13 @@ describe('middleware de sesión', () => {
     expect(sesion.token()).toBe('a-medias')
   })
 
+  it('noDebeCerrarLaSesionCuandoElDispositivoDelReporteNoEsValido', async () => {
+    sesion.guardar('vigente')
+    const { cliente } = clienteQueResponde(() => respuestaProblema(problema('dispositivo-invalido', 401), 401))
+    await cliente.POST('/api/reportes', { body: { tipo: 'SIN_AGUA', sectorId: 'manga' } })
+    expect(sesion.token()).toBe('vigente')
+  })
+
   it('noDebeCerrarLaSesionAnteUn403', async () => {
     sesion.guardar('vigente')
     const { cliente } = clienteQueResponde(() => respuestaProblema(problema('acceso-denegado', 403), 403))

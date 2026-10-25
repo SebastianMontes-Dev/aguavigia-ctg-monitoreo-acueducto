@@ -19,7 +19,10 @@ export type TipoProblema =
   | 'formato-no-aceptable'
   | 'conflicto-de-estado'
   | 'tipo-de-contenido-no-soportado'
+  | 'formato-no-permitido'
   | 'archivo-demasiado-grande'
+  | 'dispositivo-invalido'
+  | 'subida-no-autorizada'
   | 'cuenta-bloqueada'
   | 'limite-reportes-excedido'
   | 'limite-de-peticiones-excedido'
@@ -42,6 +45,8 @@ const MENSAJE_GENERICO = 'Algo falló de nuestro lado. Inténtalo otra vez en un
 const TIPOS_QUE_NO_CIERRAN_SESION: ReadonlySet<string> = new Set([
   'credencial-invalida',
   'segundo-factor-requerido',
+  // Reportar sin dispositivo válido no dice nada de la sesión: quien también tiene sesión no debe perderla por esto.
+  'dispositivo-invalido',
 ])
 
 function esProblema(cuerpo: unknown): cuerpo is Problema {
@@ -106,7 +111,12 @@ export const middlewareSesion: Middleware = {
 
 // Sin `Accept: application/json` global: GET /api/sectores/geometria responde 404 si se lo mandan.
 export function crearCliente(opciones: { baseUrl?: string; fetch?: typeof fetch } = {}) {
-  const cliente = createClient<paths>({ baseUrl: opciones.baseUrl ?? '', fetch: opciones.fetch })
+  // `openapi-fetch` fija el `fetch` global al crear el cliente; así lo toma de cada petición y las pruebas pueden sustituirlo.
+  // El origen explícito es el mismo del navegador (SPA y API comparten origen) y deja construir la `Request` fuera de él.
+  const cliente = createClient<paths>({
+    baseUrl: opciones.baseUrl ?? (typeof location === 'undefined' ? '' : location.origin),
+    fetch: opciones.fetch ?? ((...argumentos) => globalThis.fetch(...argumentos)),
+  })
   cliente.use(middlewareSesion)
   return cliente
 }

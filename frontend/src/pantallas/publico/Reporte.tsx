@@ -33,16 +33,29 @@ function mensajeEnvio(resultado: Exclude<ResultadoEnvio, { tipo: 'recibido' }>):
   }
 }
 
+/** `fotoEstado` de docs/api/reportes.md: lo que le pasa a la foto después de subirla se dice tal cual. */
+function mensajeFotoRecibida(estado: Extract<ResultadoFoto, { tipo: 'recibida' }>['estado']): string {
+  switch (estado) {
+    case 'EN_REVISION': return 'Foto recibida. Un moderador la revisa antes de que se publique.'
+    case 'PUBLICA': return 'Foto añadida y publicada con tu reporte.'
+    case 'DESCARTADA': return 'La foto no se publicará.'
+    default: return 'Foto añadida a tu reporte.'
+  }
+}
+
 function mensajeFoto(resultado: ResultadoFoto): string {
   switch (resultado.tipo) {
-    case 'recibida': return 'Foto añadida a tu reporte.'
+    case 'recibida': return mensajeFotoRecibida(resultado.estado)
     case 'muy-grande': return 'La foto pesa más de 10 MB. Elige una más liviana.'
+    case 'formato-no-permitido': return 'Esa imagen no sirve; usa una foto JPEG o PNG.'
+    case 'sin-permiso': return 'Ya no se puede añadir una foto a este reporte. El permiso dura 10 minutos.'
+    case 'ya-tiene-foto': return 'Este reporte ya tiene una foto.'
     case 'no-valida': return resultado.mensaje
     case 'fallo': return 'No pudimos enviar la foto. Tu reporte ya quedó registrado; puedes intentarlo otra vez.'
   }
 }
 
-function Foto({ reporteId }: { reporteId: string }) {
+function Foto({ reporteId, subidaToken }: { reporteId: string; subidaToken: string }) {
   const entrada = useRef<HTMLInputElement>(null)
   const [enviando, setEnviando] = useState(false)
   const [resultado, setResultado] = useState<ResultadoFoto | null>(null)
@@ -50,7 +63,7 @@ function Foto({ reporteId }: { reporteId: string }) {
   async function elegir(archivo: File | undefined) {
     if (!archivo) return
     setEnviando(true)
-    setResultado(await enviarFoto(reporteId, archivo))
+    setResultado(await enviarFoto(reporteId, archivo, subidaToken))
     setEnviando(false)
     if (entrada.current) entrada.current.value = ''
   }
@@ -71,7 +84,7 @@ function Foto({ reporteId }: { reporteId: string }) {
       <label htmlFor={`foto-${reporteId}`} className={botones.secundario} aria-disabled={enviando}>
         {enviando ? 'Enviando foto…' : 'Añadir una foto'}
       </label>
-      <p className={estilos.ayuda}>Opcional. JPEG, PNG o WebP de hasta 10 MB; se le quita la ubicación antes de guardarla.</p>
+      <p className={estilos.ayuda}>Opcional. JPEG o PNG de hasta 10 MB; se le quita la ubicación antes de guardarla.</p>
       {resultado && <p className={estilos.error} role="alert">{mensajeFoto(resultado)}</p>}
     </div>
   )
@@ -124,13 +137,13 @@ export function Reporte({ sector }: { sector: Sector }) {
   const [resultado, setResultado] = useState<ResultadoEnvio | null>(null)
   const [enviado, setEnviado] = useState<TipoReporte>('SIN_AGUA')
   const nombre = nombreLegible(sector.nombre)
-  const coordenada = ubicacionPara(sector.id ?? '')
+  const ubicacion = ubicacionPara(sector.id ?? '')
 
   async function enviar(tipo: TipoReporte) {
     if (enviando) return
     setEnviando(tipo)
     setResultado(null)
-    const respuesta = await enviarReporte(sector.id ?? '', tipo, coordenada)
+    const respuesta = await enviarReporte(sector.id ?? '', tipo, ubicacion)
     if (respuesta.tipo === 'recibido' && respuesta.reporte.id) recordarPropio(respuesta.reporte.id)
     setEnviado(tipo)
     setResultado(respuesta)
@@ -154,14 +167,16 @@ export function Reporte({ sector }: { sector: Sector }) {
                   reporteId={resultado.reporte.id ?? ''}
                   texto={PARA_COMPARTIR[enviado](nombre)}
                 />
-                <Foto reporteId={resultado.reporte.id ?? ''} />
+                {resultado.reporte.subidaToken && (
+                  <Foto reporteId={resultado.reporte.id ?? ''} subidaToken={resultado.reporte.subidaToken} />
+                )}
                 <Button className={botones.secundario} onPress={close}>Volver a {nombre}</Button>
               </div>
             ) : (
               <>
                 <Heading slot="title" className={estilos.titulo}>¿Qué pasa con el agua en tu casa?</Heading>
                 <p className={estilos.contexto}>
-                  Reportas en <strong>{nombre}</strong>{coordenada && ', con la ubicación que compartiste'}. No hace falta cuenta.
+                  Reportas en <strong>{nombre}</strong>{ubicacion && ', con la ubicación que compartiste'}. No hace falta cuenta.
                 </p>
                 <div className={estilos.opciones} aria-busy={enviando !== null}>
                   {OPCIONES.map((opcion) => (
