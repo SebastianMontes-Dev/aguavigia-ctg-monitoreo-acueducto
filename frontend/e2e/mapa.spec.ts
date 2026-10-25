@@ -34,8 +34,8 @@ test('debeAdvertirSinVerificacionRecienteSinCambiarElEstado', async ({ page }) =
   await expect(ficha.getByText(/Sin verificación reciente/)).toBeVisible()
 })
 
-test('debeReportarEnDosToquesConLaHuellaDelDispositivo', async ({ page }) => {
-  const { reportes } = await simularApi(page)
+test('debeReportarEnDosToquesConLaIdentidadDelDispositivo', async ({ page }) => {
+  const { reportes, dispositivos, identidades } = await simularApi(page)
   await page.goto('/sectores/armenia')
 
   await page.getByRole('button', { name: 'Reportar lo que pasa en mi casa' }).click()
@@ -45,7 +45,61 @@ test('debeReportarEnDosToquesConLaHuellaDelDispositivo', async ({ page }) => {
   await expect(dialogo.getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
   await expect(dialogo.getByText(/cuenta junto con los de tus vecinos/)).toBeVisible()
   expect(reportes).toHaveLength(1)
-  expect(reportes[0]).toMatchObject({ tipo: 'SIN_AGUA', sectorId: 'armenia', huella: expect.stringMatching(/^[0-9a-f]{64}$/) })
+  expect(reportes[0]).toMatchObject({ tipo: 'SIN_AGUA', sectorId: 'armenia' })
+  expect(reportes[0]).not.toHaveProperty('huella')
+  expect(dispositivos).toEqual(['dispositivo-1'])
+  expect(identidades).toEqual(['dispositivo-1'])
+})
+
+test('debePedirElDispositivoUnaSolaVezAunqueSeReporteDosVeces', async ({ page }) => {
+  const { dispositivos, identidades } = await simularApi(page)
+  await page.goto('/sectores/armenia')
+
+  for (const opcion of ['No tengo agua', 'Llega poca agua']) {
+    await page.getByRole('button', { name: 'Reportar lo que pasa en mi casa' }).click()
+    await page.getByRole('button', { name: opcion }).click()
+    await expect(page.getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
+    await page.getByRole('button', { name: 'Volver a Armenia' }).click()
+  }
+  expect(dispositivos).toHaveLength(1)
+  expect(identidades).toEqual(['dispositivo-1', 'dispositivo-1'])
+})
+
+test('debeAdjuntarLaFotoConElTokenDeSubidaYDecirQueQuedaEnRevision', async ({ page }) => {
+  const { fotos } = await simularApi(page)
+  await page.goto('/sectores/armenia')
+  await page.getByRole('button', { name: 'Reportar lo que pasa en mi casa' }).click()
+  await page.getByRole('button', { name: 'No tengo agua' }).click()
+  await expect(page.getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
+
+  const dialogo = page.getByRole('dialog')
+  await expect(dialogo.getByText(/JPEG o PNG de hasta 10 MB/)).toBeVisible()
+  await expect(dialogo.getByText(/WebP/)).toHaveCount(0)
+  expect(await dialogo.locator('input[type=file]').getAttribute('accept')).toBe('image/jpeg,image/png')
+
+  await dialogo.locator('input[type=file]').setInputFiles({ name: 'goteo.png', mimeType: 'image/png', buffer: Buffer.from('png de prueba') })
+  await expect(dialogo.getByText('Foto recibida. Un moderador la revisa antes de que se publique.')).toBeVisible()
+  expect(fotos).toEqual([{ id: 'r1', subida: 'subida-r1', tipo: expect.stringContaining('multipart/form-data') }])
+})
+
+test('debeExplicarQueElServidorRechazaLaFotoPorSuFormato', async ({ page }) => {
+  await simularApi(page)
+  await page.route(/\/api\/reportes\/[^/]+\/foto$/, (route) => route.fulfill(problema(415, 'formato-no-permitido', 'WebP no se acepta')))
+  await page.goto('/sectores/armenia')
+  await page.getByRole('button', { name: 'Reportar lo que pasa en mi casa' }).click()
+  await page.getByRole('button', { name: 'No tengo agua' }).click()
+  await page.getByRole('dialog').locator('input[type=file]').setInputFiles({ name: 'goteo.png', mimeType: 'image/png', buffer: Buffer.from('x') })
+  await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Esa imagen no sirve; usa una foto JPEG o PNG')
+})
+
+test('debeDecirQueUnCorteExpiradoOAnuladoNoTieneHoraReal', async ({ page }) => {
+  await simularApi(page)
+  await page.goto('/sectores/armenia')
+  const historial = page.getByRole('region', { name: /Cortes cerrados en Armenia/ })
+  await expect(historial.getByText('Nadie confirmó el restablecimiento; no cuenta en el Índice.')).toBeVisible()
+  await expect(historial.getByText('Publicado por error: Era el mismo aviso del día anterior')).toBeVisible()
+  // Solo el RESTABLECIDO se compara con lo prometido.
+  await expect(historial.getByText(/Prometieron/)).toHaveCount(1)
 })
 
 test('debeExplicarElCupoAgotadoSinReintentarSolo', async ({ page }) => {
