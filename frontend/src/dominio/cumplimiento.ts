@@ -96,10 +96,11 @@ export function veredicto(diferenciaPorCorte: number): Veredicto {
   return 'a-tiempo'
 }
 
+// ADR-104: en palabras del vecino, que espera el agua a una hora; no en duraciones de cortes.
 const FRASE_VEREDICTO: Record<Veredicto, string> = {
-  antes: 'los cortes terminan antes de lo anunciado',
-  'a-tiempo': 'los cortes duran lo anunciado',
-  despues: 'los cortes duran más de lo anunciado',
+  antes: 'el agua vuelve antes de la hora anunciada',
+  'a-tiempo': 'el agua vuelve a la hora anunciada',
+  despues: 'el agua vuelve más tarde de la hora anunciada',
 }
 
 /** El titular de la página es la respuesta (`identidad.md` §4.1). */
@@ -108,9 +109,28 @@ export function titularVeredicto(diferenciaPorCorte: number, barrio?: string): s
   return barrio ? `En ${barrio}, ${frase}` : frase.charAt(0).toUpperCase() + frase.slice(1)
 }
 
+/** «33 min tarde», «54 min antes» o «A la hora»: cuándo volvió el agua frente a la hora anunciada (ADR-104). */
 export function diferenciaEnPalabras(segundos: number): string {
-  if (Math.round(Math.abs(segundos) / 60) === 0) return 'Lo anunciado'
-  return `${duracionCorta(segundos)} ${segundos > 0 ? 'más' : 'menos'}`
+  if (Math.round(Math.abs(segundos) / 60) === 0) return 'A la hora'
+  return `${duracionCorta(segundos)} ${segundos > 0 ? 'tarde' : 'antes'}`
+}
+
+/** La frase bajo la cifra grande: «El agua vuelve 7 minutos antes de la hora anunciada, en promedio.» */
+export function respuestaEnPalabras(segundos: number): string {
+  const minutos = Math.round(Math.abs(segundos) / 60)
+  if (minutos === 0) return 'En promedio, el agua vuelve a la hora anunciada.'
+  const cuanto = minutos < 60
+    ? `${formatearNumero(minutos)} ${minutos === 1 ? 'minuto' : 'minutos'}`
+    : duracionAcumulada(Math.abs(segundos))
+  return `El agua vuelve ${cuanto} ${segundos > 0 ? 'más tarde de' : 'antes de'} la hora anunciada, en promedio.`
+}
+
+/** Escala de la línea de tiempo: una hora a cada lado de la hora anunciada. Lo que se pase queda en el extremo. */
+export const ESCALA_LINEA_SEGUNDOS = 3600
+
+/** Posición del punto en la línea, de 0 (una hora antes) a 100 (una hora tarde); 50 es la hora anunciada. */
+export function posicionEnLinea(segundos: number, escala = ESCALA_LINEA_SEGUNDOS): number {
+  return 50 + Math.max(-1, Math.min(1, segundos / escala)) * 50
 }
 
 /** El índice es `min(100, prometido / real)`: se explica en la misma línea, nunca como puntaje suelto. */

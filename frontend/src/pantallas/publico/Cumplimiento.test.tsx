@@ -29,9 +29,11 @@ describe('Cumplimiento', () => {
   it('debeTitularConElVeredictoYPromediarPorCorte', () => {
     render(<Cumplimiento />)
     // 9000 s de más entre 10 cortes (6 + 4 en la serie): 15 minutos por corte.
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Los cortes duran más de lo anunciado')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('El agua vuelve más tarde de la hora anunciada')
     expect(screen.getByText(/10 cortes cerrados/)).toBeInTheDocument()
-    expect(screen.getByText('15 min más')).toBeInTheDocument()
+    const respuesta = screen.getByRole('region', { name: 'En promedio' })
+    expect(respuesta).toHaveTextContent('15 mintarde')
+    expect(respuesta).toHaveTextContent('El agua vuelve 15 minutos más tarde de la hora anunciada, en promedio.')
     expect(screen.getByText(/Índice 80/)).toBeInTheDocument()
     expect(screen.queryByText('marzo de 2026')).not.toBeInTheDocument()
   })
@@ -49,7 +51,7 @@ describe('Cumplimiento', () => {
     render(<Cumplimiento />)
     expect(screen.getByText(/Aún no hay cortes cerrados para medir/)).toBeInTheDocument()
     expect(screen.getByText('Hay 12 cortes vencidos sin cierre confirmado: nadie confirmó cuándo volvió el agua.')).toBeInTheDocument()
-    expect(screen.queryByRole('region', { name: 'Promedio por corte' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'En promedio' })).not.toBeInTheDocument()
   })
 
   it('debeDeclararLaSolidezJuntoAlIndiceSoloCuandoAlgoLoDebilita', () => {
@@ -59,7 +61,7 @@ describe('Cumplimiento', () => {
 
     estado.solidez = { porcentajeProvisional: 30, cortesSinCierreConfirmado: 2, cortesAnulados: 0 }
     render(<Cumplimiento />)
-    const respuesta = screen.getByRole('region', { name: 'Promedio por corte' })
+    const respuesta = screen.getByRole('region', { name: 'En promedio' })
     expect(respuesta).toHaveTextContent('El 30% de los cierres solo lo reportaron vecinos y aún puede corregirse.')
     expect(respuesta).toHaveTextContent('Quedan fuera 2 cortes vencidos sin cierre confirmado.')
     expect(respuesta).not.toHaveTextContent('anulado')

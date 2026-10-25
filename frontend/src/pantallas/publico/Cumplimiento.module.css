@@ -1,48 +1,55 @@
 @layer componentes {
-  /* identidad.md §4.1: rótulo, titular-respuesta y barra arriba; respuesta y evidencia a dos columnas. */
+  /* identidad.md §4.1 y ADR-104: rótulo y titular-respuesta con el barrio al lado; respuesta y evidencia a dos columnas, en bloques. */
   .pagina { gap: var(--espacio-6); padding-top: var(--espacio-6); }
 
-  .cabecera { display: grid; gap: var(--espacio-3); }
-  .rotulo { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
-  .titular { max-width: 22ch; font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.08; text-wrap: balance; }
-  .barra { display: flex; flex-wrap: wrap; align-items: end; gap: var(--espacio-4); max-width: 440px; }
-  .barra > :first-child { flex: 1; }
+  .cabecera { display: grid; gap: var(--espacio-4); }
+  .encabezado { display: grid; gap: var(--espacio-2); }
+  .titular { max-width: 24ch; font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.08; text-wrap: balance; }
+  .barra { display: grid; gap: var(--espacio-2); max-width: 360px; }
 
-  .columnas { display: grid; gap: var(--espacio-6); align-items: start; }
+  .columnas { display: grid; gap: var(--espacio-5); align-items: start; }
+  .columna { display: grid; gap: var(--espacio-4); align-content: start; min-width: 0; }
 
-  .respuesta { display: grid; gap: var(--espacio-4); align-content: start; }
-  .cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--tinta); }
-  .cifras > div { display: grid; gap: var(--espacio-1); align-content: start; padding: var(--espacio-3) var(--espacio-3) var(--espacio-3) 0; border-right: 1px solid var(--linea); }
-  .cifras > div + div { padding-left: var(--espacio-3); }
-  .cifras > div:last-child { border-right: 0; }
-  .cifras dt { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); }
-  .cifras dd { margin: 0; font-size: clamp(1.125rem, 1.7vw, 1.5rem); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
-  @media (min-width: 1100px) { .cifras dd { white-space: nowrap; } }
-  .nota { max-width: var(--medida-lectura); color: var(--tinta-2); }
-  .nota strong { color: var(--tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .respuesta { gap: var(--espacio-5); }
+  .cifraGrande { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--espacio-3); margin-top: var(--espacio-2); }
+  .cifraGrande :global(.cifra) { font-size: clamp(2.5rem, 4.4vw, 3.5rem); font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+  .sentido { font-size: 1.5rem; font-weight: 600; }
+  .sinCorte { white-space: nowrap; }
+  .frase { max-width: 34ch; margin-top: var(--espacio-2); font-size: var(--texto-m); }
+  .pie { padding-top: var(--espacio-4); border-top: 1px solid color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); font-size: var(--texto-s); color: var(--tinta-2); }
+  .pie + .pie { padding-top: 0; border-top: 0; }
+  .pie strong { color: var(--tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  .comoSeMide summary, .datos summary { min-height: var(--objetivo-tactil); display: flex; align-items: center; cursor: pointer; font-size: var(--texto-s); font-weight: 600; }
-  .comoSeMide p { max-width: var(--medida-lectura); padding-bottom: var(--espacio-3); font-size: var(--texto-s); color: var(--tinta-2); }
+  .linea { display: grid; gap: var(--espacio-1); }
+  .anunciada { text-align: center; font-size: var(--texto-xs); font-weight: 600; }
+  .extremos { display: flex; justify-content: space-between; gap: var(--espacio-2); font-size: var(--texto-xs); color: var(--tinta-2); }
+  .leyendaPunto { display: inline-flex; align-items: center; gap: 6px; }
+  .muestraPunto { width: 10px; height: 10px; border-radius: 50%; background: var(--cardenillo); }
 
-  .evidencia { display: grid; gap: var(--espacio-3); align-content: start; }
-  .cabeceraSerie { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--espacio-2); padding-bottom: var(--espacio-2); border-bottom: 1px solid var(--tinta); }
-  .cabeceraSerie h2 { font-size: var(--texto-l); font-weight: 600; }
-  .cabeceraSerie p { font-size: var(--texto-s); color: var(--tinta-2); }
+  /* La línea de tiempo: eje de tinta-3, marca de la hora anunciada en tinta y el punto de lo que pasó en cardenillo. */
+  .pista { --alto: 28px; --grosor: 2px; --punto: 14px; position: relative; display: block; height: var(--alto); }
+  .pista[data-grande] { --alto: 40px; --grosor: 3px; --punto: 22px; }
+  .pista::before { content: ''; position: absolute; left: 0; right: 0; top: calc(50% - var(--grosor) / 2); height: var(--grosor); border-radius: var(--grosor); background: var(--tinta-3); }
+  .centro { position: absolute; left: 50%; top: 2px; bottom: 2px; width: var(--grosor); margin-left: calc(var(--grosor) / -2); background: var(--tinta); }
+  .tramo { position: absolute; top: calc(50% - var(--grosor)); height: calc(var(--grosor) * 2); border-radius: var(--grosor); background: var(--cardenillo); }
+  .tramo[data-sentido='antes'] { transform-origin: right center; }
+  .tramo[data-sentido='tarde'] { transform-origin: left center; }
+  .punto { position: absolute; top: calc(50% - var(--punto) / 2); width: var(--punto); height: var(--punto); margin-left: calc(var(--punto) / -2); border: 2px solid var(--elevada); border-radius: 50%; background: var(--cardenillo); box-shadow: 0 0 0 1px var(--cardenillo); }
 
-  /* Barra divergente: menos a la izquierda del eje, más a la derecha; la palabra dice el sentido. */
   .meses { display: grid; padding: 0; list-style: none; }
-  .meses li { display: grid; grid-template-columns: 9.5rem minmax(0, 1fr) 8rem 5.5rem; align-items: center; gap: var(--espacio-3); min-height: 44px; border-bottom: 1px solid var(--linea-suave); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
-  .mes { color: var(--tinta); }
-  .eje { position: relative; height: 10px; }
-  .eje::before { content: ''; position: absolute; left: 50%; top: -4px; bottom: -4px; width: 1px; background: var(--tinta-3); }
-  .menos, .mas { position: absolute; top: 0; bottom: 0; background: var(--cardenillo); }
-  .menos { right: 50%; transform-origin: right center; }
-  .mas { left: 50%; transform-origin: left center; background: repeating-linear-gradient(45deg, var(--cardenillo) 0 2px, transparent 2px 4px); outline: 1px solid var(--cardenillo); outline-offset: -1px; }
-  .valor { text-align: right; font-weight: 600; }
-  .cantidad { text-align: right; color: var(--tinta-2); }
+  .mes { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 8.5rem; align-items: center; gap: var(--espacio-4); min-height: 56px; border-top: 1px solid var(--linea-suave); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
+  .guia { min-height: 24px; border-top: 0; font-size: var(--texto-xs); color: var(--tinta-2); }
+  .guiaLinea { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--espacio-2); white-space: nowrap; }
+  .guiaLinea strong { color: var(--tinta); font-weight: 600; }
+  .guiaLinea span:last-child { text-align: right; }
+  .nombreMes { color: var(--tinta); }
+  .nombreMes::first-letter { text-transform: uppercase; }
+  .valor { display: grid; text-align: right; }
+  .valor strong { font-weight: 600; }
+  .cantidad { font-size: var(--texto-xs); color: var(--tinta-2); }
 
+  .explicacion { max-width: var(--medida-lectura); padding-bottom: var(--espacio-3); font-size: var(--texto-s); color: var(--tinta-2); }
   .accion { justify-self: start; min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta); font-weight: 600; text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; cursor: pointer; }
-  .datos { border-top: 1px solid var(--linea); }
   .tablaContenedor { max-width: 100%; overflow-x: auto; }
   .tablaContenedor table { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
   .tablaContenedor caption { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
@@ -50,32 +57,28 @@
   .tablaContenedor th:first-child, .tablaContenedor td:first-child { padding-left: 0; }
   .csv { display: inline-block; margin: var(--espacio-3) 0; font-size: var(--texto-s); font-weight: 600; color: var(--tinta); text-decoration-color: var(--laton); }
 
-  .vacio { display: grid; gap: var(--espacio-2); border-top: 1px solid var(--tinta); padding: var(--espacio-5) 0; }
+  .vacio { gap: var(--espacio-2); }
   .esqueleto { display: grid; gap: var(--espacio-3); color: var(--tinta-2); }
   .esqueleto span { display: block; height: 50px; border-bottom: 1px solid var(--linea); }
 
+  /* identidad.md §5: las reglas de tiempo crecen desde su origen, la hora anunciada. */
   @media (prefers-reduced-motion: no-preference) {
-    .menos, .mas { animation: crecer 0.9s var(--suave) both; }
+    .tramo { animation: crecer 0.9s var(--suave) both; }
   }
   @keyframes crecer { from { transform: scaleX(0); } }
 
   @media (min-width: 1100px) {
-    /* Las mismas columnas que el contenido: el selector queda sobre la evidencia que filtra. */
-    .cabecera { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: var(--espacio-7); align-items: end; }
-    .rotulo { grid-column: 1 / -1; }
-    .barra { max-width: 360px; }
-    .columnas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: var(--espacio-7); }
+    .cabecera { grid-template-columns: minmax(0, 1fr) 320px; column-gap: var(--espacio-6); align-items: end; }
+    .barra { max-width: none; }
+    .columnas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: var(--espacio-5); }
   }
 
   @media (max-width: 599px) {
     .pagina { gap: var(--espacio-4); padding-top: var(--espacio-4); padding-bottom: var(--espacio-5); }
     .titular { font-size: 1.75rem; }
-    .columnas { gap: var(--espacio-5); }
-    .cifras dd { font-size: var(--texto-m); }
-    .meses li { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'mes valor' 'eje cantidad'; row-gap: var(--espacio-1); padding: var(--espacio-2) 0; }
-    .mes { grid-area: mes; }
-    .valor { grid-area: valor; }
-    .eje { grid-area: eje; height: 6px; }
-    .cantidad { grid-area: cantidad; font-size: var(--texto-xs); }
+    .barra { max-width: none; }
+    .respuesta { gap: var(--espacio-4); }
+    .mes { grid-template-columns: 3.5rem minmax(0, 1fr) 6.5rem; gap: var(--espacio-3); min-height: 48px; }
+    .guiaLinea strong { font-size: 11px; }
   }
 }
