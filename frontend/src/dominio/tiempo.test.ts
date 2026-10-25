@@ -62,6 +62,13 @@ describe('fecha con día', () => {
     expect(diaConFecha('2026-09-27T16:00:00Z', AHORA)).toBe('Mañana · dom 27 sep')
   })
 
+  it('noDebeDecirMananaDeAlgoQueYaOcurrio', () => {
+    // El reloj de quien publica va un día adelantado: un cierre «de mañana» no existe, solo la fecha.
+    expect(diaConFecha('2026-09-27T16:00:00Z', AHORA, { pasado: true })).toBe('dom 27 sep')
+    expect(diaConFecha('2026-09-26T16:00:00Z', AHORA, { pasado: true })).toBe('Hoy · sáb 26 sep')
+    expect(diaConFecha('2026-09-26T03:00:00Z', AHORA, { pasado: true })).toBe('Ayer · vie 25 sep')
+  })
+
   it('noDebePonerDiaRelativoSiLaFechaEsLejana', () => {
     expect(diaConFecha('2026-07-24T16:00:00Z', AHORA)).toBe('vie 24 jul')
   })

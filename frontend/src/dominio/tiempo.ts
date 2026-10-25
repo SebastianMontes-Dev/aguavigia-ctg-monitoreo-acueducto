@@ -85,11 +85,16 @@ export function fechaCorta(valor: string | Date, ahora: Date): string {
   return claveDia(fecha).slice(0, 4) === claveDia(ahora).slice(0, 4) ? texto : `${texto} ${claveDia(fecha).slice(0, 4)}`
 }
 
-/** «Hoy · dom 25 oct», «Ayer · sáb 24 oct» o solo «sáb 18 oct»: el día relativo, siempre acompañado de la fecha real. */
-export function diaConFecha(valor: string | Date, ahora: Date): string {
+/**
+ * «Hoy · dom 25 oct», «Ayer · sáb 24 oct» o solo «sáb 18 oct»: el día relativo, siempre acompañado de la fecha real.
+ * Con `pasado` (algo que ya ocurrió: un cierre, un aviso) nunca se dice «mañana»: si el reloj de quien publica va
+ * adelantado respecto al de la persona, la fecha real sola es lo único que no confunde.
+ */
+export function diaConFecha(valor: string | Date, ahora: Date, { pasado = false }: { pasado?: boolean } = {}): string {
   const relativo = diaRelativo(valor, ahora)
   const fecha = fechaCorta(valor, ahora)
   if (relativo !== 'hoy' && relativo !== 'ayer' && relativo !== 'mañana') return fecha
+  if (pasado && relativo === 'mañana') return fecha
   return `${relativo.charAt(0).toUpperCase()}${relativo.slice(1)} · ${fecha}`
 }
 

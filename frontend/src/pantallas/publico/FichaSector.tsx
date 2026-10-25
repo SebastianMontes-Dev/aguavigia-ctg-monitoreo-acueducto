@@ -52,7 +52,7 @@ function FuenteDelAviso({ sector, ahora }: { sector: Sector; ahora: Date }) {
       <p className={estilos.fuenteTexto}>
         <span className={estilos.rotulo}>Último aviso {quien}</span>
         {aviso.timestamp && (
-          <time dateTime={aviso.timestamp}>{diaConFecha(aviso.timestamp, ahora)}, {formatearHora(aviso.timestamp)}</time>
+          <time dateTime={aviso.timestamp}>{diaConFecha(aviso.timestamp, ahora, { pasado: true })}, {formatearHora(aviso.timestamp)}</time>
         )}
       </p>
       <Link

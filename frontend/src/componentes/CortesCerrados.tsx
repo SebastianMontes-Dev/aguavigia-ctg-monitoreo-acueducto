@@ -22,7 +22,7 @@ function Marca({ rotulo, valor, ahora, tipo }: { rotulo: string; valor: string; 
         <time dateTime={valor} className={estilos.cifra}>
           <span className="cifra">{cifra}</span> <span className={estilos.periodo}>{periodo}</span>
         </time>
-        <span className={estilos.dia}>{diaConFecha(valor, ahora)}</span>
+        <span className={estilos.dia}>{diaConFecha(valor, ahora, { pasado: true })}</span>
       </dd>
     </div>
   )
