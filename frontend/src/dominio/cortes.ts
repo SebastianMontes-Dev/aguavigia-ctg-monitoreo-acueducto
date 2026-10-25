@@ -31,21 +31,6 @@ export function fuenteEnPalabras(fuente: string | null | undefined): string | nu
   return fuente ? FUENTES[fuente] ?? null : null
 }
 
-// Cómo se supo que el agua volvió a un barrio. Un cierre provisional es el único que no lo confirmó nadie más que vecinos.
-const CIERRES: Record<string, string> = {
-  ACUACAR: 'Confirmado por un aviso de Acuacar',
-  PRENSA: 'Confirmado por una nota de prensa',
-  VEEDOR: 'Confirmado por un revisor de AguaVigía',
-  VECINOS: 'Según reportes de vecinos',
-  SENSOR: 'Medido por un sensor de la red',
-}
-
-export function cierreEnPalabras(fuente: string | null | undefined, provisional: boolean): string | null {
-  const texto = fuente ? CIERRES[fuente] : undefined
-  if (!texto) return null
-  return provisional ? `${texto}. Un revisor de AguaVigía aún no lo confirma` : texto
-}
-
 /** Estados en los que el corte ya no está abierto; EXPIRADO y ANULADO, además, no tienen hora real. */
 const SIN_HORA_REAL: ReadonlySet<string> = new Set(['EXPIRADO', 'ANULADO'])
 const TERMINADOS: ReadonlySet<string> = new Set(['RESTABLECIDO', ...SIN_HORA_REAL])

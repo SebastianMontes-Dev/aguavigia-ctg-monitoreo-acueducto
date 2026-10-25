@@ -1,5 +1,5 @@
 import {
-  cierreEnPalabras, compararCorte, cierreProvisional, estaAbierto, estaCerrado, fuenteEnPalabras, horaReal, origenEnPalabras, promesaVencida,
+  compararCorte, cierreProvisional, estaAbierto, estaCerrado, fuenteEnPalabras, horaReal, origenEnPalabras, promesaVencida,
   sinHoraRealEnPalabras, type Corte,
 } from './cortes'
 
@@ -113,15 +113,8 @@ describe('textos', () => {
   it('noDebeUsarLaPalabraVeedorEnNingunTextoQueVeElPublico', () => {
     const textos = [
       origenEnPalabras('VEEDOR'), origenEnPalabras('INGESTA_IA'), fuenteEnPalabras('VEEDOR'), fuenteEnPalabras('PRENSA'),
-      cierreEnPalabras('VEEDOR', false), cierreEnPalabras('VECINOS', true),
     ]
     for (const texto of textos) expect(texto).not.toMatch(/veedor/i)
-  })
-
-  it('debeDecirComoSeSupoQueVolvioElAguaYAvisarSiNadieMasLoConfirmo', () => {
-    expect(cierreEnPalabras('VEEDOR', false)).toBe('Confirmado por un revisor de AguaVigía')
-    expect(cierreEnPalabras('VECINOS', true)).toBe('Según reportes de vecinos. Un revisor de AguaVigía aún no lo confirma')
-    expect(cierreEnPalabras('OTRA', false)).toBeNull()
   })
 
   it('debeAtribuirSoloLosOrigenesConocidos', () => {

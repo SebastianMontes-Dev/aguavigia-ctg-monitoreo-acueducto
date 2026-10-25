@@ -112,7 +112,8 @@ test('debeContarUnCorteCerradoConFechasYHorasYSinLaPalabraVeedor', async ({ page
   await expect(historial.getByText('Prometieron')).toBeVisible()
   await expect(historial.getByText(/que el agua volvía .* a las/)).toBeVisible()
   await expect(historial.getByText('Volvió', { exact: true })).toBeVisible()
-  await expect(historial.getByText(/Registrado y cerrado por un revisor de AguaVigía\./)).toBeVisible()
+  // La causa es texto del boletín tal cual salió de la fuente: no se muestra.
+  await expect(historial.getByText(/Causa|Mantenimiento/)).toHaveCount(0)
   await expect(page.getByText(/veedor/i)).toHaveCount(0)
 })
 

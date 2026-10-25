@@ -1,4 +1,4 @@
-import { cierreDe, cierreEnPalabras, compararCorte, origenEnPalabras, sinHoraRealEnPalabras, type Cierre, type Corte } from '../dominio/cortes'
+import { compararCorte, sinHoraRealEnPalabras, type Corte } from '../dominio/cortes'
 import { diaRelativo, momento } from '../dominio/tiempo'
 import estilos from './CortesCerrados.module.css'
 
@@ -9,27 +9,10 @@ interface Props {
   ahora: Date
 }
 
-/** El texto viene de la API o de un diccionario y a veces trae su punto y a veces no. */
-function conPunto(texto: string): string {
-  return /[.!?]$/.test(texto) ? texto : `${texto}.`
-}
-
-/**
- * Quién lo anunció y quién confirmó el cierre. Si es el mismo revisor en las dos cosas se dice una sola vez:
- * «Registrado por un revisor… Confirmado por un revisor…» sonaría a dos personas.
- */
-function procedencia(corte: Corte, cierre: Cierre | undefined): string[] {
-  const origen = origenEnPalabras(corte.origen)
-  const confirmacion = cierre ? cierreEnPalabras(cierre.fuente, cierre.provisional === true) : null
-  if (corte.origen === 'VEEDOR' && cierre?.fuente === 'VEEDOR' && cierre.provisional !== true) {
-    return ['Registrado y cerrado por un revisor de AguaVigía']
-  }
-  return [origen, confirmacion].flatMap((frase) => (frase ? [frase] : []))
-}
-
 /**
  * Guía §5.2: cada corte cerrado se cuenta con fechas y horas, no con duraciones que haya que restar. Primero el
- * veredicto en palabras; debajo, lo que se prometió y cuándo volvió el agua de verdad. Sin color de juicio.
+ * veredicto en palabras; debajo, lo que se prometió y cuándo volvió el agua de verdad. Sin color de juicio. La causa
+ * no se muestra: el texto del boletín llega tal cual salió de la fuente y se lee mal.
  */
 export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
   const filas = cortes.flatMap((corte) => {
@@ -42,7 +25,6 @@ export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
       <p className={estilos.explicacion}>Lo que Acuacar anunció frente a lo que pasó, corte por corte.</p>
       <ol className={estilos.lista}>
         {filas.map(({ corte, comparacion }) => {
-          const frases = procedencia(corte, sectorId ? cierreDe(corte, sectorId) : undefined)
           return (
             <li key={corte.id} className={estilos.fila}>
               <p className={estilos.inicio}>
@@ -63,11 +45,6 @@ export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
                   <dd><time dateTime={comparacion.realEn}>{momento(comparacion.realEn, ahora)}</time></dd>
                 </div>
               </dl>
-              {(corte.causa || frases.length > 0) && (
-                <p className={estilos.detalle}>
-                  {[corte.causa ? `Causa: ${corte.causa}` : null, ...frases].flatMap((frase) => (frase ? [conPunto(frase)] : [])).join(' ')}
-                </p>
-              )}
               {comparacion.provisional && (
                 <p className={estilos.porConfirmar}>Por confirmar: la hora real todavía puede cambiar.</p>
               )}

@@ -534,7 +534,7 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
   no: «Prometieron 42 horas · Fueron 45 horas y 15 minutos» obliga a restar, la leyenda de tres muestras es un código y «registrado por un veedor» no significa nada fuera del proyecto.
 - **Decisión.** Cada corte cerrado dice primero el veredicto («El agua tardó 3 horas y 15 minutos más de lo prometido») y debajo las dos marcas con fecha y hora de Cartagena: «Prometieron que el agua volvía
   el 25 de julio a las 3:00 p. m.» y «Volvió el 26 de julio a las 6:15 p. m.». Se quitan la barra y su leyenda (ADR-079 §4.1: una sola forma por dato). Una diferencia menor de 15 minutos se dice «a la hora
-  prometida». Un cierre provisional dice «Por confirmar». El rol `VEEDOR` se nombra al público «revisor de AguaVigía»; «veedor» queda en el panel.
+  prometida». Un cierre provisional dice «Por confirmar». La causa no se muestra: es el texto del boletín tal cual salió de la fuente y se lee mal. El rol `VEEDOR` se nombra al público «revisor de AguaVigía»; «veedor» queda en el panel.
 - **Alcance.** Solo la ficha (`CortesCerrados`). `/cumplimiento` y `DESIGN.md` M6 siguen con «prometido frente a real» porque ahí la comparación es el titular; el cambio de nombre del rol sí vale en todo el texto público.
 - **Gana.** Una frase que se entiende sin contexto y que usa solo campos del contrato (`inicio`, `finPrometido`, `cierres[]`). **Pierde.** El vistazo de la barra a varios cortes a la vez; se reconsidera si la ficha
   pasa a mostrar muchos cortes juntos.

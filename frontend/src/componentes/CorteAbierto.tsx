@@ -63,11 +63,7 @@ export function CorteAbierto({ corte, ahora }: { corte: Corte; ahora: Date }) {
         <Hora rotulo="Fin prometido" valor={corte.finPrometido} ahora={ahora} vencida={vencida} />
       </dl>
       <ReglaTiempo corte={corte} ahora={ahora} />
-      {(origen || corte.causa) && (
-        <p className={estilos.origen}>
-          {origen && <>{origen}.</>} {corte.causa && <>{corte.causa}.</>}
-        </p>
-      )}
+      {origen && <p className={estilos.origen}>{origen}.</p>}
     </article>
   )
 }
