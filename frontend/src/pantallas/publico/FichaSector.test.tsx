@@ -89,6 +89,34 @@ describe('FichaSector: encabezado y estado', () => {
     expect(estadoActual()).toHaveTextContent('Hora de restablecimiento no informada.')
   })
 
+  it('debeDecirElRegresoPrometidoDelBarrioCuandoNingunCorteAbiertoLoMuestra', () => {
+    prueba.sector = { ...BASE, ventanaPrometida: { inicio: '2026-09-25T17:00:00Z', fin: '2026-09-26T03:00:00Z' } }
+    render(<FichaSector />)
+    expect(estadoActual()).toHaveTextContent(/Regreso prometido para las 10:00 p\. m\., Hoy/)
+    expect(estadoActual()).not.toHaveTextContent('hora ya pasada')
+    expect(estadoActual()).not.toHaveTextContent('Hora de restablecimiento no informada.')
+  })
+
+  it('debeAdvertirQueLaHoraPrometidaYaPasoSinRepetirloSiYaEstaPorConfirmar', () => {
+    prueba.sector = { ...BASE, ventanaPrometida: { inicio: '2026-09-25T13:00:00Z', fin: '2026-09-25T18:00:00Z' } }
+    const { unmount } = render(<FichaSector />)
+    expect(estadoActual()).toHaveTextContent(/Regreso prometido para las 1:00 p\. m\., Hoy.*\(hora ya pasada\)\./)
+    unmount()
+
+    prueba.sector = { ...prueba.sector, restablecimientoPorConfirmar: true }
+    render(<FichaSector />)
+    expect(estadoActual()).not.toHaveTextContent('hora ya pasada')
+    expect(estadoActual()).toHaveTextContent('Ya pasó la hora prometida y nadie ha confirmado que volvió el agua.')
+  })
+
+  it('noDebeRepetirElRegresoPrometidoSiLaTarjetaDelCorteYaLoMuestra', () => {
+    prueba.sector = { ...BASE, ventanaPrometida: { inicio: '2026-09-25T17:00:00Z', fin: '2026-09-26T03:00:00Z' } }
+    prueba.cortes = [abierto('2026-09-25T17:00:00Z')]
+    render(<FichaSector />)
+    expect(estadoActual()).not.toHaveTextContent('Regreso prometido')
+    expect(within(ultimoAviso()).getByText('Fin prometido')).toBeInTheDocument()
+  })
+
   it('debeDejarRecibirAvisosEnLaEsquinaDelEncabezadoYNoEntreLasAcciones', () => {
     render(<FichaSector />)
     const enlace = screen.getByRole('link', { name: 'Recibir avisos de Manga' })

@@ -71,7 +71,9 @@ function EstadoActual({ sector, lectura, ahora, reintentar }: { sector: Sector; 
   const afectado = sector.estado && sector.estado !== 'CON_SERVICIO'
   const cortesLeidos = !consulta.isPending && !(consulta.isError && cortes.length === 0)
   const abiertos = cortes.filter((corte) => estaAbierto(corte, sector.id))
-  const sinHora = afectado && cortesLeidos && abiertos.length === 0
+  const sinTarjeta = afectado && cortesLeidos && abiertos.length === 0
+  // La promesa del barrio solo se dice aquí cuando no hay tarjeta de corte abierto que ya la muestre debajo.
+  const finPrometido = sinTarjeta ? sector.ventanaPrometida?.fin : undefined
   const enContra = sector.enDisputa ? sector.reportesEnContra ?? 0 : 0
   // El corte abierto ya dice «Aviso oficial de Acuacar» justo debajo: repetirlo junto al estado no informa nada.
   const repetida = sector.origen === 'ACUACAR' && abiertos.some((corte) => corte.origen === 'OFICIAL_ACUACAR')
@@ -90,7 +92,12 @@ function EstadoActual({ sector, lectura, ahora, reintentar }: { sector: Sector; 
         {sector.restablecimientoPorConfirmar && (
           <p className={estilos.lineaEstado}>Ya pasó la hora prometida y nadie ha confirmado que volvió el agua.</p>
         )}
-        {sinHora && <p className={estilos.lineaEstado}>Hora de restablecimiento no informada.</p>}
+        {finPrometido ? (
+          <p className={estilos.lineaEstado}>
+            Regreso prometido para las <time dateTime={finPrometido}>{formatearHora(finPrometido)}, {diaConFecha(finPrometido, ahora)}</time>
+            {!sector.restablecimientoPorConfirmar && new Date(finPrometido).getTime() < ahora.getTime() && ' (hora ya pasada)'}.
+          </p>
+        ) : sinTarjeta && <p className={estilos.lineaEstado}>Hora de restablecimiento no informada.</p>}
         {enContra > 0 && (
           <p className={estilos.lineaEstado}>
             {formatearNumero(enContra)} {enContra === 1 ? 'vecino reporta' : 'vecinos reportan'} algo distinto. Pendiente de revisión.
