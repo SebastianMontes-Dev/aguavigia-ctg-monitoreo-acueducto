@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { interpretarAlta, interpretarEnlace, MENSAJE_NEUTRO } from './avisos'
+import { describe, expect, it, vi } from 'vitest'
+import { interpretarAlta, interpretarEnlace, MAXIMO_BARRIOS_POR_AVISO, MENSAJE_NEUTRO, pedirAvisos } from './avisos'
 
 describe('avisos por correo', () => {
   it('conserva el mensaje neutro de la solicitud', () => {
@@ -34,5 +34,21 @@ describe('avisos por correo', () => {
 
   it('distingue un fallo de red del enlace', () => {
     expect(interpretarEnlace(null)).toEqual({ tipo: 'sin-red' })
+  })
+
+  it('rechaza antes de enviar una solicitud con mas de 211 barrios', async () => {
+    const pedir = vi.spyOn(globalThis, 'fetch')
+    const barrios = Array.from({ length: MAXIMO_BARRIOS_POR_AVISO + 1 }, (_, i) => `barrio-${i}`)
+    expect(await pedirAvisos('vecino@example.com', barrios)).toEqual({ tipo: 'demasiados-barrios' })
+    expect(pedir).not.toHaveBeenCalled()
+    pedir.mockRestore()
+  })
+
+  it('envia una solicitud con exactamente 211 barrios', async () => {
+    const pedir = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, { status: 201 }))
+    const barrios = Array.from({ length: MAXIMO_BARRIOS_POR_AVISO }, (_, i) => `barrio-${i}`)
+    expect(await pedirAvisos('vecino@example.com', barrios)).toEqual({ tipo: 'recibido' })
+    expect(pedir).toHaveBeenCalledTimes(1)
+    pedir.mockRestore()
   })
 })

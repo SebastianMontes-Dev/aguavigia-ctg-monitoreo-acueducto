@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, type FormEvent } from 'react'
 import { Button } from 'react-aria-components'
 import { api, normalizarError } from '../../api/cliente'
-import { MENSAJE_NEUTRO, pedirAvisos, type ResultadoAlta } from '../../api/avisos'
+import { MAXIMO_BARRIOS_POR_AVISO, MENSAJE_NEUTRO, pedirAvisos, type ResultadoAlta } from '../../api/avisos'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
 import { MarcaRecibido } from '../../componentes/MarcaRecibido'
 import { SelectorBarrio } from '../../componentes/SelectorBarrio'
@@ -31,6 +31,7 @@ function mensajeAdicional(resultado: ResultadoAlta): string | null {
   switch (resultado.tipo) {
     case 'recibido': return null
     case 'invalido': return 'Revisa el correo y los barrios elegidos antes de volver a enviarlo.'
+    case 'demasiados-barrios': return `Puedes pedir avisos de hasta ${formatearNumero(MAXIMO_BARRIOS_POR_AVISO)} barrios a la vez. Quita algunos e inténtalo de nuevo.`
     case 'esperar': return resultado.segundos === null
       ? 'Hay demasiadas solicitudes. Espera antes de volver a intentarlo.'
       : `Hay demasiadas solicitudes. Espera ${formatearNumero(resultado.segundos)} segundos antes de volver a intentarlo.`
