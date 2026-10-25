@@ -51,6 +51,25 @@ export function useListado(): Listado {
   return { lectura, porId, sectores, reintentar: instancia.actualizar }
 }
 
+/**
+ * F4: el modo se pide una vez al abrir la aplicación (el servidor lo recuerda un minuto). Si falla no se insiste: sin
+ * respuesta no hay banner, y la consulta nunca retrasa la primera respuesta del mapa.
+ */
+export function useModoSistema() {
+  return useQuery({
+    queryKey: ['modo-sistema'],
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/sistema/modo', { signal })
+        .catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return data
+    },
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+}
+
 export function useGeometria() {
   return useQuery({
     queryKey: ['geometria'],

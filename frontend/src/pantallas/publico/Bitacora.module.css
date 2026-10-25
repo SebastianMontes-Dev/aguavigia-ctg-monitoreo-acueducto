@@ -51,7 +51,7 @@
 
   @media (min-width: 1100px) {
     .columnas { grid-template-columns: 300px minmax(0, 1fr); column-gap: var(--espacio-7); }
-    .filtros { position: sticky; top: calc(var(--alto-cabecera) + var(--espacio-5)); }
+    .filtros { position: sticky; top: calc(var(--alto-cabecera) + var(--alto-aviso, 0px) + var(--espacio-5)); }
     .pestanas { flex-direction: column; overflow: visible; }
     .pestana { justify-content: space-between; border-color: transparent; border-radius: 0; padding: 0 var(--espacio-3); border-left: 2px solid transparent; }
     .pestana[aria-pressed='true'] { background: transparent; color: var(--tinta); border-color: transparent; border-left-color: var(--laton); }

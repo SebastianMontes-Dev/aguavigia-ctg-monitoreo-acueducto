@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
+import { useModoSistema } from './datos'
 import { SelectorTema } from './SelectorTema'
 import estilos from './Marco.module.css'
 
@@ -43,8 +44,10 @@ function EnlacesNavegacion({ clase }: { clase: string | undefined }) {
 
 export function Marco() {
   const { pathname } = useLocation()
+  // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
+  const simulacion = useModoSistema().data?.modo === 'SIMULACION'
   return (
-    <div className={estilos.marco}>
+    <div className={estilos.marco} data-simulacion={simulacion || undefined}>
       <a href="#contenido" className={estilos.saltar}>Saltar al contenido</a>
       <header className={estilos.cabecera}>
         <Link to="/" className={estilos.marca} aria-label="AguaVigía, Cartagena: ir al mapa">
@@ -66,6 +69,11 @@ export function Marco() {
           </Popover>
         </DialogTrigger>
       </header>
+      {simulacion && (
+        <output className={estilos.simulacion}>
+          <strong>Simulación.</strong> Datos de una simulación; no son reales.
+        </output>
+      )}
       <main id="contenido" className={estilos.principal} tabIndex={-1}>
         <Outlet />
       </main>

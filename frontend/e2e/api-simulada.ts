@@ -61,6 +61,7 @@ interface Opciones {
   serie?: (route: Route) => Promise<void>
   bitacora?: (route: Route) => Promise<void>
   sustento?: (route: Route) => Promise<void>
+  modo?: 'REAL' | 'SIMULACION'
 }
 
 /** Simula la API pública para las E2E que corren sin backend (CI). Devuelve los cuerpos de los reportes y confirmaciones. */
@@ -71,6 +72,9 @@ export async function simularApi(page: Page, opciones: Opciones = {}) {
   const dispositivos: string[] = []
   const identidades: (string | null)[] = []
   const fotos: { id: string; subida: string | null; tipo: string | null }[] = []
+  await page.route('**/api/sistema/modo', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ modo: opciones.modo ?? 'REAL', cuentasSinteticas: 0 }),
+  }))
   await page.route('**/api/sectores/stream', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'retry:60000\nevent:sectores\ndata:{}\n\n' }))
   await page.route('**/api/sectores/geometria', (route) =>
