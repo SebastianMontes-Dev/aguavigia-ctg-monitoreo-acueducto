@@ -11,6 +11,7 @@ import { Bitacora } from '../pantallas/publico/Bitacora'
 import { esTipoBitacora } from '../dominio/historia'
 import { Avisos } from '../pantallas/publico/Avisos'
 import { BajaAvisos, ConfirmarAvisos } from '../pantallas/publico/EnlaceAvisos'
+import { Restablecimiento } from '../pantallas/publico/Restablecimiento'
 
 const raiz = createRootRoute({ component: Outlet, notFoundComponent: NoEncontrada })
 
@@ -20,6 +21,14 @@ const publico = createRoute({ getParentRoute: () => raiz, id: 'publico', compone
 const mapa = createRoute({ getParentRoute: () => publico, id: 'mapa', component: PantallaMapa })
 const inicio = createRoute({ getParentRoute: () => mapa, path: '/', component: ResumenCiudad })
 const sector = createRoute({ getParentRoute: () => mapa, path: 'sectores/$id', component: FichaSector })
+
+// Fuera del mapa: es la página a la que lleva el correo de aviso, con su propio botón (FE1).
+const restablecimiento = createRoute({
+  getParentRoute: () => publico, path: 'sectores/$id/restablecimiento',
+  validateSearch: (busqueda: Record<string, unknown>): { token?: string } =>
+    typeof busqueda.token === 'string' ? { token: busqueda.token } : {},
+  component: Restablecimiento,
+})
 
 const confirmar = createRoute({ getParentRoute: () => publico, path: 'confirmar/$id', component: ConfirmarReporte })
 
@@ -71,7 +80,7 @@ const muestrario = createRoute({
 const arbol = raiz.addChildren([
   publico.addChildren([
     mapa.addChildren([inicio, sector]),
-    confirmar, historial, cumplimiento, bitacora, estadisticas, avisos, confirmarAvisos, bajaAvisos,
+    restablecimiento, confirmar, historial, cumplimiento, bitacora, estadisticas, avisos, confirmarAvisos, bajaAvisos,
   ]),
   muestrario,
 ])

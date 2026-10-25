@@ -23,6 +23,7 @@ export type TipoProblema =
   | 'archivo-demasiado-grande'
   | 'dispositivo-invalido'
   | 'subida-no-autorizada'
+  | 'enlace-invalido'
   | 'cuenta-bloqueada'
   | 'limite-reportes-excedido'
   | 'limite-de-peticiones-excedido'
