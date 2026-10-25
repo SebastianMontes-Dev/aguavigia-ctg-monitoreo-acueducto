@@ -111,21 +111,32 @@ function bitacoraConAviso(urlOriginal: string) {
   })
 }
 
-test('debeOfrecerUnBotonALaFuenteDelUltimoAvisoSinAfirmarQueFueElDeUnCorte', async ({ page }) => {
+test('debeLlevarALaBitacoraDelBarrioYDeAhiAbrirLaFuenteOriginal', async ({ page }) => {
   await simularApi(page, { bitacora: bitacoraConAviso('https://www.acuacar.com/boletin/ejemplo') })
   await page.goto('/sectores/armenia')
-  const enlace = page.getByRole('link', { name: /Ver el boletín de Acuacar/ })
-  await expect(enlace).toHaveAttribute('href', 'https://www.acuacar.com/boletin/ejemplo')
-  await expect(enlace).toHaveAttribute('target', '_blank')
-  await expect(enlace).toHaveAttribute('rel', /noopener/)
   await expect(page.getByText(/Último aviso sobre este barrio/)).toBeVisible()
+  await page.getByRole('link', { name: /Ver los avisos de Acuacar/ }).click()
+
+  await expect(page).toHaveURL(/\/bitacora\?.*sector=armenia/)
+  await expect(page).toHaveURL(/tipo=CORTE_DETECTADO_POR_INGESTA/)
+  const fuente = page.getByRole('link', { name: 'Boletín de Acuacar' })
+  await expect(fuente).toHaveAttribute('href', 'https://www.acuacar.com/boletin/ejemplo')
+  await expect(fuente).toHaveAttribute('target', '_blank')
+  await expect(fuente).toHaveAttribute('rel', /noopener/)
 })
 
-test('noDebeOfrecerElBotonSiLaUrlNoEsHttpNiHayAviso', async ({ page }) => {
+test('noDebeEnlazarUnaFuenteQueNoEsHttpEnLaBitacora', async ({ page }) => {
   await simularApi(page, { bitacora: bitacoraConAviso('javascript:alert(1)') })
+  await page.goto('/bitacora?sector=armenia&tipo=CORTE_DETECTADO_POR_INGESTA')
+  await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Boletín de Acuacar' })).toHaveCount(0)
+})
+
+test('noDebeOfrecerElBotonDeAvisosSiElBarrioNoTieneNinguno', async ({ page }) => {
+  await simularApi(page)
   await page.goto('/sectores/armenia')
   await expect(page.getByRole('heading', { level: 1, name: 'Armenia' })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Ver (el boletín|la nota|la fuente)/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Ver los avisos/ })).toHaveCount(0)
 })
 
 test('debeDarUnaSolaLineaDeFrescuraSinRepetirVerificadoNiElListadoDeLaCiudad', async ({ page }) => {
@@ -145,7 +156,8 @@ test('debeContarUnCorteCerradoConFechasYHorasYSinLaPalabraVeedor', async ({ page
   // El fixture promete 2 h y el veedor cerró 6 h después de lo prometido.
   await expect(historial.getByText('El agua tardó 6 horas más de lo prometido')).toBeVisible()
   await expect(historial.getByText('Prometieron')).toBeVisible()
-  await expect(historial.getByText(/que el agua volvía .* a las/)).toBeVisible()
+  // Cada hora va grande y con su día debajo: se comparan lado a lado, sin restar.
+  await expect(historial.locator('dl time')).toHaveCount(2)
   await expect(historial.getByText('Volvió', { exact: true })).toBeVisible()
   // La causa es texto del boletín tal cual salió de la fuente: no se muestra.
   await expect(historial.getByText(/Causa|Mantenimiento/)).toHaveCount(0)

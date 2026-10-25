@@ -80,6 +80,17 @@ describe('Bitácora', () => {
     expect(screen.getByText(/Restablecimiento según vecinos/)).toBeInTheDocument()
   })
 
+  it('soloDebeEnlazarLaFuenteOriginalSiEsHttpOHttps', () => {
+    estado.extras = [
+      { id: 'evt-j', tipo: 'CORTE_DETECTADO_POR_INGESTA', timestamp: '2026-09-25T19:00:00Z', descripcion: 'Malo', urlOriginal: 'javascript:alert(1)' },
+      { id: 'evt-h', tipo: 'CORTE_DETECTADO_POR_INGESTA', timestamp: '2026-09-25T18:50:00Z', descripcion: 'Bueno', urlOriginal: 'https://www.acuacar.com/boletin/2' },
+    ]
+    render(<Bitacora />)
+    const enlaces = screen.getAllByRole('link', { name: 'Boletín de Acuacar' })
+    expect(enlaces.map((enlace) => enlace.getAttribute('href'))).toContain('https://www.acuacar.com/boletin/2')
+    expect(enlaces.map((enlace) => enlace.getAttribute('href'))).not.toContain('javascript:alert(1)')
+  })
+
   it('noDebeAtribuirUnaFuenteDesconocida', () => {
     estado.extras = [{ id: 'evt-f', tipo: 'CORTE_ANULADO', timestamp: '2026-09-25T19:55:00Z', descripcion: 'Retirado', fuente: 'OTRA' }]
     render(<Bitacora />)

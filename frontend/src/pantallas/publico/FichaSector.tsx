@@ -11,7 +11,6 @@ import { estaAbierto, estaCerrado, sinHoraRealEnPalabras } from '../../dominio/c
 import { presentarEstado } from '../../dominio/estados'
 import { sinVerificacionReciente } from '../../dominio/frescura'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
-import { enlaceExterno } from '../../dominio/historia'
 import { haceCuanto, momento } from '../../dominio/tiempo'
 import botones from '../../componentes/Botones.module.css'
 import estilos from './Panel.module.css'
@@ -40,20 +39,22 @@ function Registro({ sector, lectura, ahora, reintentar }: { sector: Sector; lect
   )
 }
 
-/** Un botón a la fuente: la persona puede comprobar por sí misma lo que dice la ficha. */
+/**
+ * El botón lleva a la bitácora del barrio, filtrada a los avisos de boletines y notas, y de ahí la persona elige cuál
+ * abrir en su fuente. No enlaza una URL externa desde la ficha: el contrato no dice qué aviso anunció cada corte.
+ */
 function FuenteDelAviso({ sector, ahora }: { sector: Sector; ahora: Date }) {
   const { data: aviso } = useUltimoAviso(sector.id ?? '')
-  const enlace = enlaceExterno(aviso?.urlOriginal)
-  if (!aviso || !enlace) return null
-  const origen = aviso.fuente === 'PRENSA' ? 'la nota de prensa' : aviso.fuente === 'ACUACAR' ? 'el boletín de Acuacar' : 'la fuente del aviso'
+  if (!aviso) return null
+  const quien = aviso.fuente === 'PRENSA' ? 'de prensa' : aviso.fuente === 'ACUACAR' ? 'de Acuacar' : 'de este barrio'
   return (
     <section aria-label="Fuente del aviso" className={estilos.bloque}>
-      <a href={enlace} target="_blank" rel="noopener noreferrer" className={botones.secundario}>
-        Ver {origen} <span className={botones.flecha} aria-hidden="true">↗</span>
-      </a>
+      <Link to="/bitacora" search={{ sector: sector.id, tipo: 'CORTE_DETECTADO_POR_INGESTA' }} className={botones.secundario}>
+        Ver los avisos {quien} <span className={botones.flecha} aria-hidden="true">→</span>
+      </Link>
       {aviso.timestamp && (
         <p className={estilos.nota}>
-          Último aviso sobre este barrio: <time dateTime={aviso.timestamp}>{momento(aviso.timestamp, ahora)}</time> · se abre en otra pestaña
+          Último aviso sobre este barrio: <time dateTime={aviso.timestamp}>{momento(aviso.timestamp, ahora)}</time> · en la bitácora abres el boletín original
         </p>
       )}
     </section>

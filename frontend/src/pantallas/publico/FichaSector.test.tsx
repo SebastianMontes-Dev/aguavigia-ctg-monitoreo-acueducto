@@ -13,7 +13,9 @@ const prueba = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-router', () => ({
   useParams: () => ({ id: 'manga' }),
-  Link: ({ children, className }: { children: unknown; className?: string }) => <a href="/" className={className}>{children as never}</a>,
+  Link: ({ children, className, to, search }: { children: unknown; className?: string; to?: string; search?: object }) => (
+    <a href={to ?? '/'} className={className} data-search={JSON.stringify(search ?? {})}>{children as never}</a>
+  ),
 }))
 // 15:00 en Cartagena.
 vi.mock('../../app/ahora', () => ({ useAhora: () => new Date('2026-09-25T20:00:00Z') }))
@@ -48,24 +50,26 @@ describe('FichaSector: frescura y fuente', () => {
     expect(screen.queryByText(/Actualizado hace/)).not.toBeInTheDocument()
   })
 
-  it('debeOfrecerElBotonALaFuenteConLaFechaDelAviso', () => {
+  it('debeLlevarALaBitacoraDelBarrioFiltradaAlosAvisosYDecirCuandoFueElUltimo', () => {
     prueba.aviso = { urlOriginal: 'https://www.acuacar.com/boletin/1', fuente: 'ACUACAR', timestamp: '2026-09-25T15:00:00Z' }
     render(<FichaSector />)
-    const enlace = screen.getByRole('link', { name: /Ver el boletín de Acuacar/ })
-    expect(enlace).toHaveAttribute('href', 'https://www.acuacar.com/boletin/1')
-    expect(enlace).toHaveAttribute('target', '_blank')
-    expect(enlace).toHaveAttribute('rel', 'noopener noreferrer')
+    const enlace = screen.getByRole('link', { name: /Ver los avisos de Acuacar/ })
+    expect(enlace).toHaveAttribute('href', '/bitacora')
+    expect(JSON.parse(enlace.getAttribute('data-search') ?? '{}')).toEqual({ sector: 'manga', tipo: 'CORTE_DETECTADO_POR_INGESTA' })
     expect(screen.getByText(/Último aviso sobre este barrio/)).toBeInTheDocument()
+    // La ficha no abre ninguna fuente externa por sí sola: eso se elige en la bitácora.
+    expect(screen.queryByRole('link', { name: /boletín original/ })).not.toBeInTheDocument()
+    expect(document.querySelector('a[href^="http"]')).toBeNull()
   })
 
-  it('noDebeOfrecerElBotonSinAvisoNiConUnaUrlQueNoSeaHttp', () => {
+  it('debeNombrarLaPrensaCuandoElUltimoAvisoVienedeUnaNota', () => {
+    prueba.aviso = { fuente: 'PRENSA', timestamp: '2026-09-25T15:00:00Z' }
     render(<FichaSector />)
-    expect(screen.queryByRole('link', { name: /Ver (el boletín|la nota|la fuente)/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Ver los avisos de prensa/ })).toBeInTheDocument()
   })
 
-  it('noDebeAbrirUnEnlaceJavascript', () => {
-    prueba.aviso = { urlOriginal: 'javascript:alert(1)', fuente: 'ACUACAR', timestamp: '2026-09-25T15:00:00Z' }
+  it('noDebeOfrecerElBotonSiNoHayAvisos', () => {
     render(<FichaSector />)
-    expect(screen.queryByRole('link', { name: /Ver el boletín/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Ver los avisos/ })).not.toBeInTheDocument()
   })
 })

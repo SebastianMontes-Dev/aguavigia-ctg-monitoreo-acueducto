@@ -49,6 +49,7 @@
     align-items: center;
     justify-content: center;
     justify-self: start;
+    gap: var(--espacio-3);
     min-height: var(--objetivo-tactil);
     padding: 0 var(--espacio-5);
     border: 1px solid var(--tinta-2);

@@ -28,33 +28,61 @@
     color: var(--tinta);
   }
 
+  /* Dos horas lado a lado, con su día: se comparan de un vistazo sin restar nada. La regla de 1 px las separa. */
   .marcas {
     display: grid;
-    gap: var(--espacio-1);
-    font-size: var(--texto-s);
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espacio-4);
+    padding: var(--espacio-3) 0;
+    border-top: 1px solid var(--linea-suave);
   }
 
-  /* La palabra, la marca y la hora fluyen como una sola frase: si no caben en una línea, la segunda vuelve al margen. */
-  .marcas dt,
-  .marcas dd {
-    display: inline;
+  .marca + .marca {
+    padding-left: var(--espacio-4);
+    border-left: 1px solid var(--linea);
+  }
+
+  .marca dd {
+    display: grid;
+    gap: 2px;
+  }
+
+  .rotulo {
+    display: flex;
+    align-items: center;
+    gap: var(--espacio-2);
+    margin-bottom: var(--espacio-1);
+    font-size: var(--texto-xs);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tinta-2);
+  }
+
+  .cifra {
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
     color: var(--tinta);
   }
 
-  .marcas dt {
-    font-weight: 600;
+  .periodo {
+    font-size: var(--texto-s);
+    font-weight: 400;
+    color: var(--tinta-2);
   }
 
-  .marcas dd {
-    font-variant-numeric: tabular-nums;
+  .dia {
+    font-size: var(--texto-s);
+    color: var(--tinta-2);
   }
 
   /* Contorno = lo prometido; relleno = lo que pasó. Cada marca va con su palabra: el color no explica nada solo. */
-  .marca {
-    display: inline-block;
+  .punto {
+    flex: none;
     width: 9px;
     height: 9px;
-    margin-right: var(--espacio-2);
     border-radius: 50%;
   }
 

@@ -1,5 +1,5 @@
 import { compararCorte, sinHoraRealEnPalabras, type Corte } from '../dominio/cortes'
-import { diaRelativo, momento } from '../dominio/tiempo'
+import { diaRelativo, momento, partirHora } from '../dominio/tiempo'
 import estilos from './CortesCerrados.module.css'
 
 interface Props {
@@ -7,6 +7,25 @@ interface Props {
   /** El barrio de la ficha: cada corte se compara con el cierre de este barrio y no con el de todo el corte. */
   sectorId?: string
   ahora: Date
+}
+
+/** La hora grande y su día debajo, como en «Inicio anunciado / Fin prometido» del corte abierto (`ADR-101`). */
+function Marca({ rotulo, valor, ahora, tipo }: { rotulo: string; valor: string; ahora: Date; tipo: 'prometido' | 'real' }) {
+  const { cifra, periodo } = partirHora(valor)
+  return (
+    <div className={estilos.marca}>
+      <dt className={estilos.rotulo}>
+        <span className={`${estilos.punto} ${estilos[tipo]}`} aria-hidden="true" />
+        {rotulo}
+      </dt>
+      <dd>
+        <time dateTime={valor} className={estilos.cifra}>
+          <span className="cifra">{cifra}</span> <span className={estilos.periodo}>{periodo}</span>
+        </time>
+        <span className={estilos.dia}>{diaRelativo(valor, ahora)}</span>
+      </dd>
+    </div>
+  )
 }
 
 /**
@@ -32,18 +51,8 @@ export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
               </p>
               <p className={estilos.veredicto}>{comparacion.veredicto}</p>
               <dl className={estilos.marcas}>
-                <div>
-                  <dt><span className={`${estilos.marca} ${estilos.prometido}`} aria-hidden="true" />Prometieron</dt>
-                  {' '}
-                  <dd>
-                    que el agua volvía <time dateTime={comparacion.prometidoEn}>{momento(comparacion.prometidoEn, ahora)}</time>
-                  </dd>
-                </div>
-                <div>
-                  <dt><span className={`${estilos.marca} ${estilos.real}`} aria-hidden="true" />Volvió</dt>
-                  {' '}
-                  <dd><time dateTime={comparacion.realEn}>{momento(comparacion.realEn, ahora)}</time></dd>
-                </div>
+                <Marca rotulo="Prometieron" valor={comparacion.prometidoEn} ahora={ahora} tipo="prometido" />
+                <Marca rotulo="Volvió" valor={comparacion.realEn} ahora={ahora} tipo="real" />
               </dl>
               {comparacion.provisional && (
                 <p className={estilos.porConfirmar}>Por confirmar: la hora real todavía puede cambiar.</p>

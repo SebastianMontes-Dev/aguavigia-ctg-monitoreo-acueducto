@@ -8,6 +8,7 @@ import { GlifoEstado } from '../../componentes/GlifoEstado'
 import { presentarEstado, type EstadoServicio } from '../../dominio/estados'
 import {
   descripcionLegible,
+  enlaceExterno,
   esTipoEvento,
   FILTRO_TIPO,
   imagenDeBitacora,
@@ -74,6 +75,7 @@ function EventoBitacora({ evento, nombreDe, originalDe }: {
 }) {
   const estado = estadoValido(evento.estado)
   const imagen = imagenDeBitacora(evento.imagenUrl)
+  const fuenteOriginal = enlaceExterno(evento.urlOriginal)
   const tipo = esTipoEvento(evento.tipo) ? evento.tipo : null
   const barrio = evento.sectorId ? nombreDe(evento.sectorId) ?? evento.sectorId : null
   const original = evento.sectorId ? originalDe(evento.sectorId) : undefined
@@ -96,10 +98,10 @@ function EventoBitacora({ evento, nombreDe, originalDe }: {
             {respaldo && `${formatearNumero(respaldo.vecinos ?? 0)} de ${formatearNumero(respaldo.umbral ?? 0)} vecinos`}
           </p>
         )}
-        {(evento.urlOriginal || (sustento > 0 && evento.id)) && (
+        {(fuenteOriginal || (sustento > 0 && evento.id)) && (
           <p className={estilos.acciones}>
-            {evento.urlOriginal && (
-              <a href={evento.urlOriginal} target="_blank" rel="noopener noreferrer" className={estilos.enlace}>
+            {fuenteOriginal && (
+              <a href={fuenteOriginal} target="_blank" rel="noopener noreferrer" className={estilos.enlace}>
                 {tipo === 'CORTE_DETECTADO_POR_INGESTA' ? 'Boletín de Acuacar' : 'Ver fuente original'}
               </a>
             )}
