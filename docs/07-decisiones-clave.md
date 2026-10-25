@@ -532,8 +532,8 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 
 - **Contexto.** La prueba de los cinco segundos (ADR-079) sobre la ficha de un barrio la hizo Yordy con la mirada de quien no conoce la app. El mapa se entendió a la primera; el bloque «Cortes cerrados»
   no: «Prometieron 42 horas · Fueron 45 horas y 15 minutos» obliga a restar, la leyenda de tres muestras es un código y «registrado por un veedor» no significa nada fuera del proyecto.
-- **Decisión.** Cada corte cerrado dice primero el veredicto («El agua tardó 3 horas y 15 minutos más de lo prometido») y debajo las dos marcas con fecha y hora de Cartagena: «Prometieron que el agua volvía
-  el 25 de julio a las 3:00 p. m.» y «Volvió el 26 de julio a las 6:15 p. m.». Se quitan la barra y su leyenda (ADR-079 §4.1: una sola forma por dato). Una diferencia menor de 15 minutos se dice «a la hora
+- **Decisión.** Cada corte cerrado dice primero el veredicto («El agua tardó 3 horas y 15 minutos más de lo prometido») y debajo dos horas grandes lado a lado, cada una con su día, como en «Inicio anunciado / Fin prometido»:
+  PROMETIERON 3:00 p. m. · 25 de julio y VOLVIÓ 6:15 p. m. · 26 de julio (una regla de 1 px las separa; un texto plano se leía mal). Se quitan la barra y su leyenda (ADR-079 §4.1: una sola forma por dato). Una diferencia menor de 15 minutos se dice «a la hora
   prometida». Un cierre provisional dice «Por confirmar». La causa no se muestra: es el texto del boletín tal cual salió de la fuente y se lee mal. El rol `VEEDOR` se nombra al público «revisor de AguaVigía»; «veedor» queda en el panel.
 - **Alcance.** Solo la ficha (`CortesCerrados`). `/cumplimiento` y `DESIGN.md` M6 siguen con «prometido frente a real» porque ahí la comparación es el titular; el cambio de nombre del rol sí vale en todo el texto público.
 - **Gana.** Una frase que se entiende sin contexto y que usa solo campos del contrato (`inicio`, `finPrometido`, `cierres[]`). **Pierde.** El vistazo de la barra a varios cortes a la vez; se reconsidera si la ficha
@@ -545,9 +545,9 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Contexto.** La misma prueba de los cinco segundos (ADR-101) encontró redundancia en la ficha: «Estado registrado hace menos de un minuto · verificado hace menos de un minuto» repetía una fecha y, debajo,
   «En vivo · Listado generado a las 8:34» daba la hora del listado de toda la ciudad, que en la ficha de un barrio no le sirve a nadie y que la portada ya dice.
 - **Decisión.** La ficha dice «Actualizado hace X» (`actualizadoEn`; la fecha exacta, en el `title`) y, si el canal está conectado, el punto «En vivo» en la misma línea. «Verificado hace…» sale solo por la advertencia de
-  24 horas que ya existía; «Listado generado…» sale solo cuando la lectura es guardada o falló. Se añade un botón «Ver el boletín de Acuacar» (o «la nota de prensa») al último aviso detectado para ese barrio
-  (`GET /api/bitacora?sectorId&tipo=CORTE_DETECTADO_POR_INGESTA`), con su fecha, que abre en otra pestaña y solo acepta `http(s)`.
-- **Límite que se dice.** El contrato no enlaza la fuente de un corte concreto: `CorteRespuesta` no trae URL y esos eventos llegan con `corteId` nulo. El botón dice «Último aviso sobre este barrio» y no afirma que fuera el
+  24 horas que ya existía; «Listado generado…» sale solo cuando la lectura es guardada o falló. Se añade un botón «Ver los avisos de Acuacar» (o «de prensa») que lleva a la bitácora del barrio filtrada a boletines y notas (`/bitacora?sector=…&tipo=CORTE_DETECTADO_POR_INGESTA`), con la fecha del último aviso
+  (`GET /api/bitacora?sectorId&tipo=CORTE_DETECTADO_POR_INGESTA&tamano=1`). De ahí la persona elige un aviso y abre su fuente original, en otra pestaña y solo si la URL es `http(s)`; la ficha no abre fuentes externas.
+- **Límite que se dice.** El contrato no enlaza la fuente de un corte concreto: `CorteRespuesta` no trae URL y esos eventos llegan con `corteId` nulo. La ficha dice «Último aviso sobre este barrio» y no afirma que fuera el
   que anunció un corte en particular (ética de datos 4). Para enlazarlo por corte, el backend tendría que ofrecer `urlOriginal` en `CorteRespuesta`; queda anotado para Sebastian en el PR #121.
 - **Gana.** Una línea en vez de tres y una fuente que la persona puede comprobar. **Pierde.** La hora del listado ya no está a la vista cuando todo funciona; sigue en «Cartagena ahora» y aparece si algo falla.
 - **Se revierte** restaurando `Registro` en `FichaSector` y quitando `useUltimoAviso`.
