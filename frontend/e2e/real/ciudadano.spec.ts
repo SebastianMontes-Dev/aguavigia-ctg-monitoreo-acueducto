@@ -1,51 +1,11 @@
-import { expect, test, type APIRequestContext, type Page } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+import { nuevoDispositivo, puntoDentroDe } from './ayudantes'
 
 // PNG de 1×1 píxel: el servidor verifica la firma binaria y reescala la imagen, así que no vale un texto cualquiera.
 const PNG_1X1 = Buffer.from(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
   'base64',
 )
-
-/** Cada llamada crea una identidad distinta: así se simulan vecinos distintos (docs/api/reportes.md). */
-async function nuevoDispositivo(request: APIRequestContext): Promise<string> {
-  const respuesta = await request.post('/api/dispositivos')
-  expect(respuesta.status()).toBe(201)
-  return ((await respuesta.json()) as { token: string }).token
-}
-
-type Anillo = number[][]
-
-function dentro(anillo: Anillo, x: number, y: number): boolean {
-  let adentro = false
-  for (let i = 0, j = anillo.length - 1; i < anillo.length; j = i++) {
-    const [xi = 0, yi = 0] = anillo[i] ?? []
-    const [xj = 0, yj = 0] = anillo[j] ?? []
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) adentro = !adentro
-  }
-  return adentro
-}
-
-/** Un punto dentro del barrio, de la geometría real: con él el servidor puede marcar el reporte UBICACION_VERIFICADA. */
-async function puntoDentroDe(request: APIRequestContext, sectorId: string): Promise<{ latitud: number; longitud: number }> {
-  const geometria = await (await request.get('/api/sectores/geometria')).json() as {
-    features: { id: string; geometry: { type: string; coordinates: number[][][] | number[][][][] } }[]
-  }
-  const barrio = geometria.features.find((feature) => String(feature.id) === sectorId)
-  expect(barrio, `el barrio ${sectorId} no está en la geometría`).toBeDefined()
-  const poligonos = (barrio!.geometry.type === 'Polygon' ? [barrio!.geometry.coordinates] : barrio!.geometry.coordinates) as number[][][][]
-  const exterior = poligonos[0]![0]!
-  const xs = exterior.map(([x = 0]) => x)
-  const ys = exterior.map(([, y = 0]) => y)
-  const [minX, maxX, minY, maxY] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)]
-  for (let i = 1; i < 40; i++) {
-    for (let j = 1; j < 40; j++) {
-      const x = minX + ((maxX - minX) * i) / 40
-      const y = minY + ((maxY - minY) * j) / 40
-      if (dentro(exterior, x, y)) return { latitud: y, longitud: x }
-    }
-  }
-  throw new Error(`no se encontró un punto dentro de ${sectorId}`)
-}
 
 async function abrirReporte(page: Page, opcion: string) {
   await page.getByRole('button', { name: 'Reportar lo que pasa en mi casa' }).click()
