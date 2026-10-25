@@ -179,7 +179,7 @@ Restricciones deliberadas, para que el agente no las proponga:
 - **No es una app de emergencias.** No compite con la línea de atención de Acuacar ni la sustituye.
 - **No usa estética de IA genérica.** Nada de gradiente morado sobre blanco, ni Inter/Space Grotesk
   como opción "segura", ni emoji como marcadores de sección, ni tarjetas redondeadas con barrita de
-  color al costado. Si una propuesta se parece a cualquier landing generada por IA, se rehace.
+  color al costado (salvo la ficha del barrio, `ADR-103`, que las usa sin sombra y con iconos funcionales). Si una propuesta se parece a cualquier landing generada por IA, se rehace.
 
 ---
 

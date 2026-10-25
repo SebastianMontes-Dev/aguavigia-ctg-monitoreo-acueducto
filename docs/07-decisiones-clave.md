@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6) son los últimos usados.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6) y el **ADR-103** (§7) son los últimos usados; el siguiente libre es el 104.
 
 ## 1. Decisiones que se conservan
 
@@ -554,3 +554,29 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Una línea en vez de tres y una fuente que la persona puede comprobar. **Pierde.** La hora del listado ya no está a la vista cuando todo funciona; sigue en «Cartagena ahora» y aparece si algo falla.
 - **Se revierte** restaurando `Registro` en `FichaSector` y quitando `useUltimoAviso`.
 
+## 7. Composición de la ficha del barrio (2026-10-25)
+
+### ADR-103 — La ficha del barrio se compone en bloques compactos
+
+- **Contexto.** Yordy trajo una referencia (la ficha de Manga) y pidió rediseñar la ficha con ella. La ficha apilaba texto separado por reglas de 1 px y todo pesaba lo mismo: el estado no se distinguía
+  del resto de un vistazo. La referencia choca con `identidad.md` §6 y `DESIGN.md` §9 (tarjetas, barrita de color al costado, iconos); el dueño decidió copiarla y registrar la excepción, acotada a esta pantalla.
+  Una primera versión añadió «Sobre el barrio» (fuente del estado en una tarjeta) y una nota sobre cómo se combinan las fuentes; quedó demasiado alta (1045 px a 1024 × 768) y Yordy pidió una segunda iteración:
+  menos bloques, menos aire y nada que explique el funcionamiento interno de AguaVigía.
+- **Decisión.** En `/sectores/:id`, en este orden y con 24 px entre bloques (32 px en «Cartagena ahora»):
+  1. El nombre en Newsreader y debajo el rótulo «BARRIO · N HABITANTES», con «Recibir avisos» en su esquina.
+  2. El **estado en un recuadro teñido de su color** (`color-mix` al 12 % sobre `--elevada`, borde al 35 %) con el glifo en un círculo de 44 px, la palabra y, en la línea de abajo, la frescura de ADR-102 con el punto «En vivo».
+     Sin dato verificado, **sin tinte** (ADR-014). Lo que matiza el estado va dentro y solo si existe: «Puedes reportar…», «Ya pasó la hora prometida y nadie ha confirmado que volvió el agua» (`restablecimientoPorConfirmar`),
+     «Hora de restablecimiento no informada», la disputa («N vecinos reportan algo distinto. Pendiente de revisión.»: no cambia el estado) y la advertencia de 24 horas.
+     La **procedencia** va en pequeño junto a la palabra del estado y solo distingue lo oficial de lo comunitario: «Aviso oficial de Acuacar», «Según una nota de prensa» o «Reportado por N vecinos» (`respaldo`).
+     Un estado del revisor o de un sensor no se rotula.
+  3. **«Último aviso»**, con «Ver todos →» a la bitácora del barrio (ADR-102): una tarjeta por corte abierto con barrita a la izquierda (azul de corte programado si aún no empieza, `--tinta-2` si ya empezó) y, aparte, el último
+     boletín o nota en **una fila** (icono, tipo y fecha), porque el contrato no dice qué aviso anunció cada corte. Sin nada, «No hay avisos registrados para este barrio».
+  4. El **botón de reporte a todo el ancho**, con megáfono y flecha.
+  5. Tras una regla, el historial de cortes cerrados (ADR-101) con las horas a 20 px y filas más juntas; cálculos y textos sin cambios.
+  Los iconos (calendario, megáfono, documento) son funcionales, siempre junto a una palabra y en el formato de los glifos.
+- **Lo que no se muestra.** La referencia traía localidad y un conteo de reportes recientes: la API no tiene localidad y los reportes no son públicos (guía §5.1, RF038). Sin dato útil, no hay sección «Sobre el barrio»:
+  habitantes ya está en el rótulo, y procedencia y disputa están en el estado. La explicación de cómo se combinan las fuentes no va en la ficha.
+- **Alcance.** Solo la ficha del barrio. El resto de pantallas sigue con reglas de 1 px y sin iconos; `identidad.md` §4 y §6 y `DESIGN.md` §9 nombran la excepción.
+- **Gana.** El estado se lee primero y se distingue por su recuadro, sin depender solo del color (glifo y palabra siguen). La ficha de Manga baja de 1045 a 705 px a 1024 × 768 y, a 1440 × 900, cabe entera con su historial.
+  **Pierde.** La ficha deja de ser la composición de reglas finas del resto del sitio.
+- **Se revierte** restaurando `FichaSector`, `Panel.module.css`, `CorteAbierto.module.css`, `CortesCerrados.module.css` y el botón de `Reporte` del commit anterior y quitando `componentes/Icono.tsx` y sus SVG.

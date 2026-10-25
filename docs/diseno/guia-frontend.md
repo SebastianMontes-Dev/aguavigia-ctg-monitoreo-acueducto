@@ -158,12 +158,12 @@ Esquemas de disposición, no datos reales. La barra del sitio que aloja los Arti
 │ MAPA        [+] [−]  │       │ MAPA                 [+] [−]   │
 │ leyenda / atribución │       │ leyenda / atribución           │
 ├──────────────────────┤       ├────────────────────────────────┤
-│ Barrio               │       │ Barrio                         │
-│ ◇ Estado del agua    │       │ ◇ Estado del agua              │
-│ Horario / sin horario│       │ Horario / sin horario          │
-│ Estado registrado…   │       │ Estado registrado…             │
-│ [Reportar]           │       │ [Reportar]  Historial  Avisos   │
-│ Historial  Avisos    │       │ Ampliar · Lista de sectores     │
+│ Barrio       Avisos  │       │ Barrio                  Avisos │
+│ [◇ Estado · hace X]  │       │ [◇ Estado · Actualizado hace X]│
+│ Último aviso  Todos →│       │ Último aviso        Ver todos →│
+│ [Corte] · boletín    │       │ [Corte: inicio · fin] · boletín│
+│ [Reportar ───────→]  │       │ [Reportar ──────────────────→] │
+│ Historial            │       │ Historial · Lista de sectores  │
 └──────────────────────┘       └────────────────────────────────┘
 
 1280 px
@@ -171,19 +171,19 @@ Esquemas de disposición, no datos reales. La barra del sitio que aloja los Arti
 │ AguaVigía   Mapa  Cumplimiento  Bitácora  Estadísticas  Avisos │
 ├───────────────────┬──────────────────────────────────────────┤
 │ Panel 384 px      │ Buscador y mapa                           │
-│ Barrio            │                                          │
-│ ◇ Estado          │ Sectores, calles y nombres                │
-│ Horario           │                                          │
-│ Antigüedad        │                                          │
-│ [Reportar]        │                               [+] [−]    │
-│ Historial / Avisos│ Leyenda                    Atribución     │
+│ Barrio · Avisos   │                                          │
+│ [◇ Estado]        │ Sectores, calles y nombres                │
+│ Último aviso →    │                                          │
+│ [Reportar ──→]    │                                          │
+│ Historial         │                               [+] [−]    │
+│                   │ Leyenda                    Atribución     │
 └───────────────────┴──────────────────────────────────────────┘
 ```
 
 - **360 y 768 px:** hoja inferior de ancho completo; buscador en el espacio de mapa. Al seleccionar sector, mostrar el resumen sin scroll interno y ajustar la cámara al área no tapada. Respetar `safe-area-inset-bottom`.
 - **Desde 1024 px:** panel de 384 px a la izquierda bajo cabecera, separado del mapa; contenido desplazable dentro del panel. El mapa no queda oculto debajo.
 - **Sin barrio:** resumen «Elige tu barrio para consultar el agua», con «Buscar barrio» y «Usar mi ubicación». No abrir el permiso de ubicación automáticamente. Si el permiso falla, volver a búsqueda sin bloquear nada.
-- **Barrio elegido:** nombre → estado → horario disponible → fecha de registro → reportar. Historial y avisos son secundarios. La lista de sectores abre una vista equivalente accesible sin depender de WebGL.
+- **Barrio elegido (`ADR-103`):** nombre y rótulo con «Recibir avisos» → recuadro de estado con su frescura, su procedencia y lo que lo matiza → «Último aviso» (cortes abiertos con su horario y el último boletín en una fila, con «Ver todos →») → reportar, a todo el ancho → historial. El historial es secundario. La lista de sectores abre una vista equivalente accesible sin depender de WebGL.
 - **Poca altura o zoom 200%:** permitir desplazamiento vertical y expansión de la hoja; no recortar contenido para sostener una altura fija. El criterio sin scroll se verifica a tamaño normal, no a costa de accesibilidad al ampliar.
 
 ### 4.2 Páginas de lectura, formularios y panel
@@ -210,7 +210,7 @@ Las rutas de interfaz son las de esta matriz más las que añade cada fase de [`
 | Ruta / vista | Jerarquía, texto y datos permitidos | Estados y aceptación específica |
 |---|---|---|
 | `/` mapa | §4.1; [sectores, geometría y SSE](../api/sectores-y-tiempo-real.md). Buscador y lista comparten selección | Primera visita, carga separada de mapa y estado, error parcial, sin WebGL, sin red. La ficha no espera tiles; ninguna selección inicial inventada |
-| `/sectores/:id` ficha | Nombre, estado y **una línea de frescura** («Actualizado hace X · En vivo», `ADR-102`); histórico de cortes y cumplimiento bajo demanda; fila «Último aviso de Acuacar» con su fecha y «Ver avisos →» a la bitácora del barrio filtrada a boletines (ahí se abre la fuente). «Recibir avisos» va en la esquina del rótulo del barrio. «Hora de restablecimiento no informada» cuando falta | `null`, sector inexistente, historial vacío, varios cortes, futuro y vencido. `actualizadoEn` no se convierte en inicio del corte |
+| `/sectores/:id` ficha | Compuesta en bloques (`ADR-103`). Nombre; estado en recuadro teñido con **una línea de frescura** («Actualizado hace X · En vivo», `ADR-102`), «Hora de restablecimiento no informada» cuando falta y «Ya pasó la hora prometida…» con `restablecimientoPorConfirmar`; en el recuadro, la procedencia solo cuando distingue lo oficial de lo comunitario (`origen`, `respaldo`; el revisor no se rotula) y la disputa (`enDisputa`/`reportesEnContra`); «Último aviso»: una tarjeta por corte abierto (programado o en curso según `inicio`) y el último boletín o nota en una fila con su fecha, y «Ver todos →» a la bitácora del barrio filtrada a boletines (ahí se abre la fuente). Sin sección «Sobre el barrio»: la API no tiene localidad ni reportes públicos; histórico de cortes y cumplimiento bajo demanda. «Recibir avisos» va en la esquina del rótulo del barrio | `null`, sector inexistente, historial vacío, varios cortes, futuro y vencido. `actualizadoEn` no se convierte en inicio del corte |
 | Reporte, hoja sobre mapa | «¿Qué pasa con el agua en tu casa?» y «Reportas en [barrio]». Botones «No tengo agua», «Llega poca agua», «Ya volvió el agua»; [reportes](../api/reportes.md) | Con sector conocido: abrir y elegir tipo = dos toques; el segundo envía. Cambiar barrio antes de enviar es una ruta alternativa, sin promesa de dos toques. Sin login ni campos extra |
 | Reporte recibido / foto | «Reporte recibido. Tu reporte cuenta junto con los de tus vecinos». «Añadir foto» después del 201 | Foto fallida no deshace el reporte; mantiene su id. No cambia el estado del mapa de forma optimista. Envío incierto no se presenta como recibido |
 | `/confirmar/:id` | «Confirmar reporte» y botón «Confirmar este reporte»; id recibido en el enlace, [contrato de confirmación](../api/reportes.md) | No ejecutar al abrir. Sin GET público de contenido, no inventar barrio, tipo ni foto. `404`: «Este reporte no está disponible». No crear un listado público de reportes |
