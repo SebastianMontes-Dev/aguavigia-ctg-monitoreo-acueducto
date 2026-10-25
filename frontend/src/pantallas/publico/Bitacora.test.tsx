@@ -5,7 +5,7 @@ import { bitacoraDeEjemplo } from '../../pruebas/datos/historia'
 import { sectoresDeEjemplo } from '../../pruebas/datos/sectores'
 import { Bitacora } from './Bitacora'
 
-const estado = vi.hoisted(() => ({ error: false, fallo: false, vacio: false, sustentoAbierto: false }))
+const estado = vi.hoisted(() => ({ error: false, fallo: false, vacio: false, sustentoAbierto: false, extras: [] as object[] }))
 
 vi.mock('@tanstack/react-router', () => ({
   useSearch: () => ({}),
@@ -19,8 +19,9 @@ vi.mock('../../app/datos', () => ({
     ? { isPending: false, isError: true, error: { estado: 400 }, data: undefined }
     : estado.fallo
       ? { isPending: false, isError: true, error: { estado: 503 }, data: undefined, refetch: vi.fn<() => void>() }
-      : { isPending: false, isError: false, error: null, hasNextPage: false, data: { pages: [{ eventos: estado.vacio ? [] : bitacoraDeEjemplo, paginacion: { total: estado.vacio ? 0 : 6 } }] } },
+      : { isPending: false, isError: false, error: null, hasNextPage: false, data: { pages: [{ eventos: estado.vacio ? [] : [...bitacoraDeEjemplo, ...estado.extras], paginacion: { total: estado.vacio ? 0 : 6 } }] } },
   useConteosBitacora: () => ({ CORTE_ANUNCIADO: 2, CORTE_RESTABLECIDO: 2, CORTE_CONFIRMADO_POR_CIUDADANOS: 1, CORTE_DETECTADO_POR_INGESTA: 1 }),
+  useTotalBitacora: () => ({ data: 6 }),
   useSustento: (_id: string, abierto: boolean) => {
     estado.sustentoAbierto = abierto
     return { isPending: !abierto, isError: false, data: abierto ? { pages: [{ ids: ['reporte-1'] }] } : undefined, hasNextPage: false }
@@ -28,7 +29,7 @@ vi.mock('../../app/datos', () => ({
 }))
 
 describe('Bitácora', () => {
-  afterEach(() => { estado.error = false; estado.fallo = false; estado.vacio = false; estado.sustentoAbierto = false })
+  afterEach(() => { estado.error = false; estado.fallo = false; estado.vacio = false; estado.sustentoAbierto = false; estado.extras = [] })
 
   it('debeTitularConElUltimoCambioYAgruparPorDia', () => {
     render(<Bitacora />)
@@ -43,6 +44,46 @@ describe('Bitácora', () => {
     expect(screen.getByRole('button', { name: 'Todos 6' })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: 'Anunciados 2' })).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: 'En boletines 1' })).toBeInTheDocument()
+  })
+
+  it('soloDebeOfrecerPestanasParaLosCuatroTiposQueLaApiDejaFiltrar', () => {
+    render(<Bitacora />)
+    // Con otro valor de `tipo` el servidor responde 400: los cinco tipos nuevos se ven en la lista, no en los filtros.
+    expect(screen.getAllByRole('button', { name: /^(Todos|Anunciados|Restablecidos|Confirmados por vecinos|En boletines) \d+$/ })).toHaveLength(5)
+    expect(screen.queryByRole('button', { name: /Anulados|En disputa|Consensos revertidos/ })).not.toBeInTheDocument()
+  })
+
+  it('debeNombrarCadaUnoDeLosCincoTiposNuevosEnLaLista', () => {
+    estado.extras = ['CORTE_EXPIRADO', 'CORTE_ANULADO', 'RESTABLECIMIENTO_POR_VECINOS', 'ESTADO_EN_DISPUTA', 'CONSENSO_REVERTIDO']
+      .map((tipo, i) => ({ id: `evt-n${i}`, tipo, timestamp: '2026-09-25T19:40:00Z', descripcion: `Evento ${tipo}` }))
+    render(<Bitacora />)
+    for (const nombre of ['Corte sin cierre confirmado', 'Corte anulado', 'Restablecimiento según vecinos', 'Estado en disputa', 'Consenso revertido']) {
+      expect(screen.getByText(nombre)).toBeInTheDocument()
+    }
+    expect(screen.queryByText('Evento registrado')).not.toBeInTheDocument()
+  })
+
+  it('debeMostrarUnTipoDesconocidoConTextoNeutroEnVezDeDescartarlo', () => {
+    estado.extras = [{ id: 'evt-x', tipo: 'TIPO_FUTURO', timestamp: '2026-09-25T19:45:00Z', descripcion: 'Algo que el backend añadió después' }]
+    render(<Bitacora />)
+    expect(screen.getByText('Evento registrado')).toBeInTheDocument()
+    expect(screen.getByText('Algo que el backend añadió después')).toBeInTheDocument()
+  })
+
+  it('debeMostrarLaFuenteYElRespaldoDeUnEventoDeQuorum', () => {
+    estado.extras = [{
+      id: 'evt-q', tipo: 'RESTABLECIMIENTO_POR_VECINOS', timestamp: '2026-09-25T19:50:00Z', sectorId: 'torices',
+      descripcion: 'Vecinos confirman', estado: 'CON_SERVICIO', fuente: 'VECINOS', respaldo: { vecinos: 11, umbral: 12 },
+    }]
+    render(<Bitacora />)
+    expect(screen.getByText('Reportes de vecinos · 11 de 12 vecinos')).toBeInTheDocument()
+    expect(screen.getByText(/Restablecimiento según vecinos/)).toBeInTheDocument()
+  })
+
+  it('noDebeAtribuirUnaFuenteDesconocida', () => {
+    estado.extras = [{ id: 'evt-f', tipo: 'CORTE_ANULADO', timestamp: '2026-09-25T19:55:00Z', descripcion: 'Retirado', fuente: 'OTRA' }]
+    render(<Bitacora />)
+    expect(screen.queryByText('OTRA')).not.toBeInTheDocument()
   })
 
   it('noDebeNombrarLoQueNoExiste', () => {

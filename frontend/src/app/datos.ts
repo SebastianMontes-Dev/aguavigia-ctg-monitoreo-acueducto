@@ -187,6 +187,25 @@ export function useConteosBitacora(filtros: Omit<FiltrosBitacora, 'tipo'>, tipos
   return Object.fromEntries(tipos.map((tipo, indice) => [tipo, consultas[indice]?.data ?? null])) as Record<TipoBitacora, number | null>
 }
 
+/**
+ * La pestaña «Todos»: el total sin filtrar por tipo. No sale de sumar las demás, porque cinco tipos de evento se ven en
+ * la lista pero la API no los deja filtrar (solo acepta cuatro).
+ */
+export function useTotalBitacora(filtros: Omit<FiltrosBitacora, 'tipo'>) {
+  return useQuery({
+    queryKey: ['bitacora-conteo', 'todos', filtros.sector, filtros.desde, filtros.hasta],
+    queryFn: async ({ signal }) => {
+      const { error, response } = await api.GET('/api/bitacora', {
+        params: { query: { pagina: 0, tamano: 1, sectorId: filtros.sector, desde: filtros.desde, hasta: filtros.hasta } },
+        signal,
+      }).catch(() => ({ error: undefined, response: null }))
+      if (!response || !response.ok) throw normalizarError(response ?? null, error)
+      return leerPaginacion(response.headers, 0).total
+    },
+    staleTime: 5_000,
+  })
+}
+
 export function useSustento(id: string, abierto: boolean) {
   return useInfiniteQuery({
     queryKey: ['sustento', id],

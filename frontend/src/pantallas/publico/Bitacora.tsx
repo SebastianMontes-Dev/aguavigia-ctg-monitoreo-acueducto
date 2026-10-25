@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useNavigate, useSearch } from '@tanstack/react-router'
 import type { components } from '../../api/generado/esquema'
-import { useBitacora, useConteosBitacora, useListado, useSustento } from '../../app/datos'
+import { useBitacora, useConteosBitacora, useListado, useSustento, useTotalBitacora } from '../../app/datos'
 import { useAhora } from '../../app/ahora'
 import { SelectorBarrio } from '../../componentes/SelectorBarrio'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
 import { presentarEstado, type EstadoServicio } from '../../dominio/estados'
 import {
   descripcionLegible,
-  esTipoBitacora,
+  esTipoEvento,
   FILTRO_TIPO,
   imagenDeBitacora,
   limiteDiaCartagena,
@@ -17,6 +17,7 @@ import {
   TIPOS_BITACORA,
   type TipoBitacora,
 } from '../../dominio/historia'
+import { fuenteEnPalabras } from '../../dominio/cortes'
 import { formatearNumero } from '../../dominio/formato'
 import { nombreLegible } from '../../dominio/sectores'
 import { claveDiaCartagena, etiquetaDia, formatearHora, haceCuanto } from '../../dominio/tiempo'
@@ -73,10 +74,12 @@ function EventoBitacora({ evento, nombreDe, originalDe }: {
 }) {
   const estado = estadoValido(evento.estado)
   const imagen = imagenDeBitacora(evento.imagenUrl)
-  const tipo = esTipoBitacora(evento.tipo) ? evento.tipo : null
+  const tipo = esTipoEvento(evento.tipo) ? evento.tipo : null
   const barrio = evento.sectorId ? nombreDe(evento.sectorId) ?? evento.sectorId : null
   const original = evento.sectorId ? originalDe(evento.sectorId) : undefined
   const sustento = evento.cantidadReportesSustento ?? 0
+  const fuente = fuenteEnPalabras(evento.fuente)
+  const respaldo = evento.respaldo?.vecinos != null && evento.respaldo.umbral != null ? evento.respaldo : null
   return (
     <li className={estilos.evento}>
       <time className={estilos.hora} dateTime={evento.timestamp}>{evento.timestamp ? formatearHora(evento.timestamp) : 'Sin hora'}</time>
@@ -87,6 +90,12 @@ function EventoBitacora({ evento, nombreDe, originalDe }: {
           <span className={estilos.tipo}>{tipo ? NOMBRE_TIPO[tipo] : 'Evento registrado'}{estado && ` · ${presentarEstado(estado).texto}`}</span>
         </p>
         {evento.descripcion && <p className={estilos.descripcion}>{descripcionLegible(evento.descripcion, nombreDe, original && barrio ? { original, legible: barrio } : undefined)}</p>}
+        {(fuente || respaldo) && (
+          <p className={estilos.procedencia}>
+            {fuente}{fuente && respaldo && ' · '}
+            {respaldo && `${formatearNumero(respaldo.vecinos ?? 0)} de ${formatearNumero(respaldo.umbral ?? 0)} vecinos`}
+          </p>
+        )}
         {(evento.urlOriginal || (sustento > 0 && evento.id)) && (
           <p className={estilos.acciones}>
             {evento.urlOriginal && (
@@ -137,8 +146,7 @@ export function Bitacora() {
   const nombreDe = (id: string) => nombres.get(id)
   const originalDe = (id: string) => originales.get(id)
   const barrioFiltrado = buscar.sector ? nombreDe(buscar.sector) ?? buscar.sector : null
-  const conteoTotal = TIPOS_BITACORA.every((tipo) => conteos[tipo] !== null)
-    ? TIPOS_BITACORA.reduce((suma, tipo) => suma + (conteos[tipo] ?? 0), 0) : null
+  const conteoTotal = useTotalBitacora(rango).data ?? null
 
   const ultimo = eventos[0]
   const barrioUltimo = ultimo?.sectorId ? nombreDe(ultimo.sectorId) ?? null : null

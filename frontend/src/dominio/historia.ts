@@ -1,3 +1,4 @@
+/** Los cuatro tipos por los que `GET /api/bitacora?tipo=` filtra: con otro valor el servidor responde 400 (docs/api). */
 export const TIPOS_BITACORA = [
   'CORTE_ANUNCIADO',
   'CORTE_RESTABLECIDO',
@@ -7,11 +8,28 @@ export const TIPOS_BITACORA = [
 
 export type TipoBitacora = typeof TIPOS_BITACORA[number]
 
-export const NOMBRE_TIPO: Record<TipoBitacora, string> = {
+/** Los nueve tipos que el servidor puede devolver en un evento; los cinco últimos se ven pero no se filtran. */
+export const TIPOS_EVENTO = [
+  ...TIPOS_BITACORA,
+  'CORTE_EXPIRADO',
+  'CORTE_ANULADO',
+  'RESTABLECIMIENTO_POR_VECINOS',
+  'ESTADO_EN_DISPUTA',
+  'CONSENSO_REVERTIDO',
+] as const
+
+export type TipoEvento = typeof TIPOS_EVENTO[number]
+
+export const NOMBRE_TIPO: Record<TipoEvento, string> = {
   CORTE_ANUNCIADO: 'Corte anunciado',
   CORTE_RESTABLECIDO: 'Corte restablecido',
   CORTE_CONFIRMADO_POR_CIUDADANOS: 'Confirmado por ciudadanos',
   CORTE_DETECTADO_POR_INGESTA: 'Detectado en boletín',
+  CORTE_EXPIRADO: 'Corte sin cierre confirmado',
+  CORTE_ANULADO: 'Corte anulado',
+  RESTABLECIMIENTO_POR_VECINOS: 'Restablecimiento según vecinos',
+  ESTADO_EN_DISPUTA: 'Estado en disputa',
+  CONSENSO_REVERTIDO: 'Consenso revertido',
 }
 
 /** Nombre de cada tipo como pestaña de filtro: el plural de lo que se ve en la lista. */
@@ -49,6 +67,10 @@ export function descripcionLegible(
 
 export function esTipoBitacora(valor: unknown): valor is TipoBitacora {
   return typeof valor === 'string' && TIPOS_BITACORA.some((tipo) => tipo === valor)
+}
+
+export function esTipoEvento(valor: unknown): valor is TipoEvento {
+  return typeof valor === 'string' && TIPOS_EVENTO.some((tipo) => tipo === valor)
 }
 
 function diaValido(dia: string): boolean {

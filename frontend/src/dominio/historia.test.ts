@@ -1,6 +1,33 @@
 import { describe, expect, it } from 'vitest'
-import { descripcionLegible, imagenDeBitacora, limiteDiaCartagena, rangoDiasValido } from './historia'
+import { descripcionLegible, esTipoBitacora, esTipoEvento, FILTRO_TIPO, imagenDeBitacora, limiteDiaCartagena, NOMBRE_TIPO, rangoDiasValido, TIPOS_BITACORA, TIPOS_EVENTO } from './historia'
 import { claveDiaCartagena, etiquetaDia } from './tiempo'
+
+describe('tipos de la bitácora', () => {
+  const NUEVE = [
+    'CORTE_ANUNCIADO', 'CORTE_RESTABLECIDO', 'CORTE_CONFIRMADO_POR_CIUDADANOS', 'CORTE_DETECTADO_POR_INGESTA',
+    'CORTE_EXPIRADO', 'CORTE_ANULADO', 'RESTABLECIMIENTO_POR_VECINOS', 'ESTADO_EN_DISPUTA', 'CONSENSO_REVERTIDO',
+  ]
+
+  it('debeReconocerLosNueveTiposDelContratoConSuTexto', () => {
+    expect([...TIPOS_EVENTO]).toEqual(NUEVE)
+    for (const tipo of NUEVE) {
+      expect(esTipoEvento(tipo)).toBe(true)
+      expect(NOMBRE_TIPO[tipo as keyof typeof NOMBRE_TIPO]).toEqual(expect.any(String))
+    }
+  })
+
+  it('soloDebeDejarFiltrarPorLosCuatroTiposQueLaApiAcepta', () => {
+    expect([...TIPOS_BITACORA]).toEqual(NUEVE.slice(0, 4))
+    expect(esTipoBitacora('CORTE_ANUNCIADO')).toBe(true)
+    expect(esTipoBitacora('CORTE_EXPIRADO')).toBe(false)
+    for (const tipo of TIPOS_BITACORA) expect(FILTRO_TIPO[tipo]).toEqual(expect.any(String))
+  })
+
+  it('noDebeReconocerUnTipoQueElContratoNoTiene', () => {
+    expect(esTipoEvento('TIPO_FUTURO')).toBe(false)
+    expect(esTipoEvento(undefined)).toBe(false)
+  })
+})
 
 describe('días de la bitácora', () => {
   const ahora = new Date('2026-09-25T20:00:00Z')

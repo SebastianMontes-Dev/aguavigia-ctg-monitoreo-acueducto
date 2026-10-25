@@ -35,6 +35,7 @@
   .titulo strong { font-weight: 600; }
   .tipo { color: var(--tinta-2); font-size: var(--texto-s); }
   .descripcion { max-width: var(--medida-lectura); color: var(--tinta-2); font-size: var(--texto-s); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .procedencia { color: var(--tinta-2); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
   .acciones { display: flex; flex-wrap: wrap; gap: var(--espacio-1) var(--espacio-4); }
   .enlace { min-height: 32px; padding: 0; border: 0; background: none; color: var(--tinta); font-size: var(--texto-s); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; cursor: pointer; }
   .enlace:hover { text-decoration-color: var(--laton); }
