@@ -7,14 +7,15 @@ import { CorteAbierto } from '../../componentes/CorteAbierto'
 import { CortesCerrados, CortesSinHoraReal } from '../../componentes/CortesCerrados'
 import { EnVivo, EstadoListado } from '../../componentes/EstadoListado'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
-import { estaAbierto, estaCerrado, sinHoraRealEnPalabras } from '../../dominio/cortes'
+import { Icono } from '../../componentes/Icono'
+import { estaAbierto, estaCerrado, sinHoraRealEnPalabras, type Corte } from '../../dominio/cortes'
 import { presentarEstado } from '../../dominio/estados'
+import { formatearNumero } from '../../dominio/formato'
 import { sinVerificacionReciente } from '../../dominio/frescura'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
 import { diaConFecha, formatearHora, haceCuanto, momento } from '../../dominio/tiempo'
 import estilos from './Panel.module.css'
 
-const numero = new Intl.NumberFormat('es-CO')
 // El cajón del reporte solo se necesita al tocar el botón: no pesa en la primera respuesta.
 const Reporte = lazy(() => import('./Reporte').then((modulo) => ({ default: modulo.Reporte })))
 
@@ -22,9 +23,15 @@ function Volver() {
   return <Link to="/" className={estilos.volver}><span aria-hidden="true">←</span> Cartagena ahora</Link>
 }
 
+function useCortesDelSector(sector: Sector) {
+  const consulta = useCortes(sector.id ?? '')
+  const cortes = useMemo(() => consulta.data?.pages.flatMap((pagina) => pagina.cortes) ?? [], [consulta.data])
+  return { consulta, cortes }
+}
+
 /**
  * ADR-102: una sola línea de frescura. «Verificado hace…» solo importa cuando pasan 24 horas sin verificar y entonces lo dice
- * la advertencia del encabezado; «Listado generado…» es de toda la ciudad y solo se dice cuando la lectura es guardada.
+ * la advertencia de la tarjeta; «Listado generado…» es de toda la ciudad y solo se dice cuando la lectura es guardada.
  */
 function Registro({ sector, lectura, ahora, reintentar }: { sector: Sector; lectura: LecturaCanal; ahora: Date; reintentar: () => void }) {
   if (lectura.error || lectura.estado === 'sin-red') return <EstadoListado lectura={lectura} ahora={ahora} reintentar={reintentar} />
@@ -39,59 +46,139 @@ function Registro({ sector, lectura, ahora, reintentar }: { sector: Sector; lect
 }
 
 /**
- * Una fila de fuente, con reglas y sin tarjeta: qué fue lo último que se avisó de este barrio y cuándo, y un enlace a la
- * bitácora filtrada a boletines y notas, donde se elige uno y se abre su fuente original. La ficha no enlaza una URL
- * externa: el contrato no dice qué aviso anunció cada corte.
+ * Solo distingue un aviso oficial o una nota de prensa de un reporte de vecinos. Un estado del revisor o de un sensor no
+ * se rotula: la persona necesita saber qué pasa con el agua, no cómo funciona AguaVigía por dentro.
  */
-function FuenteDelAviso({ sector, ahora }: { sector: Sector; ahora: Date }) {
-  const { data: aviso } = useUltimoAviso(sector.id ?? '')
-  if (!aviso) return null
-  const quien = aviso.fuente === 'PRENSA' ? 'de prensa' : aviso.fuente === 'ACUACAR' ? 'de Acuacar' : 'de este barrio'
+function procedenciaDelEstado(sector: Sector): string | null {
+  switch (sector.origen) {
+    case 'ACUACAR': return 'Aviso oficial de Acuacar'
+    case 'PRENSA': return 'Según una nota de prensa'
+    case 'VECINOS': {
+      const vecinos = sector.respaldo?.vecinos
+      return vecinos ? `Reportado por ${formatearNumero(vecinos)} ${vecinos === 1 ? 'vecino' : 'vecinos'}` : 'Reportado por vecinos'
+    }
+    default: return null
+  }
+}
+
+/**
+ * ADR-103: el estado en un recuadro teñido de su color, con glifo y palabra; sin dato verificado no lleva color. Lo que
+ * matiza el estado (procedencia, promesa vencida, disputa, falta de verificación) va dentro, no en bloques aparte.
+ */
+function EstadoActual({ sector, lectura, ahora, reintentar }: { sector: Sector; lectura: LecturaCanal; ahora: Date; reintentar: () => void }) {
+  const { consulta, cortes } = useCortesDelSector(sector)
+  const estado = presentarEstado(sector.estado)
+  const afectado = sector.estado && sector.estado !== 'CON_SERVICIO'
+  const cortesLeidos = !consulta.isPending && !(consulta.isError && cortes.length === 0)
+  const abiertos = cortes.filter((corte) => estaAbierto(corte, sector.id))
+  const sinHora = afectado && cortesLeidos && abiertos.length === 0
+  const enContra = sector.enDisputa ? sector.reportesEnContra ?? 0 : 0
+  // El corte abierto ya dice «Aviso oficial de Acuacar» justo debajo: repetirlo junto al estado no informa nada.
+  const repetida = sector.origen === 'ACUACAR' && abiertos.some((corte) => corte.origen === 'OFICIAL_ACUACAR')
+  const procedencia = repetida ? null : procedenciaDelEstado(sector)
+
   return (
-    <section aria-label="Fuente del aviso" className={estilos.fuente}>
-      <p className={estilos.fuenteTexto}>
-        <span className={estilos.rotulo}>Último aviso {quien}</span>
-        {aviso.timestamp && (
-          <time dateTime={aviso.timestamp}>{diaConFecha(aviso.timestamp, ahora, { pasado: true })}, {formatearHora(aviso.timestamp)}</time>
+    <section aria-label="Estado actual" className={estilos.tarjetaEstado} data-estado={estado.clave}>
+      <span className={estilos.circuloGlifo}><GlifoEstado estado={sector.estado} tamano={24} /></span>
+      <div className={estilos.cuerpoEstado}>
+        <p className={estilos.filaTituloEstado}>
+          <span className={estilos.tituloEstado}>{estado.texto}</span>
+          {procedencia && <span className={estilos.procedencia}>{procedencia}</span>}
+        </p>
+        <Registro sector={sector} lectura={lectura} ahora={ahora} reintentar={reintentar} />
+        {!sector.estado && <p className={estilos.lineaEstado}>Puedes reportar lo que pasa en tu casa.</p>}
+        {sector.restablecimientoPorConfirmar && (
+          <p className={estilos.lineaEstado}>Ya pasó la hora prometida y nadie ha confirmado que volvió el agua.</p>
         )}
-      </p>
-      <Link
-        to="/bitacora"
-        search={{ sector: sector.id, tipo: 'CORTE_DETECTADO_POR_INGESTA' }}
-        aria-label={`Ver avisos ${quien} en la bitácora`}
-        className={estilos.enlaceFlecha}
-      >
-        Ver avisos <span aria-hidden="true">→</span>
-      </Link>
+        {sinHora && <p className={estilos.lineaEstado}>Hora de restablecimiento no informada.</p>}
+        {enContra > 0 && (
+          <p className={estilos.lineaEstado}>
+            {formatearNumero(enContra)} {enContra === 1 ? 'vecino reporta' : 'vecinos reportan'} algo distinto. Pendiente de revisión.
+          </p>
+        )}
+        {sinVerificacionReciente(sector.verificadoEn, ahora) && (
+          <p className={estilos.advertencia}>
+            Sin verificación reciente: nadie lo confirma desde hace más de 24 horas. El estado es el último registrado.
+          </p>
+        )}
+      </div>
     </section>
   )
 }
 
-function useCortesDelSector(sector: Sector) {
-  const consulta = useCortes(sector.id ?? '')
-  const cortes = useMemo(() => consulta.data?.pages.flatMap((pagina) => pagina.cortes) ?? [], [consulta.data])
-  return { consulta, cortes }
+const TIPO_DE_AVISO: Record<string, string> = { ACUACAR: 'Aviso de Acuacar', PRENSA: 'Nota de prensa' }
+
+/** Un corte que aún no empieza se dice programado; uno que ya empezó, en curso. No se infiere que causó el estado. */
+function TarjetaCorte({ corte, ahora }: { corte: Corte; ahora: Date }) {
+  const tipo = !corte.inicio ? 'registrado' : new Date(corte.inicio).getTime() > ahora.getTime() ? 'programado' : 'en-curso'
+  return (
+    <div className={estilos.tarjetaAviso} data-tipo={tipo}>
+      <p className={estilos.tipoAviso}>
+        <Icono nombre="calendario" tamano={16} />
+        {tipo === 'programado' ? 'Corte programado' : tipo === 'en-curso' ? 'Corte en curso' : 'Corte registrado'}
+      </p>
+      <CorteAbierto corte={corte} ahora={ahora} />
+    </div>
+  )
 }
 
-function Horario({ sector, ahora }: { sector: Sector; ahora: Date }) {
+/**
+ * Los cortes abiertos del barrio y, en una fila, el último boletín o nota que lo nombra. Van separados porque el contrato
+ * no dice qué aviso anunció cada corte (ADR-102); «Ver todos» lleva a la bitácora filtrada, donde se abre la fuente.
+ */
+function UltimoAviso({ sector, ahora }: { sector: Sector; ahora: Date }) {
   const { consulta, cortes } = useCortesDelSector(sector)
+  const avisoConsulta = useUltimoAviso(sector.id ?? '')
+  const aviso = avisoConsulta.data
   const abiertos = cortes.filter((corte) => estaAbierto(corte, sector.id))
-  const afectado = sector.estado && sector.estado !== 'CON_SERVICIO'
-  if (!consulta.isPending && !consulta.isError && abiertos.length === 0 && !afectado) return null
+  const fallo = (consulta.isError && cortes.length === 0) || avisoConsulta.isError
+  const cargando = consulta.isPending || (abiertos.length === 0 && avisoConsulta.isPending)
+
+  function reintentar() {
+    if (consulta.isError) void consulta.refetch()
+    if (avisoConsulta.isError) void avisoConsulta.refetch()
+  }
 
   return (
-    <section aria-label="Horario del corte" className={estilos.bloque} aria-busy={consulta.isPending}>
-      {consulta.isPending ? (
+    <section aria-labelledby="titulo-aviso" className={estilos.bloqueFicha} aria-busy={cargando}>
+      <div className={estilos.cabeceraSeccion}>
+        <h2 id="titulo-aviso" className={estilos.seccionFicha}>Último aviso</h2>
+        {aviso && (
+          <Link
+            to="/bitacora"
+            search={{ sector: sector.id, tipo: 'CORTE_DETECTADO_POR_INGESTA' }}
+            aria-label={`Ver todos los avisos de ${nombreLegible(sector.nombre)} en la bitácora`}
+            className={estilos.enlaceFlecha}
+          >
+            Ver todos <span aria-hidden="true">→</span>
+          </Link>
+        )}
+      </div>
+      {cargando ? (
         <div className={estilos.esqueleto} aria-hidden="true"><span /><span /></div>
-      ) : consulta.isError && cortes.length === 0 ? (
-        <div className={estilos.alerta} role="alert">
-          <p>No pudimos consultar los cortes de este barrio.</p>
-          <button type="button" className={estilos.botonSecundario} onClick={() => consulta.refetch()}>Reintentar</button>
-        </div>
-      ) : abiertos.length > 0 ? (
-        abiertos.map((corte) => <CorteAbierto key={corte.id} corte={corte} ahora={ahora} />)
       ) : (
-        <p className={estilos.nota}>Hora de restablecimiento no informada.</p>
+        <>
+          {fallo && (
+            <div className={estilos.alerta} role="alert">
+              <p>No pudimos consultar los avisos de este barrio.</p>
+              <button type="button" className={estilos.botonSecundario} onClick={reintentar}>Reintentar</button>
+            </div>
+          )}
+          {abiertos.map((corte) => <TarjetaCorte key={corte.id} corte={corte} ahora={ahora} />)}
+          {aviso ? (
+            <p className={estilos.filaAviso}>
+              <Icono nombre="documento" tamano={16} />
+              <span className={estilos.tipoFila}>{(aviso.fuente && TIPO_DE_AVISO[aviso.fuente]) || 'Aviso sobre este barrio'}</span>
+              {aviso.timestamp && (
+                <time dateTime={aviso.timestamp} className={estilos.fechaAviso}>
+                  {diaConFecha(aviso.timestamp, ahora, { pasado: true })}, {formatearHora(aviso.timestamp)}
+                </time>
+              )}
+            </p>
+          ) : !fallo && abiertos.length === 0 && (
+            <p className={estilos.nota}>No hay avisos registrados para este barrio.</p>
+          )}
+        </>
       )}
     </section>
   )
@@ -102,8 +189,8 @@ function Historial({ sector, ahora }: { sector: Sector; ahora: Date }) {
   const cerrados = cortes.filter((corte) => estaCerrado(corte, sector.id))
   const sinHoraReal = cortes.filter((corte) => sinHoraRealEnPalabras(corte) !== null)
   return (
-    <section aria-labelledby="titulo-cerrados" className={estilos.bloque}>
-      <h2 id="titulo-cerrados" className={estilos.seccion}>Cortes cerrados en {nombreLegible(sector.nombre)}</h2>
+    <section aria-labelledby="titulo-cerrados" className={`${estilos.bloqueFicha} ${estilos.historial}`}>
+      <h2 id="titulo-cerrados" className={estilos.seccionFicha}>Cortes cerrados en {nombreLegible(sector.nombre)}</h2>
       {consulta.isPending || (consulta.isError && cortes.length === 0) ? null : cerrados.length === 0 ? (
         <p className={estilos.nota}>No hay cortes cerrados registrados para este barrio.</p>
       ) : (
@@ -153,43 +240,27 @@ export function FichaSector() {
   }
 
   const nombre = nombreLegible(sector.nombre)
-  const estado = presentarEstado(sector.estado)
-  const advertir = sinVerificacionReciente(sector.verificadoEn, ahora)
 
   return (
-    <article className={estilos.contenido} aria-labelledby="nombre-barrio">
+    <article className={`${estilos.contenido} ${estilos.contenidoFicha}`} aria-labelledby="nombre-barrio">
       <Volver />
       <header className={estilos.ficha}>
+        <h1 id="nombre-barrio" className={estilos.barrio}>{nombre}</h1>
         <div className={estilos.filaRotulo}>
           <p className={estilos.rotulo}>
-            Barrio · {sector.poblacion == null ? 'sin dato censal' : `${numero.format(sector.poblacion)} habitantes`}
+            Barrio · {sector.poblacion == null ? 'sin dato censal' : `${formatearNumero(sector.poblacion)} habitantes`}
           </p>
           <Link to="/avisos" search={{ sector: sector.id }} aria-label={`Recibir avisos de ${nombre}`} className={estilos.avisosEsquina}>
             Recibir avisos
           </Link>
         </div>
-        <h1 id="nombre-barrio" className={estilos.barrio}>{nombre}</h1>
-        <p className={estilos.estado}>
-          <GlifoEstado estado={sector.estado} tamano={24} />
-          {estado.texto}
-        </p>
-        {!sector.estado && <p className={estilos.nota}>Puedes reportar lo que pasa en tu casa.</p>}
-        {advertir && (
-          <p className={estilos.advertencia}>
-            Sin verificación reciente: nadie lo confirma desde hace más de 24 horas. El estado es el último registrado.
-          </p>
-        )}
       </header>
 
-      <Horario sector={sector} ahora={ahora} />
+      <EstadoActual sector={sector} lectura={lectura} ahora={ahora} reintentar={reintentar} />
 
-      <section aria-label="Registro del dato" className={estilos.bloque}>
-        <Registro sector={sector} lectura={lectura} ahora={ahora} reintentar={reintentar} />
-      </section>
+      <UltimoAviso sector={sector} ahora={ahora} />
 
-      <FuenteDelAviso sector={sector} ahora={ahora} />
-
-      <section aria-label="Qué puedes hacer" className={`${estilos.bloque} ${estilos.acciones}`}>
+      <section aria-label="Qué puedes hacer" className={estilos.acciones}>
         <Suspense fallback={<span className={estilos.reservaBoton} aria-hidden="true" />}>
           <Reporte sector={sector} />
         </Suspense>

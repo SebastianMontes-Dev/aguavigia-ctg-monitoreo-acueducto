@@ -21,8 +21,11 @@ export function listado(ahora = new Date()) {
   return {
     generadoEn: ahora.toISOString(),
     sectores: [
-      { id: 'armenia', nombre: 'ARMENIA', poblacion: 1061, estado: 'SIN_SERVICIO', actualizadoEn: haceHoras(1), verificadoEn: haceHoras(1) },
-      { id: 'el-bosque', nombre: 'EL BOSQUE', poblacion: 6754, estado: 'CON_SERVICIO', actualizadoEn: haceHoras(52), verificadoEn: haceHoras(30) },
+      { id: 'armenia', nombre: 'ARMENIA', poblacion: 1061, estado: 'SIN_SERVICIO', actualizadoEn: haceHoras(1), verificadoEn: haceHoras(1), origen: 'ACUACAR' },
+      {
+        id: 'el-bosque', nombre: 'EL BOSQUE', poblacion: 6754, estado: 'CON_SERVICIO', actualizadoEn: haceHoras(52), verificadoEn: haceHoras(30),
+        origen: 'VECINOS', respaldo: { vecinos: 12, umbral: 12 }, enDisputa: true, reportesEnContra: 5,
+      },
       { id: 'manga', nombre: 'MANGA', poblacion: null, estado: null, actualizadoEn: null, verificadoEn: null },
     ],
   }

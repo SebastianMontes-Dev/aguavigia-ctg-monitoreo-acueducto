@@ -30,6 +30,19 @@
     outline-offset: 3px;
   }
 
+  /* ADR-103: en la ficha del barrio el principal ocupa el ancho del panel, con su icono a la izquierda y la flecha al extremo. */
+  .ancho {
+    width: 100%;
+    justify-content: space-between;
+    text-align: start;
+  }
+
+  .etiqueta {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-3);
+  }
+
   .flecha {
     display: inline-block;
   }

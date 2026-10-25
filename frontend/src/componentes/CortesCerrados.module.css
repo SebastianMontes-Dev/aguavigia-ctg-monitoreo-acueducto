@@ -6,8 +6,8 @@
 
   .fila {
     display: grid;
-    gap: var(--espacio-2);
-    padding: var(--espacio-4) 0;
+    gap: var(--espacio-1);
+    padding: var(--espacio-3) 0;
     border-bottom: 1px solid var(--linea-suave);
   }
 
@@ -27,6 +27,7 @@
 
   /* Dos horas lado a lado, con su día: se comparan de un vistazo sin restar nada. La regla de 1 px las separa. */
   .marcas {
+    margin-bottom: var(--espacio-1);
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--espacio-4);
@@ -46,7 +47,7 @@
     display: flex;
     align-items: center;
     gap: var(--espacio-2);
-    margin-bottom: var(--espacio-1);
+    margin-bottom: 2px;
     font-size: var(--texto-xs);
     font-weight: 600;
     letter-spacing: 0.08em;
@@ -55,7 +56,7 @@
   }
 
   .cifra {
-    font-size: 1.5rem;
+    font-size: var(--texto-l);
     font-weight: 600;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;

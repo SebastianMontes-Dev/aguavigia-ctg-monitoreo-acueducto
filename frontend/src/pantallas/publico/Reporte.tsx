@@ -3,6 +3,7 @@ import { Button, Dialog, DialogTrigger, Heading, Modal, ModalOverlay } from 'rea
 import { recordarPropio } from '../../api/memoria-reportes'
 import { enviarFoto, enviarReporte, TIPOS_FOTO, type ResultadoEnvio, type ResultadoFoto, type TipoReporte } from '../../api/reportes'
 import { ubicacionPara } from '../../app/ubicacion'
+import { Icono } from '../../componentes/Icono'
 import { MarcaRecibido } from '../../componentes/MarcaRecibido'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
 import botones from '../../componentes/Botones.module.css'
@@ -152,8 +153,9 @@ export function Reporte({ sector }: { sector: Sector }) {
 
   return (
     <DialogTrigger onOpenChange={(abierto) => { if (!abierto) setResultado(null) }}>
-      <Button className={botones.principal}>
-        Reportar lo que pasa en mi casa <span className={botones.flecha} aria-hidden="true">→</span>
+      <Button className={`${botones.principal} ${botones.ancho}`}>
+        <span className={botones.etiqueta}><Icono nombre="megafono" />Reportar lo que pasa en mi casa</span>
+        <span className={botones.flecha} aria-hidden="true">→</span>
       </Button>
       <ModalOverlay className={estilos.fondo} isDismissable>
         <Modal className={estilos.cajon}>

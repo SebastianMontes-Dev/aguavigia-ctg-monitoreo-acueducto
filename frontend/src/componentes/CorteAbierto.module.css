@@ -1,7 +1,7 @@
 @layer componentes {
   .corte {
     display: grid;
-    gap: var(--espacio-4);
+    gap: var(--espacio-3);
   }
 
   .corte + .corte {
@@ -12,7 +12,7 @@
   .horas {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--espacio-4);
+    gap: var(--espacio-3);
   }
 
   .hora dd {
@@ -30,7 +30,7 @@
   }
 
   .cifra {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 600;
     line-height: 1.1;
     font-variant-numeric: tabular-nums;
@@ -51,7 +51,7 @@
   .regla {
     position: relative;
     height: 28px;
-    margin: 18px 6px 0;
+    margin: 10px 6px 0;
   }
 
   .eje,

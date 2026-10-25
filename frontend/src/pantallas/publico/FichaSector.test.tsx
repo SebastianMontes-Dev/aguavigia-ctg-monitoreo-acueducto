@@ -1,13 +1,17 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { vi } from 'vitest'
 import type { LecturaCanal } from '../../api/canal-en-vivo'
+import type { Corte } from '../../dominio/cortes'
+import type { Sector } from '../../dominio/sectores'
 import { FichaSector } from './FichaSector'
 
-const SECTOR = { id: 'manga', nombre: 'MANGA', poblacion: 10754, estado: 'SIN_SERVICIO', actualizadoEn: '2026-09-25T19:30:00Z', verificadoEn: '2026-09-25T19:30:00Z' }
+const BASE: Sector = { id: 'manga', nombre: 'MANGA', poblacion: 10754, estado: 'SIN_SERVICIO', actualizadoEn: '2026-09-25T19:30:00Z', verificadoEn: '2026-09-25T19:30:00Z' }
 
 const prueba = vi.hoisted(() => ({
   estado: 'en-vivo' as string,
   error: false,
+  sector: null as unknown as Sector,
+  cortes: [] as Corte[],
   aviso: null as null | { urlOriginal?: string; fuente?: string; timestamp?: string },
 }))
 
@@ -22,22 +26,38 @@ vi.mock('../../app/ahora', () => ({ useAhora: () => new Date('2026-09-25T20:00:0
 vi.mock('./Reporte', () => ({ Reporte: () => <button type="button">Reportar</button> }))
 vi.mock('../../app/datos', () => ({
   useListado: () => ({
-    lectura: { listado: { generadoEn: '2026-09-25T19:55:00Z', sectores: [SECTOR] }, estado: prueba.estado, error: prueba.error } as unknown as LecturaCanal,
-    porId: new Map([['manga', SECTOR]]),
+    lectura: { listado: { generadoEn: '2026-09-25T19:55:00Z', sectores: [prueba.sector] }, estado: prueba.estado, error: prueba.error } as unknown as LecturaCanal,
+    porId: new Map([['manga', prueba.sector]]),
     reintentar: vi.fn<() => void>(),
   }),
-  useCortes: () => ({ isPending: false, isError: false, data: { pages: [{ cortes: [] }] }, hasNextPage: false }),
+  useCortes: () => ({ isPending: false, isError: false, data: { pages: [{ cortes: prueba.cortes }] }, hasNextPage: false }),
   useUltimoAviso: () => ({ data: prueba.aviso ? { id: 'a1', tipo: 'CORTE_DETECTADO_POR_INGESTA', ...prueba.aviso } : null }),
 }))
 
-describe('FichaSector: frescura y fuente', () => {
-  afterEach(() => { prueba.estado = 'en-vivo'; prueba.error = false; prueba.aviso = null })
+const ACUACAR = { urlOriginal: 'https://www.acuacar.com/boletin/1', fuente: 'ACUACAR', timestamp: '2026-09-25T15:00:00Z' }
 
-  it('debeDarUnaSolaLineaDeFrescuraConElPuntoEnVivo', () => {
+function abierto(inicio: string): Corte {
+  return { id: `c-${inicio}`, sectoresAfectados: ['manga'], inicio, finPrometido: '2026-09-26T03:00:00Z', cierres: [], origen: 'OFICIAL_ACUACAR', estado: 'CONFIRMADO' }
+}
+
+const estadoActual = () => screen.getByRole('region', { name: 'Estado actual' })
+const ultimoAviso = () => screen.getByRole('region', { name: 'Último aviso' })
+
+beforeEach(() => { prueba.sector = { ...BASE } })
+afterEach(() => { prueba.estado = 'en-vivo'; prueba.error = false; prueba.aviso = null; prueba.cortes = [] })
+
+describe('FichaSector: encabezado y estado', () => {
+  it('debeNombrarLosHabitantesUnaSolaVez', () => {
     render(<FichaSector />)
-    const registro = screen.getByRole('region', { name: 'Registro del dato' })
-    expect(registro).toHaveTextContent('Actualizado hace 30 min')
-    expect(registro).toHaveTextContent('En vivo')
+    expect(screen.getAllByText(/10\.754 habitantes/)).toHaveLength(1)
+    expect(screen.getByRole('heading', { level: 1, name: 'Manga' })).toBeInTheDocument()
+  })
+
+  it('debeDarUnaSolaLineaDeFrescuraConElPuntoEnVivoDentroDelEstado', () => {
+    render(<FichaSector />)
+    expect(estadoActual()).toHaveTextContent('Sin servicio')
+    expect(estadoActual()).toHaveTextContent('Actualizado hace 30 min')
+    expect(estadoActual()).toHaveTextContent('En vivo')
     expect(screen.queryByText(/Listado generado/)).not.toBeInTheDocument()
     expect(screen.queryByText(/verificado hace/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Estado registrado/)).not.toBeInTheDocument()
@@ -50,29 +70,23 @@ describe('FichaSector: frescura y fuente', () => {
     expect(screen.queryByText(/Actualizado hace/)).not.toBeInTheDocument()
   })
 
-  it('debeLlevarALaBitacoraDelBarrioFiltradaAlosAvisosYDecirCuandoFueElUltimo', () => {
-    prueba.aviso = { urlOriginal: 'https://www.acuacar.com/boletin/1', fuente: 'ACUACAR', timestamp: '2026-09-25T15:00:00Z' }
+  it('debeMostrarSinDatosVerificadosSinColorYConLaInvitacionAReportar', () => {
+    prueba.sector = { ...BASE, estado: null, actualizadoEn: null, verificadoEn: null }
     render(<FichaSector />)
-    const enlace = screen.getByRole('link', { name: 'Ver avisos de Acuacar en la bitácora' })
-    expect(enlace).toHaveAttribute('href', '/bitacora')
-    expect(JSON.parse(enlace.getAttribute('data-search') ?? '{}')).toEqual({ sector: 'manga', tipo: 'CORTE_DETECTADO_POR_INGESTA' })
-    expect(screen.getByText('Último aviso de Acuacar')).toBeInTheDocument()
-    // La fecha real acompaña al día relativo: «Ayer · jue 25 sep», no solo «ayer».
-    expect(screen.getByText(/Hoy · vie 25 sep, 10:00 a\. m\./)).toBeInTheDocument()
-    // La ficha no abre ninguna fuente externa por sí sola: eso se elige en la bitácora.
-    expect(screen.queryByRole('link', { name: /boletín original/ })).not.toBeInTheDocument()
-    expect(document.querySelector('a[href^="http"]')).toBeNull()
+    expect(estadoActual()).toHaveAttribute('data-estado', 'SIN_DATOS')
+    expect(estadoActual()).toHaveTextContent('Sin datos verificados')
+    expect(estadoActual()).toHaveTextContent('Puedes reportar lo que pasa en tu casa.')
   })
 
-  it('debeNombrarLaPrensaCuandoElUltimoAvisoVienedeUnaNota', () => {
-    prueba.aviso = { fuente: 'PRENSA', timestamp: '2026-09-25T15:00:00Z' }
+  it('debeDecirQueNadieConfirmoElRestablecimientoCuandoLaPromesaVencio', () => {
+    prueba.sector = { ...BASE, restablecimientoPorConfirmar: true }
     render(<FichaSector />)
-    expect(screen.getByRole('link', { name: 'Ver avisos de prensa en la bitácora' })).toBeInTheDocument()
+    expect(estadoActual()).toHaveTextContent('Ya pasó la hora prometida y nadie ha confirmado que volvió el agua.')
   })
 
-  it('noDebeOfrecerElBotonSiNoHayAvisos', () => {
+  it('debeDecirQueLaHoraNoEstaInformadaSiElBarrioEstaAfectadoSinCorteAbierto', () => {
     render(<FichaSector />)
-    expect(screen.queryByRole('link', { name: /Ver avisos/ })).not.toBeInTheDocument()
+    expect(estadoActual()).toHaveTextContent('Hora de restablecimiento no informada.')
   })
 
   it('debeDejarRecibirAvisosEnLaEsquinaDelEncabezadoYNoEntreLasAcciones', () => {
@@ -81,5 +95,96 @@ describe('FichaSector: frescura y fuente', () => {
     expect(enlace).toHaveTextContent('Recibir avisos')
     expect(JSON.parse(enlace.getAttribute('data-search') ?? '{}')).toEqual({ sector: 'manga' })
     expect(screen.getByRole('region', { name: 'Qué puedes hacer' })).not.toContainElement(enlace)
+  })
+})
+
+describe('FichaSector: último aviso', () => {
+  it('debeLlevarALaBitacoraDelBarrioFiltradaAlosAvisosYDecirCuandoFueElUltimo', () => {
+    prueba.aviso = ACUACAR
+    render(<FichaSector />)
+    const enlace = screen.getByRole('link', { name: 'Ver todos los avisos de Manga en la bitácora' })
+    expect(enlace).toHaveTextContent('Ver todos')
+    expect(enlace).toHaveAttribute('href', '/bitacora')
+    expect(JSON.parse(enlace.getAttribute('data-search') ?? '{}')).toEqual({ sector: 'manga', tipo: 'CORTE_DETECTADO_POR_INGESTA' })
+    expect(within(ultimoAviso()).getByText('Aviso de Acuacar')).toBeInTheDocument()
+    // La fecha real acompaña al día relativo: «Hoy · vie 25 sep», no solo «hoy».
+    expect(within(ultimoAviso()).getByText(/Hoy · vie 25 sep, 10:00 a\. m\./)).toBeInTheDocument()
+    // La ficha no abre ninguna fuente externa por sí sola: eso se elige en la bitácora.
+    expect(document.querySelector('a[href^="http"]')).toBeNull()
+  })
+
+  it('debeNombrarLaPrensaCuandoElUltimoAvisoVieneDeUnaNota', () => {
+    prueba.aviso = { fuente: 'PRENSA', timestamp: '2026-09-25T15:00:00Z' }
+    render(<FichaSector />)
+    expect(within(ultimoAviso()).getByText('Nota de prensa')).toBeInTheDocument()
+  })
+
+  it('debeDecirQueNoHayAvisosSinOfrecerVerTodosCuandoNoHayCorteNiAviso', () => {
+    render(<FichaSector />)
+    expect(within(ultimoAviso()).getByText('No hay avisos registrados para este barrio.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /Ver todos/ })).not.toBeInTheDocument()
+  })
+
+  it('debeDistinguirUnCorteProgramadoDeUnoEnCursoSegunSuInicio', () => {
+    prueba.cortes = [abierto('2026-09-25T22:00:00Z'), abierto('2026-09-25T18:00:00Z')]
+    render(<FichaSector />)
+    const tarjetas = within(ultimoAviso()).getAllByRole('article', { name: 'Corte registrado para este barrio' })
+    expect(tarjetas).toHaveLength(2)
+    expect(within(ultimoAviso()).getByText('Corte programado').closest('[data-tipo]')).toHaveAttribute('data-tipo', 'programado')
+    expect(within(ultimoAviso()).getByText('Corte en curso').closest('[data-tipo]')).toHaveAttribute('data-tipo', 'en-curso')
+    expect(estadoActual()).not.toHaveTextContent('Hora de restablecimiento no informada.')
+  })
+
+  it('debeDarElUltimoAvisoEnUnaFilaAparteDelCorteAbiertoYUnaSolaVez', () => {
+    prueba.cortes = [abierto('2026-09-25T18:00:00Z')]
+    prueba.aviso = ACUACAR
+    render(<FichaSector />)
+    // El contrato no dice qué aviso anunció el corte (ADR-102): la fila no va dentro de la tarjeta del corte.
+    const corte = within(ultimoAviso()).getByRole('article', { name: 'Corte registrado para este barrio' })
+    expect(corte).not.toHaveTextContent(/Hoy · vie 25 sep, 10:00/)
+    expect(within(ultimoAviso()).getAllByText('Aviso de Acuacar')).toHaveLength(1)
+    expect(within(ultimoAviso()).getAllByText(/Hoy · vie 25 sep, 10:00 a\. m\./)).toHaveLength(1)
+  })
+})
+
+describe('FichaSector: procedencia y disputa dentro del estado', () => {
+  it('debeDecirCuantosVecinosSostienenElEstadoJuntoAlEstado', () => {
+    prueba.sector = { ...BASE, origen: 'VECINOS', respaldo: { vecinos: 12, umbral: 12 } }
+    render(<FichaSector />)
+    expect(estadoActual()).toHaveTextContent('Reportado por 12 vecinos')
+  })
+
+  it('debeDistinguirElAvisoOficialJuntoAlEstado', () => {
+    prueba.sector = { ...BASE, origen: 'ACUACAR' }
+    render(<FichaSector />)
+    expect(estadoActual()).toHaveTextContent('Aviso oficial de Acuacar')
+  })
+
+  it('noDebeRepetirElAvisoOficialSiYaLoDiceElCorteAbierto', () => {
+    prueba.sector = { ...BASE, origen: 'ACUACAR' }
+    prueba.cortes = [abierto('2026-09-25T18:00:00Z')]
+    render(<FichaSector />)
+    expect(screen.getAllByText(/Aviso oficial de Acuacar/)).toHaveLength(1)
+  })
+
+  it('noDebeRotularElEstadoQueSostieneUnRevisor', () => {
+    prueba.sector = { ...BASE, origen: 'VEEDOR' }
+    render(<FichaSector />)
+    expect(screen.queryByText(/revisor/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Fuente del estado/)).not.toBeInTheDocument()
+  })
+
+  it('debeMostrarLaDisputaDentroDelEstadoSinCambiarlo', () => {
+    prueba.sector = { ...BASE, origen: 'ACUACAR', enDisputa: true, reportesEnContra: 7 }
+    render(<FichaSector />)
+    expect(estadoActual()).toHaveTextContent('7 vecinos reportan algo distinto. Pendiente de revisión.')
+    expect(estadoActual()).toHaveAttribute('data-estado', 'SIN_SERVICIO')
+    expect(estadoActual()).toHaveTextContent('Sin servicio')
+  })
+
+  it('noDebeTenerBloquesDeRellenoNiLaNotaExplicativa', () => {
+    render(<FichaSector />)
+    expect(screen.queryByRole('region', { name: 'Sobre el barrio' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Combinamos avisos de Acuacar/)).not.toBeInTheDocument()
   })
 })

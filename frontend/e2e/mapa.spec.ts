@@ -26,6 +26,16 @@ test('debePresentarElEstadoNuloComoSinDatosYNuncaComoConServicio', async ({ page
   await expect(ficha.getByText('Sin fecha de registro.')).toBeVisible()
 })
 
+test('debeDecirQuienSostieneElEstadoYQueLosVecinosLoDisputanSinCambiarlo', async ({ page }) => {
+  await simularApi(page)
+  await page.goto('/sectores/el-bosque')
+  const estado = page.getByRole('region', { name: 'Estado actual' })
+  await expect(estado.getByText('Reportado por 12 vecinos')).toBeVisible()
+  await expect(estado.getByText('5 vecinos reportan algo distinto. Pendiente de revisión.')).toBeVisible()
+  await expect(estado.getByText('Con servicio')).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Sobre el barrio' })).toHaveCount(0)
+})
+
 test('debeAdvertirSinVerificacionRecienteSinCambiarElEstado', async ({ page }) => {
   await simularApi(page)
   await page.goto('/sectores/el-bosque')
@@ -114,8 +124,9 @@ function bitacoraConAviso(urlOriginal: string) {
 test('debeLlevarALaBitacoraDelBarrioYDeAhiAbrirLaFuenteOriginal', async ({ page }) => {
   await simularApi(page, { bitacora: bitacoraConAviso('https://www.acuacar.com/boletin/ejemplo') })
   await page.goto('/sectores/armenia')
-  await expect(page.getByText('Último aviso de Acuacar')).toBeVisible()
-  await page.getByRole('link', { name: 'Ver avisos de Acuacar en la bitácora' }).click()
+  // Armenia tiene un corte abierto; el último aviso va en su propia fila, fuera de la tarjeta del corte.
+  await expect(page.getByRole('region', { name: 'Último aviso' }).getByText('Aviso de Acuacar', { exact: true })).toBeVisible()
+  await page.getByRole('link', { name: 'Ver todos los avisos de Armenia en la bitácora' }).click()
 
   await expect(page).toHaveURL(/\/bitacora\?.*sector=armenia/)
   await expect(page).toHaveURL(/tipo=CORTE_DETECTADO_POR_INGESTA/)
@@ -136,13 +147,13 @@ test('noDebeOfrecerElBotonDeAvisosSiElBarrioNoTieneNinguno', async ({ page }) =>
   await simularApi(page)
   await page.goto('/sectores/armenia')
   await expect(page.getByRole('heading', { level: 1, name: 'Armenia' })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Ver avisos/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Ver todos/ })).toHaveCount(0)
 })
 
 test('debeDarUnaSolaLineaDeFrescuraSinRepetirVerificadoNiElListadoDeLaCiudad', async ({ page }) => {
   await simularApi(page)
   await page.goto('/sectores/armenia')
-  await expect(page.getByRole('region', { name: 'Registro del dato' }).getByText(/Actualizado hace \d+ min/)).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Estado actual' }).getByText(/Actualizado hace \d+ min/)).toBeVisible()
   await expect(page.getByText(/Listado generado/)).toHaveCount(0)
   await expect(page.getByText(/verificado hace/i)).toHaveCount(0)
   await expect(page.getByText(/Estado registrado/)).toHaveCount(0)
