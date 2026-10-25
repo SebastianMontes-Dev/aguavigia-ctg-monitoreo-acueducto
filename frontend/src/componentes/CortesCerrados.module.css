@@ -89,4 +89,38 @@
   .real {
     background: var(--cardenillo);
   }
+
+  .todoElCorte summary {
+    display: flex;
+    align-items: center;
+    min-height: var(--objetivo-tactil);
+    width: fit-content;
+    font-size: var(--texto-s);
+    font-weight: 600;
+    color: var(--tinta);
+    cursor: pointer;
+  }
+
+  .todoElCorte summary:focus-visible {
+    outline: var(--grosor-foco) solid var(--laton);
+    outline-offset: 2px;
+  }
+
+  .todoElCorte[open] {
+    display: grid;
+    gap: var(--espacio-1);
+    padding-bottom: var(--espacio-2);
+  }
+
+  .reintentar {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--tinta);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    cursor: pointer;
+  }
 }

@@ -1,5 +1,6 @@
 import { compararCorte, sinHoraRealEnPalabras, type Corte } from '../dominio/cortes'
 import { diaConFecha, fechaCorta, formatearHora, partirHora } from '../dominio/tiempo'
+import { IndiceCorte } from './IndiceCorte'
 import estilos from './CortesCerrados.module.css'
 
 interface Props {
@@ -58,6 +59,7 @@ export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
               {comparacion.provisional && (
                 <p className={estilos.porConfirmar}>Por confirmar: la hora real todavía puede cambiar.</p>
               )}
+              <IndiceCorte corte={corte} />
             </li>
           )
         })}

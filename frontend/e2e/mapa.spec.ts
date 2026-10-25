@@ -248,3 +248,37 @@ test('debeExplicarEnLaLeyendaLaMarcaDeLosBarriosEnDisputaSoloSiHayAlguno', async
   await expect(leyenda.getByText('Con servicio')).toBeVisible()
   await expect(leyenda.getByText('En disputa o por confirmar')).toHaveCount(0)
 })
+
+test('debeDarElIndiceDeTodoElCorteSoloAlAbrirloYDecirCuandoAunNoSePuedeMedir', async ({ page }) => {
+  const pedidos: string[] = []
+  await simularApi(page, {
+    indiceCorte: (route) => {
+      const id = new URL(route.request().url()).pathname.split('/').at(-1) ?? ''
+      pedidos.push(id)
+      return id === 'c-varios'
+        ? route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ duracionPrometidaSegundos: 14_400, duracionRealSegundos: 18_000, desviacionSegundos: 3600, porcentajeCumplimiento: 80, porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 }) })
+        : route.fulfill(problema(409, 'conflicto-de-estado', 'El corte todavía no está cerrado'))
+    },
+  })
+  const hace = (horas: number) => new Date(Date.now() - horas * 3_600_000).toISOString()
+  await page.route(/\/api\/sectores\/armenia\/cortes/, (route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    headers: { 'X-Total-Count': '2', 'X-Total-Pages': '1', 'X-Page': '0', 'X-Page-Size': '10' },
+    body: JSON.stringify([
+      { id: 'c-varios', sectoresAfectados: ['armenia', 'manga'], inicio: hace(30), finPrometido: hace(26), origen: 'OFICIAL_ACUACAR', estado: 'RESTABLECIDO',
+        cierres: [{ sectorId: 'armenia', hora: hace(25), fuente: 'ACUACAR', provisional: false }, { sectorId: 'manga', hora: hace(24), fuente: 'ACUACAR', provisional: false }] },
+      { id: 'c-pendiente', sectoresAfectados: ['armenia', 'el-bosque', 'manga'], inicio: hace(60), finPrometido: hace(56), origen: 'OFICIAL_ACUACAR', estado: 'CONFIRMADO',
+        cierres: [{ sectorId: 'armenia', hora: hace(55), fuente: 'VEEDOR', provisional: false }] },
+    ]),
+  }))
+  await page.goto('/sectores/armenia')
+  const historial = page.getByRole('region', { name: 'Cortes cerrados en Armenia' })
+  await expect(historial.getByText('Todo el corte (2 barrios)')).toBeVisible()
+  expect(pedidos).toHaveLength(0)
+
+  await historial.getByText('Todo el corte (2 barrios)').click()
+  await expect(historial.getByText(/Índice 80/)).toBeVisible()
+  await historial.getByText('Todo el corte (3 barrios)').click()
+  await expect(historial.getByText('Todavía no se puede medir: falta el cierre de algún barrio.')).toBeVisible()
+  expect(pedidos).toEqual(['c-varios', 'c-pendiente'])
+})
