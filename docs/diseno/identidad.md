@@ -100,8 +100,9 @@ hoja inferior. El mapa, el buscador y la lista accesible abren la misma ficha.
 
 **Elementos**
 - Separación por **reglas de 1 px**, no por cajas. Una regla de tinta abre los bloques de cifras. Excepción: la ficha del barrio
-  se compone en bloques (`ADR-103`): estado en recuadro teñido, tarjetas de corte y una fila para el último aviso.
-- Radios: 999 px para botones y selectores de tema; 10–12 px solo en lo que flota, en el recuadro del índice y en los bloques de la ficha del barrio (`ADR-103`);
+  se compone en bloques (`ADR-103`): estado en recuadro teñido, tarjetas de corte y una fila para el último aviso; y Cumplimiento, Bitácora,
+  Estadísticas y Avisos, con la respuesta en un recuadro teñido de cardenillo, cifras y eventos en bloques (`ADR-104`).
+- Radios: 999 px para botones y selectores de tema; 10–12 px solo en lo que flota, en el recuadro del índice y en los bloques de la ficha del barrio (`ADR-103`) y de las páginas de historia y Avisos (`ADR-104`);
   0 en tablas, listas y campos (el campo es una línea inferior).
 - Botón principal: pastilla cardenillo de 50 px de alto con flecha. Secundario: la misma pastilla en hueco. Enlace:
   texto subrayado con regla fina que pasa a latón.
@@ -158,7 +159,8 @@ excepción; el punto «en vivo» queda fijo. Ninguna animación bloquea la inter
 - **Colores:** turquesa o azul genérico como acción, índigo, degradados, gris puro, crema con terracota, neón.
 - **Formas de plantilla:** tarjetas con sombra y el mismo radio para todo, pastillas de colores para cada dato,
   barrita de color al costado de una tarjeta, iconos decorativos, emojis, ilustraciones. Salvo la ficha del barrio (`ADR-103`), que
-  usa tarjetas sin sombra, la barrita en la tarjeta de un corte e iconos funcionales siempre junto a una palabra.
+  usa tarjetas sin sombra, la barrita en la tarjeta de un corte e iconos funcionales siempre junto a una palabra, y las páginas de historia y Avisos
+  (`ADR-104`), con bloques sin sombra e iconos funcionales.
 - **Movimiento gratuito:** rebotes, parallax, desenfoques de fondo, bucles salvo el punto «en vivo», entradas que
   dejen contenido invisible si falla el script.
 - **Datos inventados:** lo que el prototipo muestra de ejemplo no se convierte en campo de la API (guía §5).

@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6) y el **ADR-103** (§7) son los últimos usados; el siguiente libre es el 104.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7) y el **ADR-104** (§8) son los últimos usados; el siguiente libre es el 105.
 
 ## 1. Decisiones que se conservan
 
@@ -580,3 +580,38 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** El estado se lee primero y se distingue por su recuadro, sin depender solo del color (glifo y palabra siguen). La ficha de Manga baja de 1045 a 705 px a 1024 × 768 y, a 1440 × 900, cabe entera con su historial.
   **Pierde.** La ficha deja de ser la composición de reglas finas del resto del sitio.
 - **Se revierte** restaurando `FichaSector`, `Panel.module.css`, `CorteAbierto.module.css`, `CortesCerrados.module.css` y el botón de `Reporte` del commit anterior y quitando `componentes/Icono.tsx` y sus SVG.
+
+## 8. Composición de Cumplimiento, Bitácora, Estadísticas y Avisos (2026-10-25)
+
+### ADR-104 — Las páginas de historia y Avisos se componen en bloques, como la ficha
+
+- **Contexto.** Con la ficha en bloques (ADR-103), Cumplimiento, Bitácora, Estadísticas y Avisos seguían separadas por reglas de 1 px y todo pesaba lo mismo:
+  en escritorio quedaba media pantalla vacía, cada evento de la bitácora repetía su contenido cuatro veces («Confirmado por ciudadanos · Sin servicio», la descripción,
+  «Reportes de vecinos · 5 de 3 vecinos», «Sustentado por 5 reportes»), Estadísticas dibujaba cinco barras iguales y Cumplimiento obligaba a comparar dos duraciones
+  casi idénticas (25 h 26 min contra 25 h 19 min). Yordy pidió rediseñarlas como la ficha y aprobó el prototipo
+  [«Rediseño historia y avisos»](https://claude.ai/artifact/MinzHM4Au991x4HGExMD8b) (Artifact privado), tras pedir una segunda versión de Cumplimiento porque la primera no se entendía.
+- **Decisión.** Las cuatro páginas usan el lenguaje de ADR-103: bloques de `--elevada` con borde de `--linea` y radio de 12 px, sin sombra; la respuesta principal en un
+  recuadro teñido de `--cardenillo` (no de un estado del servicio, porque aquí no hay uno); iconos funcionales siempre junto a una palabra. El titular sigue siendo la respuesta
+  (ADR-079) y la página sigue a dos columnas en escritorio.
+  1. **Cumplimiento.** Titular en palabras del vecino («El agua vuelve un poco antes de lo que anuncia Acuacar»). La respuesta es una sola cifra, la diferencia por corte
+     («7 min antes» o «33 min tarde»), y una **línea de tiempo**: la hora anunciada es la marca del centro y un punto de `--cardenillo` marca cuándo volvió el agua
+     (izquierda = antes, derecha = tarde, escala de una hora a cada lado, recortada en los extremos). «Mes a mes» usa la misma línea por mes, con «N min tarde»,
+     «N min antes» o «A la hora» y la cantidad de cortes. Las duraciones por corte y el índice con su significado bajan a una línea al pie del recuadro; la solidez
+     (F4) va debajo. El barrio se elige en una pastilla junto al titular.
+  2. **Bitácora.** Los tipos, como pestañas con su cantidad, y «Barrio» y «Fechas» van en **una barra** horizontal (`identidad.md` §4.1, punto 5). Cada evento es una
+     tarjeta de dos líneas: el glifo del estado en un círculo teñido, «Barrio · lo que pasó» en palabras del vecino («Volvió el agua», «Se quedó sin agua», según `tipo`
+     y `estado`) y la hora; debajo, la procedencia («Lo confirmaron 8 vecinos (hacían falta 3)», «Boletín de Acuacar») y, si existen, la fuente y el sustento. La
+     descripción del backend solo se muestra cuando no la dicen ya el tipo y la procedencia (boletines, notas, correcciones). A la derecha, en escritorio, el último
+     boletín de Acuacar y la invitación a recibir avisos.
+  3. **Estadísticas.** La duración media en palabras («25 horas y media», DESIGN.md §5). Tres bloques con cifra: cortes registrados, el día con más y el día con menos.
+     Los días, en barras con el máximo resaltado. Los barrios con más cortes, como lista enlazada a su ficha; si empatan todos, se dice («Cinco barrios empatan con 6
+     cortes») en vez de dibujar barras iguales (`identidad.md` §4.1, punto 3).
+  4. **Avisos.** El formulario en un bloque con dos pasos numerados (barrios y correo); los barrios elegidos como pastillas con el punto y la palabra de su estado y un
+     botón para quitarlos. «Así funciona», en tres tarjetas con icono. Las pantallas de enlace (`/avisos/confirmar`, `/avisos/baja` y «¿Ya volvió el agua?») toman el mismo
+     bloque para su tarea.
+- **Lo que no se muestra.** Nada que la API no devuelva: la línea de tiempo sale de `desviacionSegundos / cantidadCortes` (o del agregado con la serie, como ya se hacía),
+  no de una hora inventada; el empate se deduce de `sectoresMasAfectados`.
+- **Alcance.** Estas cuatro páginas y las pantallas de enlace de avisos. El mapa sigue igual; `identidad.md` §4 y §6 y `DESIGN.md` §9 nombran la excepción.
+- **Gana.** Cada página dice su respuesta con una cifra y una forma que se leen solas, y en escritorio llena el primer pliegue. **Pierde.** El sitio deja de ser, salvo el
+  mapa, la composición de reglas finas de ADR-070.
+- **Se revierte** restaurando `Cumplimiento`, `Bitacora`, `Estadisticas`, `Avisos` y `EnlaceAvisos` y sus estilos del commit anterior a este ADR.
