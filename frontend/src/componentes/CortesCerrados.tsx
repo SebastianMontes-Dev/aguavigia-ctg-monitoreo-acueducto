@@ -1,5 +1,5 @@
 import { compararCorte, sinHoraRealEnPalabras, type Corte } from '../dominio/cortes'
-import { diaRelativo, momento, partirHora } from '../dominio/tiempo'
+import { diaConFecha, fechaCorta, formatearHora, partirHora } from '../dominio/tiempo'
 import estilos from './CortesCerrados.module.css'
 
 interface Props {
@@ -22,7 +22,7 @@ function Marca({ rotulo, valor, ahora, tipo }: { rotulo: string; valor: string; 
         <time dateTime={valor} className={estilos.cifra}>
           <span className="cifra">{cifra}</span> <span className={estilos.periodo}>{periodo}</span>
         </time>
-        <span className={estilos.dia}>{diaRelativo(valor, ahora)}</span>
+        <span className={estilos.dia}>{diaConFecha(valor, ahora)}</span>
       </dd>
     </div>
   )
@@ -30,7 +30,7 @@ function Marca({ rotulo, valor, ahora, tipo }: { rotulo: string; valor: string; 
 
 /**
  * Guía §5.2: cada corte cerrado se cuenta con fechas y horas, no con duraciones que haya que restar. Primero el
- * veredicto en palabras; debajo, lo que se prometió y cuándo volvió el agua de verdad. Sin color de juicio. La causa
+ * dos horas lado a lado, lo que se prometió y cuándo volvió el agua de verdad, y debajo, en pequeño, la diferencia en palabras. Sin color de juicio. La causa
  * no se muestra: el texto del boletín llega tal cual salió de la fuente y se lee mal.
  */
 export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
@@ -41,19 +41,20 @@ export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
 
   return (
     <>
-      <p className={estilos.explicacion}>Lo que Acuacar anunció frente a lo que pasó, corte por corte.</p>
       <ol className={estilos.lista}>
         {filas.map(({ corte, comparacion }) => {
           return (
             <li key={corte.id} className={estilos.fila}>
-              <p className={estilos.inicio}>
-                <time dateTime={corte.inicio}>Corte que empezó {momento(corte.inicio!, ahora)}</time>
-              </p>
-              <p className={estilos.veredicto}>{comparacion.veredicto}</p>
               <dl className={estilos.marcas}>
                 <Marca rotulo="Prometieron" valor={comparacion.prometidoEn} ahora={ahora} tipo="prometido" />
                 <Marca rotulo="Volvió" valor={comparacion.realEn} ahora={ahora} tipo="real" />
               </dl>
+              <p className={estilos.veredicto}>{comparacion.veredicto}</p>
+              <p className={estilos.inicio}>
+                <time dateTime={corte.inicio}>
+                  Empezó el {fechaCorta(corte.inicio!, ahora)} a las {formatearHora(corte.inicio!)}
+                </time>
+              </p>
               {comparacion.provisional && (
                 <p className={estilos.porConfirmar}>Por confirmar: la hora real todavía puede cambiar.</p>
               )}
@@ -72,7 +73,7 @@ export function CortesSinHoraReal({ cortes, ahora }: { cortes: readonly Corte[];
       {cortes.map((corte) => (
         <li key={corte.id} className={estilos.fila}>
           <p className={estilos.inicio}>
-            {corte.inicio && <time dateTime={corte.inicio}>Corte del {diaRelativo(corte.inicio, ahora)}</time>}
+            {corte.inicio && <time dateTime={corte.inicio}>Corte del {fechaCorta(corte.inicio, ahora)}</time>}
           </p>
           <p className={estilos.veredicto}>{corte.estado === 'ANULADO' ? 'Corte anulado' : 'Corte sin cierre confirmado'}</p>
           <p className={estilos.detalle}>{sinHoraRealEnPalabras(corte)}</p>

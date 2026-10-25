@@ -83,7 +83,7 @@ export function promesaVencida(corte: Corte, ahora: Date, sectorId?: string): bo
 export interface Comparacion {
   /** Verdadero si el cierre solo lo sostienen los vecinos: «por confirmar». */
   provisional: boolean
-  /** La frase que responde: «El agua tardó 3 horas y 15 minutos más de lo prometido». */
+  /** La frase corta que acompaña a las dos horas: «Tardó 3 horas y 15 minutos más de lo prometido». */
   veredicto: string
   /** Las dos marcas se muestran como fecha y hora, no como duraciones que haya que restar. */
   prometidoEn: string
@@ -102,9 +102,9 @@ export function compararCorte(corte: Corte, sectorId?: string): Comparacion | nu
   const realMs = new Date(fin).getTime() - inicio
   if (prometidoMs <= 0 || realMs < 0) return null
   const exceso = realMs - prometidoMs
-  const veredicto = Math.abs(exceso) < TOLERANCIA_MS ? 'El agua volvió a la hora prometida'
-    : exceso > 0 ? `El agua tardó ${duracionEnPalabras(exceso)} más de lo prometido`
-      : `El agua volvió ${duracionEnPalabras(exceso)} antes de lo prometido`
+  const veredicto = Math.abs(exceso) < TOLERANCIA_MS ? 'Volvió a la hora prometida'
+    : exceso > 0 ? `Tardó ${duracionEnPalabras(exceso)} más de lo prometido`
+      : `Volvió ${duracionEnPalabras(exceso)} antes de lo prometido`
   const provisional = sectorId ? cierreProvisional(corte, sectorId) : (corte.cierres ?? []).some((cierre) => cierre.provisional)
   return { provisional, veredicto, prometidoEn: corte.finPrometido, realEn: fin }
 }

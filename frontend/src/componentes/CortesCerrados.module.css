@@ -1,9 +1,4 @@
 @layer componentes {
-  .explicacion {
-    font-size: var(--texto-s);
-    color: var(--tinta-2);
-  }
-
   .lista {
     list-style: none;
     padding: 0;
@@ -23,7 +18,9 @@
     color: var(--tinta-2);
   }
 
+  /* La diferencia en palabras acompaña a las horas; no compite con ellas. */
   .veredicto {
+    font-size: var(--texto-s);
     font-weight: 600;
     color: var(--tinta);
   }
@@ -33,8 +30,6 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: var(--espacio-4);
-    padding: var(--espacio-3) 0;
-    border-top: 1px solid var(--linea-suave);
   }
 
   .marca + .marca {

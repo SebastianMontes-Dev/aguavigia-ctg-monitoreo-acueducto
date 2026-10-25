@@ -78,7 +78,7 @@ describe('compararCorte', () => {
     const pasado = compararCorte({ ...abierto, finPrometido: '2026-09-26T13:00:00Z', estado: 'RESTABLECIDO', cierres: cierre('2026-09-26T19:00:00Z') })
     expect(pasado).toEqual({
       provisional: false,
-      veredicto: 'El agua tardó 6 horas más de lo prometido',
+      veredicto: 'Tardó 6 horas más de lo prometido',
       prometidoEn: '2026-09-26T13:00:00Z',
       realEn: '2026-09-26T19:00:00Z',
     })
@@ -86,12 +86,12 @@ describe('compararCorte', () => {
 
   it('debeDecirCuantoAntesVolvioElAgua', () => {
     const antes = compararCorte({ ...abierto, finPrometido: '2026-09-26T15:00:00Z', estado: 'RESTABLECIDO', cierres: cierre('2026-09-26T14:30:00Z') })
-    expect(antes?.veredicto).toBe('El agua volvió 30 minutos antes de lo prometido')
+    expect(antes?.veredicto).toBe('Volvió 30 minutos antes de lo prometido')
   })
 
   it('debeDarPorCumplidoLoQueDifiereMenosDe15Minutos', () => {
     const justo = compararCorte({ ...abierto, finPrometido: '2026-09-26T15:00:00Z', estado: 'RESTABLECIDO', cierres: cierre('2026-09-26T15:10:00Z') })
-    expect(justo?.veredicto).toBe('El agua volvió a la hora prometida')
+    expect(justo?.veredicto).toBe('Volvió a la hora prometida')
   })
 
   it('noDebeCompararUnCorteQueSigueAbierto', () => {
@@ -103,8 +103,8 @@ describe('compararCorte', () => {
       { sectorId: 'armenia', hora: '2026-09-26T13:00:00Z', fuente: 'VEEDOR', provisional: false },
       { sectorId: 'manga', hora: '2026-09-26T19:00:00Z', fuente: 'VECINOS', provisional: true },
     ])
-    expect(compararCorte(corte, 'armenia')).toMatchObject({ veredicto: 'El agua volvió 1 hora antes de lo prometido', provisional: false })
-    expect(compararCorte(corte, 'manga')).toMatchObject({ veredicto: 'El agua tardó 5 horas más de lo prometido', provisional: true })
+    expect(compararCorte(corte, 'armenia')).toMatchObject({ veredicto: 'Volvió 1 hora antes de lo prometido', provisional: false })
+    expect(compararCorte(corte, 'manga')).toMatchObject({ veredicto: 'Tardó 5 horas más de lo prometido', provisional: true })
     expect(compararCorte(corte)).toBeNull()
   })
 })

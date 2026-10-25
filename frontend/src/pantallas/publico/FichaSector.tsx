@@ -11,8 +11,7 @@ import { estaAbierto, estaCerrado, sinHoraRealEnPalabras } from '../../dominio/c
 import { presentarEstado } from '../../dominio/estados'
 import { sinVerificacionReciente } from '../../dominio/frescura'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
-import { haceCuanto, momento } from '../../dominio/tiempo'
-import botones from '../../componentes/Botones.module.css'
+import { diaConFecha, formatearHora, haceCuanto, momento } from '../../dominio/tiempo'
 import estilos from './Panel.module.css'
 
 const numero = new Intl.NumberFormat('es-CO')
@@ -30,33 +29,40 @@ function Volver() {
 function Registro({ sector, lectura, ahora, reintentar }: { sector: Sector; lectura: LecturaCanal; ahora: Date; reintentar: () => void }) {
   if (lectura.error || lectura.estado === 'sin-red') return <EstadoListado lectura={lectura} ahora={ahora} reintentar={reintentar} />
   return (
-    <p className={estilos.nota}>
+    <p className={estilos.registro}>
       {sector.actualizadoEn
-        ? <>Actualizado <time dateTime={sector.actualizadoEn} title={momento(sector.actualizadoEn, ahora)}>{haceCuanto(sector.actualizadoEn, ahora)}</time></>
-        : 'Sin fecha de registro.'}
-      {lectura.estado === 'en-vivo' && <> · <EnVivo /></>}
+        ? <span>Actualizado <time dateTime={sector.actualizadoEn} title={momento(sector.actualizadoEn, ahora)}>{haceCuanto(sector.actualizadoEn, ahora)}</time></span>
+        : <span>Sin fecha de registro.</span>}
+      {lectura.estado === 'en-vivo' && <EnVivo />}
     </p>
   )
 }
 
 /**
- * El botón lleva a la bitácora del barrio, filtrada a los avisos de boletines y notas, y de ahí la persona elige cuál
- * abrir en su fuente. No enlaza una URL externa desde la ficha: el contrato no dice qué aviso anunció cada corte.
+ * Una fila de fuente, con reglas y sin tarjeta: qué fue lo último que se avisó de este barrio y cuándo, y un enlace a la
+ * bitácora filtrada a boletines y notas, donde se elige uno y se abre su fuente original. La ficha no enlaza una URL
+ * externa: el contrato no dice qué aviso anunció cada corte.
  */
 function FuenteDelAviso({ sector, ahora }: { sector: Sector; ahora: Date }) {
   const { data: aviso } = useUltimoAviso(sector.id ?? '')
   if (!aviso) return null
   const quien = aviso.fuente === 'PRENSA' ? 'de prensa' : aviso.fuente === 'ACUACAR' ? 'de Acuacar' : 'de este barrio'
   return (
-    <section aria-label="Fuente del aviso" className={estilos.bloque}>
-      <Link to="/bitacora" search={{ sector: sector.id, tipo: 'CORTE_DETECTADO_POR_INGESTA' }} className={botones.secundario}>
-        Ver los avisos {quien} <span className={botones.flecha} aria-hidden="true">→</span>
+    <section aria-label="Fuente del aviso" className={estilos.fuente}>
+      <p className={estilos.fuenteTexto}>
+        <span className={estilos.rotulo}>Último aviso {quien}</span>
+        {aviso.timestamp && (
+          <time dateTime={aviso.timestamp}>{diaConFecha(aviso.timestamp, ahora)}, {formatearHora(aviso.timestamp)}</time>
+        )}
+      </p>
+      <Link
+        to="/bitacora"
+        search={{ sector: sector.id, tipo: 'CORTE_DETECTADO_POR_INGESTA' }}
+        aria-label={`Ver avisos ${quien} en la bitácora`}
+        className={estilos.enlaceFlecha}
+      >
+        Ver avisos <span aria-hidden="true">→</span>
       </Link>
-      {aviso.timestamp && (
-        <p className={estilos.nota}>
-          Último aviso sobre este barrio: <time dateTime={aviso.timestamp}>{momento(aviso.timestamp, ahora)}</time> · en la bitácora abres el boletín original
-        </p>
-      )}
     </section>
   )
 }
@@ -154,9 +160,14 @@ export function FichaSector() {
     <article className={estilos.contenido} aria-labelledby="nombre-barrio">
       <Volver />
       <header className={estilos.ficha}>
-        <p className={estilos.rotulo}>
-          Barrio · {sector.poblacion == null ? 'sin dato censal' : `${numero.format(sector.poblacion)} habitantes`}
-        </p>
+        <div className={estilos.filaRotulo}>
+          <p className={estilos.rotulo}>
+            Barrio · {sector.poblacion == null ? 'sin dato censal' : `${numero.format(sector.poblacion)} habitantes`}
+          </p>
+          <Link to="/avisos" search={{ sector: sector.id }} aria-label={`Recibir avisos de ${nombre}`} className={estilos.avisosEsquina}>
+            Recibir avisos
+          </Link>
+        </div>
         <h1 id="nombre-barrio" className={estilos.barrio}>{nombre}</h1>
         <p className={estilos.estado}>
           <GlifoEstado estado={sector.estado} tamano={24} />
@@ -182,7 +193,6 @@ export function FichaSector() {
         <Suspense fallback={<span className={estilos.reservaBoton} aria-hidden="true" />}>
           <Reporte sector={sector} />
         </Suspense>
-        <Link to="/avisos" search={{ sector: sector.id }} className={estilos.enlace}>Recibir avisos de {nombre}</Link>
       </section>
 
       <Historial sector={sector} ahora={ahora} />

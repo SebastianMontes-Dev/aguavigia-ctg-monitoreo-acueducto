@@ -114,8 +114,8 @@ function bitacoraConAviso(urlOriginal: string) {
 test('debeLlevarALaBitacoraDelBarrioYDeAhiAbrirLaFuenteOriginal', async ({ page }) => {
   await simularApi(page, { bitacora: bitacoraConAviso('https://www.acuacar.com/boletin/ejemplo') })
   await page.goto('/sectores/armenia')
-  await expect(page.getByText(/Último aviso sobre este barrio/)).toBeVisible()
-  await page.getByRole('link', { name: /Ver los avisos de Acuacar/ }).click()
+  await expect(page.getByText('Último aviso de Acuacar')).toBeVisible()
+  await page.getByRole('link', { name: 'Ver avisos de Acuacar en la bitácora' }).click()
 
   await expect(page).toHaveURL(/\/bitacora\?.*sector=armenia/)
   await expect(page).toHaveURL(/tipo=CORTE_DETECTADO_POR_INGESTA/)
@@ -136,7 +136,7 @@ test('noDebeOfrecerElBotonDeAvisosSiElBarrioNoTieneNinguno', async ({ page }) =>
   await simularApi(page)
   await page.goto('/sectores/armenia')
   await expect(page.getByRole('heading', { level: 1, name: 'Armenia' })).toBeVisible()
-  await expect(page.getByRole('link', { name: /Ver los avisos/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: /Ver avisos/ })).toHaveCount(0)
 })
 
 test('debeDarUnaSolaLineaDeFrescuraSinRepetirVerificadoNiElListadoDeLaCiudad', async ({ page }) => {
@@ -152,9 +152,15 @@ test('debeContarUnCorteCerradoConFechasYHorasYSinLaPalabraVeedor', async ({ page
   await simularApi(page)
   await page.goto('/sectores/armenia')
   const historial = page.getByRole('region', { name: /Cortes cerrados en Armenia/ })
-  await expect(historial.getByText('Lo que Acuacar anunció frente a lo que pasó, corte por corte.')).toBeVisible()
+  // La frase de introducción repetía el título del bloque: no se muestra.
+  await expect(historial.getByText(/corte por corte/)).toHaveCount(0)
   // El fixture promete 2 h y el veedor cerró 6 h después de lo prometido.
-  await expect(historial.getByText('El agua tardó 6 horas más de lo prometido')).toBeVisible()
+  await expect(historial.getByText('Tardó 6 horas más de lo prometido')).toBeVisible()
+  // Las horas van primero y la diferencia en palabras, debajo y más pequeña.
+  const orden = await historial.locator('dl, p').evaluateAll((nodos) => nodos.map((nodo) => nodo.tagName + ':' + (nodo.textContent ?? '').slice(0, 12)))
+  expect(orden.findIndex((texto) => texto.startsWith('DL'))).toBeLessThan(orden.findIndex((texto) => texto.includes('Tardó')))
+  // Fecha real («vie 17 oct»), no solo «mañana» o «ayer».
+  await expect(historial.locator('dl')).toContainText(/(lun|mar|mié|jue|vie|sáb|dom) \d{1,2} (ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)/)
   await expect(historial.getByText('Prometieron')).toBeVisible()
   // Cada hora va grande y con su día debajo: se comparan lado a lado, sin restar.
   await expect(historial.locator('dl time')).toHaveCount(2)
@@ -185,6 +191,16 @@ test('debeAvisarSinCifrasCuandoNoSePuedeConsultarElEstado', async ({ page }) => 
   await expect(page.getByRole('alert')).toContainText('No pudimos consultar el estado')
   await expect(page.getByRole('button', { name: 'Reintentar' })).toBeVisible()
   await expect(page.getByText('Con servicio')).toHaveCount(0)
+})
+
+test('debeDejarRecibirAvisosEnLaEsquinaDeLaFicha', async ({ page }) => {
+  await simularApi(page)
+  await page.goto('/sectores/armenia')
+  const enlace = page.getByRole('link', { name: 'Recibir avisos de Armenia' })
+  await expect(enlace).toBeVisible()
+  await expect(enlace).toHaveText('Recibir avisos')
+  await enlace.click()
+  await expect(page).toHaveURL(/\/avisos\?.*sector=armenia/)
 })
 
 test('debeOfrecerLaListaDeBarriosComoAlternativaAlMapa', async ({ page }) => {

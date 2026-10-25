@@ -1,5 +1,5 @@
 import { origenEnPalabras, promesaVencida, type Corte } from '../dominio/cortes'
-import { diaRelativo, partirHora } from '../dominio/tiempo'
+import { diaConFecha, partirHora } from '../dominio/tiempo'
 import estilos from './CorteAbierto.module.css'
 
 function Hora({ rotulo, valor, ahora, vencida = false }: { rotulo: string; valor: string | undefined; ahora: Date; vencida?: boolean }) {
@@ -19,7 +19,7 @@ function Hora({ rotulo, valor, ahora, vencida = false }: { rotulo: string; valor
         <time dateTime={valor} className={estilos.cifra}>
           <span className="cifra">{cifra}</span> <span className={estilos.periodo}>{periodo}</span>
         </time>
-        <span className={estilos.dia}>{diaRelativo(valor, ahora)}{vencida ? ' (hora ya pasada)' : ''}</span>
+        <span className={estilos.dia}>{diaConFecha(valor, ahora)}{vencida ? ' (hora ya pasada)' : ''}</span>
       </dd>
     </div>
   )

@@ -159,6 +159,69 @@
     color: var(--tinta-2);
   }
 
+  /* El rótulo del barrio y, en su esquina, la acción secundaria de la ficha: no compite con «Reportar». */
+  .filaRotulo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espacio-3);
+  }
+
+  .avisosEsquina,
+  .enlaceFlecha {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--espacio-2);
+    min-height: var(--objetivo-tactil);
+    flex: none;
+    color: var(--tinta);
+    font-size: var(--texto-s);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: var(--tinta-3);
+    text-underline-offset: 4px;
+  }
+
+  .avisosEsquina:hover,
+  .enlaceFlecha:hover {
+    text-decoration-color: var(--laton);
+  }
+
+  .avisosEsquina:focus-visible,
+  .enlaceFlecha:focus-visible {
+    outline: var(--grosor-foco) solid var(--laton);
+    outline-offset: 3px;
+  }
+
+  /* Una sola línea de frescura: «Actualizado hace X» y, si hay canal, el punto «En vivo». */
+  .registro {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--espacio-1) var(--espacio-4);
+    font-size: var(--texto-s);
+    color: var(--tinta-2);
+  }
+
+  /* Fila de fuente con reglas de 1 px, sin tarjeta: qué se avisó por última vez y el camino a verlo. */
+  .fuente {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--espacio-4);
+    padding: var(--espacio-2) 0;
+    border-top: 1px solid var(--linea-suave);
+  }
+
+  .fuenteTexto {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+    font-size: var(--texto-s);
+    color: var(--tinta);
+    font-variant-numeric: tabular-nums;
+  }
+
   .barrio {
     font-size: 2.5rem;
     font-weight: 400;
