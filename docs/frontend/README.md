@@ -98,7 +98,7 @@ Desde `frontend/`:
 
 | Fase | Guía | Qué entrega | Rutas del contrato que suma | Estado |
 |---|---|---|---|---|
-| FE0 | [Contrato al día](FE0-contrato-al-dia.md) | CI en verde; reportar funciona; se adoptan todos los cambios que **rompen** (F0–F3) | `POST /api/dispositivos` y `GET /api/fotos/{n}` | — |
+| FE0 | [Contrato al día](FE0-contrato-al-dia.md) | CI en verde; reportar funciona; se adoptan todos los cambios que **rompen** (F0–F3) | `POST /api/dispositivos` y `GET /api/fotos/{n}` | PR abierto: [#121](https://github.com/SebastianMontes-Dev/Agua-Vigia-CTG-privado/pull/121) (2026-10-25) |
 | FE1 | [Lo público, completo](FE1-publico-completo.md) | Insignias del estado del barrio, calidad del Índice, Índice por corte, banner de simulación, «¿ya volvió el agua?» | `cumplimiento/calidad`, `cumplimiento/cortes/{id}`, `sistema/modo`, `sectores/{id}/restablecimiento` | — |
 | FE2 | [Ingreso al panel](FE2-ingreso-al-panel.md) | Rebasar `feat/f5-ingreso-panel`: ingreso, alta de TOTP con QR, marco con permisos, seguridad de la cuenta | `veedor/sesion`, `sesion/cierre`, `yo`, `segundo-factor/*`, `cuenta/clave` | — |
 | FE3 | [Moderación y cortes](FE3-moderacion-y-cortes.md) | Cola de reportes, fotos del panel, cortes (crear, cerrar, por barrio, confirmar, anular), vencidos, disputas | 14 operaciones de `veedor/reportes`, `veedor/fotos`, `veedor/cortes`, `veedor/disputas` | — |
