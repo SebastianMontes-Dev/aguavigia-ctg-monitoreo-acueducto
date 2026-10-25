@@ -9,7 +9,7 @@ function simularEstadisticas(page: Page, cuerpo: unknown) {
 test('debeTitularConLaDuracionPromedioYNombrarLosDiasExtremos', async ({ page }) => {
   await simularApi(page)
   await page.goto('/estadisticas')
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 5 horas en promedio')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 5 horas y media en promedio')
   await expect(page.getByRole('main')).toHaveCount(1)
   const cifras = page.locator('dl')
   await expect(cifras.getByText('22', { exact: true })).toBeVisible()
@@ -26,9 +26,9 @@ test('debeGuardarTablasYCsvDetrasDeVerDatos', async ({ page }) => {
   await page.goto('/estadisticas')
   const tablaDias = page.getByRole('table', { name: 'Cortes registrados de lunes a domingo' })
   await expect(tablaDias).toBeHidden()
-  await page.getByText('Ver datos').click()
+  await page.getByText('Ver los datos y descargar el CSV').click()
   await expect(tablaDias.getByRole('rowheader')).toHaveText(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
-  const barrios = page.getByRole('table', { name: 'Avisos de corte aprobados por barrio' })
+  const barrios = page.getByRole('table', { name: 'Barrios con más cortes' })
   await expect(barrios.getByRole('rowheader')).toHaveText(['Torices', 'Getsemani', 'Bocagrande'])
   await expect(page.getByRole('link', { name: 'Descargar en CSV' })).toHaveAttribute('href', '/api/estadisticas/exportar.csv')
 })
@@ -47,15 +47,15 @@ test('debeUsarElNombreDeLaRespuestaYElIdComoRespaldo', async ({ page }) => {
   await expect(barrios).toHaveText([/^Armenia/, /^barrio-nuevo/])
 })
 
-test('debeDecirSinRodeosQueNingunBoletinNombraBarrios', async ({ page }) => {
+test('debeDecirQueTodaviaNoHayCortesPorBarrio', async ({ page }) => {
   await simularEstadisticas(page, {
     sectoresMasAfectados: [],
     cortesPorDiaDeSemana: { Lunes: 1, Martes: 0, Miércoles: 0, Jueves: 0, Viernes: 0, Sábado: 0, Domingo: 0 },
     duracionPromedioHoras: 2.5,
   })
   await page.goto('/estadisticas')
-  await expect(page.getByText('Ningún boletín aprobado de Acuacar menciona barrios todavía.')).toBeVisible()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 3 horas en promedio')
+  await expect(page.getByText('Todavía no hay cortes registrados por barrio.')).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 2 horas y media en promedio')
 })
 
 test('debeTitularLaPreguntaYExplicarLaAusenciaSinDatos', async ({ page }) => {
@@ -81,7 +81,7 @@ test('debePermitirReintentarDespuesDeUnError', async ({ page }) => {
   await page.goto('/estadisticas')
   await expect(page.getByRole('alert')).toContainText('No pudimos consultar las estadísticas', { timeout: 20_000 })
   await page.getByRole('button', { name: 'Reintentar' }).click()
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 5 horas en promedio')
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 5 horas y media en promedio')
 })
 
 test('debeResponderEnLaPrimeraVistaConElGraficoDeDias', async ({ page }) => {

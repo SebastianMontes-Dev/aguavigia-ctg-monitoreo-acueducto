@@ -180,7 +180,8 @@ export function Bitacora() {
   const { sectores, lectura, reintentar: reintentarListado } = useListado()
   const ahora = useAhora()
   const fechasActivas = Boolean(buscar.desde || buscar.hasta)
-  const [panel, setPanel] = useState<'barrio' | 'fechas' | null>(null)
+  // Si el enlace ya trae fechas, se ven sin buscarlas; el barrio ya se lee en su botón.
+  const [panel, setPanel] = useState<'barrio' | 'fechas' | null>(fechasActivas ? 'fechas' : null)
   const valido = rangoDiasValido(buscar.desde, buscar.hasta)
   const rango = {
     sector: buscar.sector,
