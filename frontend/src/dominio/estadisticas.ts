@@ -1,3 +1,5 @@
+import { duracionEnPalabras } from './tiempo'
+
 export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'] as const
 
 export interface DiaConCortes {
@@ -27,15 +29,16 @@ export function disponibilidadEstadisticas(datos: DatosDisponibilidad) {
   }
 }
 
-/** `identidad.md` §4.1: el titular es la respuesta. Sin duración medida, titula la pregunta. */
+/** `identidad.md` §4.1: el titular es la respuesta, con la cifra en palabras (DESIGN.md §5). Sin duración medida, titula la pregunta. */
 export function titularEstadisticas(duracionHoras: number | null): string {
   if (duracionHoras === null) return 'Cuándo hay cortes en Cartagena'
-  if (duracionHoras < 1) {
-    const minutos = Math.max(1, Math.round(duracionHoras * 60))
-    return `Un corte dura ${minutos} ${minutos === 1 ? 'minuto' : 'minutos'} en promedio`
-  }
-  const horas = Math.round(duracionHoras)
-  return `Un corte dura ${horas} ${horas === 1 ? 'hora' : 'horas'} en promedio`
+  return `Un corte dura ${duracionEnPalabras(duracionHoras * 3_600_000)} en promedio`
+}
+
+/** Si todos los barrios de la lista tienen la misma cantidad, se dice con una frase en vez de dibujar barras iguales (ADR-104). */
+export function empateDeBarrios(cantidades: readonly (number | null)[]): number | null {
+  if (cantidades.length < 2 || cantidades.some((cantidad) => cantidad === null)) return null
+  return cantidades.every((cantidad) => cantidad === cantidades[0]) ? cantidades[0] ?? null : null
 }
 
 export interface DiasExtremos {

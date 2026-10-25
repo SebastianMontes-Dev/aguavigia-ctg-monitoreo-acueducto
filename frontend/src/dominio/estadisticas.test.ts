@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { estadisticasDeEjemplo } from '../pruebas/datos/historia'
-import { diasExtremos, disponibilidadEstadisticas, listaDeDias, ordenarDias, titularEstadisticas } from './estadisticas'
+import { diasExtremos, disponibilidadEstadisticas, empateDeBarrios, listaDeDias, ordenarDias, titularEstadisticas } from './estadisticas'
 
 describe('estadísticas', () => {
   it('debeOrdenarLosSieteDiasYConservarLosCerosReales', () => {
@@ -36,8 +36,9 @@ describe('estadísticas', () => {
 
 describe('respuesta de las estadísticas', () => {
   it('debeTitularConLaDuracionRedondeadaOConLaPreguntaSinMedicion', () => {
-    expect(titularEstadisticas(24.2)).toBe('Un corte dura 24 horas en promedio')
-    expect(titularEstadisticas(1.2)).toBe('Un corte dura 1 hora en promedio')
+    expect(titularEstadisticas(25.5)).toBe('Un corte dura 25 horas y media en promedio')
+    expect(titularEstadisticas(24.2)).toBe('Un corte dura 24 horas y 15 minutos en promedio')
+    expect(titularEstadisticas(1)).toBe('Un corte dura 1 hora en promedio')
     expect(titularEstadisticas(0.5)).toBe('Un corte dura 30 minutos en promedio')
     expect(titularEstadisticas(null)).toBe('Cuándo hay cortes en Cartagena')
   })
@@ -51,5 +52,12 @@ describe('respuesta de las estadísticas', () => {
 
   it('noDebeNombrarExtremosSiTodosLosDiasEmpatan', () => {
     expect(diasExtremos(ordenarDias({ Lunes: 0, Martes: 0, Miércoles: 0, Jueves: 0, Viernes: 0, Sábado: 0, Domingo: 0 }), 'mas')).toBeNull()
+  })
+
+  it('debeDetectarCuandoTodosLosBarriosEmpatan', () => {
+    expect(empateDeBarrios([6, 6, 6, 6, 6])).toBe(6)
+    expect(empateDeBarrios([7, 6, 6])).toBeNull()
+    expect(empateDeBarrios([6])).toBeNull()
+    expect(empateDeBarrios([6, null])).toBeNull()
   })
 })

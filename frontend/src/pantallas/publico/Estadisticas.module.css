@@ -1,47 +1,33 @@
 @layer componentes {
-  /* identidad.md §4.1: la duración es el titular; cifras y barrios a la izquierda, días a la derecha. */
-  .pagina { gap: var(--espacio-6); padding-top: var(--espacio-6); }
+  /* identidad.md §4.1 y ADR-104: la duración es el titular; tres cifras en bloques y, debajo, los días y los barrios. */
+  .pagina { gap: var(--espacio-5); padding-top: var(--espacio-6); }
 
-  .cabecera { display: grid; gap: var(--espacio-3); }
-  .rotulo { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
+  .cabecera { display: grid; gap: var(--espacio-2); }
   .titular { max-width: 22ch; font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.08; text-wrap: balance; }
 
-  .columnas { display: grid; gap: var(--espacio-6); align-items: start; }
-  .respuesta, .evidencia { display: grid; gap: var(--espacio-4); align-content: start; min-width: 0; }
+  /* Cada cifra en su bloque: el círculo con el icono, la cifra grande y debajo qué es. El orden visual pone la cifra arriba. */
+  .datos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--espacio-4); margin: 0; }
+  .dato { display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-areas: 'icono valor' 'icono que'; column-gap: var(--espacio-3); align-items: center; padding: var(--espacio-4) var(--espacio-5); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--elevada); }
+  .dato > :first-child { grid-area: icono; }
+  .valor { grid-area: valor; margin: 0; font-size: clamp(1.375rem, 2.2vw, 1.75rem); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
+  .que { grid-area: que; font-size: var(--texto-s); color: var(--tinta-2); }
+  .nota { max-width: var(--medida-lectura); margin-top: var(--espacio-2); font-size: var(--texto-s); color: var(--tinta-2); }
 
-  .cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--tinta); }
-  .cifras > div { display: grid; gap: var(--espacio-1); align-content: start; padding: var(--espacio-3) var(--espacio-3) var(--espacio-3) 0; border-right: 1px solid var(--linea); }
-  .cifras > div + div { padding-left: var(--espacio-3); }
-  .cifras > div:last-child { border-right: 0; }
-  .cifras dt { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); }
-  .cifras dd { margin: 0; font-size: clamp(1.125rem, 1.7vw, 1.5rem); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
-  .nota { max-width: var(--medida-lectura); color: var(--tinta-2); }
-  .enlace { color: var(--tinta); text-decoration-color: var(--laton); text-underline-offset: 3px; white-space: nowrap; }
+  .columnas { display: grid; gap: var(--espacio-5); align-items: start; }
+  .lateral { display: grid; gap: var(--espacio-4); align-content: start; min-width: 0; }
+  .cabeceraBloque { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--espacio-2); }
 
-  .bloque { display: grid; gap: var(--espacio-2); padding-top: var(--espacio-3); }
-  .bloque h2, .cabeceraBloque h2 { font-size: var(--texto-l); font-weight: 600; }
-  .cabeceraBloque { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--espacio-2); padding-bottom: var(--espacio-2); border-bottom: 1px solid var(--tinta); }
-  .cabeceraBloque p { font-size: var(--texto-s); color: var(--tinta-2); font-variant-numeric: tabular-nums; }
-
-  .barrios { display: grid; padding: 0; list-style: none; border-top: 1px solid var(--tinta); }
-  .barrios li { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto; align-items: center; gap: var(--espacio-3); min-height: 40px; border-bottom: 1px solid var(--linea-suave); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
-  .barrios li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ejeBarrio { height: 8px; }
-  .ejeBarrio span { display: block; height: 100%; background: var(--cardenillo); transform-origin: left center; }
-
-  /* Columnas verticales de lunes a domingo: la cifra encima, el día debajo. */
-  .columnasDias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--espacio-2); padding: 0; list-style: none; }
-  .columnasDias li { display: grid; grid-template-rows: auto 180px auto; justify-items: center; gap: var(--espacio-1); font-variant-numeric: tabular-nums; }
+  /* Columnas de lunes a domingo: la cifra encima, el día debajo; el día con más cortes, en cardenillo pleno. */
+  .columnasDias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--espacio-3); padding: 0; list-style: none; }
+  .columnasDias li { display: grid; grid-template-rows: auto 200px auto; justify-items: center; gap: var(--espacio-1); font-variant-numeric: tabular-nums; }
   .columnasDias strong { font-size: var(--texto-s); font-weight: 600; }
   .columnasDias abbr { font-size: var(--texto-s); color: var(--tinta-2); text-decoration: none; }
   .destacado abbr { color: var(--tinta); font-weight: 600; }
-  .columna { position: relative; width: 100%; max-width: 44px; border-bottom: 1px solid var(--tinta-3); }
-  .columna span { position: absolute; left: 0; right: 0; bottom: 0; background: var(--cardenillo); transform-origin: center bottom; opacity: 0.55; }
-  .destacado .columna span { opacity: 1; }
+  .columna { position: relative; width: 100%; border-bottom: 1px solid var(--tinta); }
+  .columna span { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px 6px 0 0; background: color-mix(in srgb, var(--cardenillo) 62%, var(--elevada)); transform-origin: center bottom; }
+  .destacado .columna span { background: var(--cardenillo); }
 
-  .accion { justify-self: start; min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta); font-weight: 600; text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; cursor: pointer; }
-  .datos { border-top: 1px solid var(--linea); }
-  .datos summary { min-height: var(--objetivo-tactil); display: flex; align-items: center; cursor: pointer; font-size: var(--texto-s); font-weight: 600; }
+  .verDatos { border-top: 1px solid var(--linea-suave); }
   .tablaContenedor { display: grid; gap: var(--espacio-4); max-width: 100%; overflow-x: auto; }
   .tablaContenedor table { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
   .tablaContenedor caption { text-align: left; font-weight: 600; padding: var(--espacio-2) 0; }
@@ -49,31 +35,36 @@
   .tablaContenedor th:first-child { padding-left: 0; }
   .csv { display: inline-block; margin: var(--espacio-3) 0; font-size: var(--texto-s); font-weight: 600; color: var(--tinta); text-decoration-color: var(--laton); }
 
-  .vacio { border-top: 1px solid var(--tinta); padding: var(--espacio-5) 0; }
+  .barrios { display: grid; padding: 0; list-style: none; }
+  .barrio { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--espacio-3); min-height: 48px; border-top: 1px solid var(--linea-suave); color: var(--tinta); font-size: var(--texto-s); text-decoration: none; font-variant-numeric: tabular-nums; }
+  .barrio:hover .nombreBarrio { text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; }
+  .barrio:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .barrio strong { font-weight: 600; }
+  .nombreBarrio { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  .accion { justify-self: start; min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta); font-weight: 600; text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; cursor: pointer; }
+  .vacio { color: var(--tinta-2); }
   .esqueleto { display: grid; gap: var(--espacio-3); color: var(--tinta-2); }
-  .esqueleto span { display: block; height: 50px; border-bottom: 1px solid var(--linea); }
+  .esqueleto span { display: block; height: 64px; border: 1px solid var(--linea); border-radius: var(--radio-flotante); }
 
   @media (prefers-reduced-motion: no-preference) {
     .columna span { animation: subir 0.9s var(--suave) both; }
-    .ejeBarrio span { animation: crecer 0.9s var(--suave) both; }
   }
   @keyframes subir { from { transform: scaleY(0); } }
-  @keyframes crecer { from { transform: scaleX(0); } }
 
   @media (min-width: 1100px) {
-    .columnas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: var(--espacio-7); }
+    .columnas { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); column-gap: var(--espacio-5); }
   }
 
   @media (max-width: 599px) {
     .pagina { gap: var(--espacio-4); padding-top: var(--espacio-4); padding-bottom: var(--espacio-5); }
     .titular { font-size: 1.75rem; }
-    .columnas { gap: var(--espacio-5); }
-    /* En el celular el gráfico de días va antes que los barrios: es lo que más informa. */
-    .respuesta { display: contents; }
-    .barriosBloque { order: 1; }
-    .cifras dd { font-size: var(--texto-m); }
+    .datos { gap: var(--espacio-2); }
+    .dato { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'valor' 'que'; padding: var(--espacio-3); }
+    .dato > :first-child { display: none; }
+    .valor { font-size: var(--texto-l); }
+    .que { font-size: var(--texto-xs); }
+    .columnasDias { gap: var(--espacio-2); }
     .columnasDias li { grid-template-rows: auto 120px auto; }
-    .barrios li { grid-template-columns: minmax(0, 1fr) auto; }
-    .ejeBarrio { display: none; }
   }
 }
