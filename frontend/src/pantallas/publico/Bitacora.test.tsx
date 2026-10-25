@@ -10,6 +10,7 @@ const estado = vi.hoisted(() => ({ error: false, fallo: false, vacio: false, sus
 vi.mock('@tanstack/react-router', () => ({
   useSearch: () => ({}),
   useNavigate: () => vi.fn<() => void>(),
+  Link: ({ children, className, to }: { children: unknown; className?: string; to?: string }) => <a href={to} className={className}>{children as never}</a>,
 }))
 // 15:00 en Cartagena: los eventos del 25 son «Hoy» y el del 24, «Ayer».
 vi.mock('../../app/ahora', () => ({ useAhora: () => new Date('2026-09-25T20:00:00Z') }))
@@ -22,6 +23,7 @@ vi.mock('../../app/datos', () => ({
       : { isPending: false, isError: false, error: null, hasNextPage: false, data: { pages: [{ eventos: estado.vacio ? [] : [...bitacoraDeEjemplo, ...estado.extras], paginacion: { total: estado.vacio ? 0 : 6 } }] } },
   useConteosBitacora: () => ({ CORTE_ANUNCIADO: 2, CORTE_RESTABLECIDO: 2, CORTE_CONFIRMADO_POR_CIUDADANOS: 1, CORTE_DETECTADO_POR_INGESTA: 1 }),
   useTotalBitacora: () => ({ data: 6 }),
+  useUltimoBoletin: () => ({ data: null }),
   useSustento: (_id: string, abierto: boolean) => {
     estado.sustentoAbierto = abierto
     return { isPending: !abierto, isError: false, data: abierto ? { pages: [{ ids: ['reporte-1'] }] } : undefined, hasNextPage: false }
@@ -57,8 +59,9 @@ describe('Bitácora', () => {
     estado.extras = ['CORTE_EXPIRADO', 'CORTE_ANULADO', 'RESTABLECIMIENTO_POR_VECINOS', 'ESTADO_EN_DISPUTA', 'CONSENSO_REVERTIDO']
       .map((tipo, i) => ({ id: `evt-n${i}`, tipo, timestamp: '2026-09-25T19:40:00Z', descripcion: `Evento ${tipo}` }))
     render(<Bitacora />)
-    for (const nombre of ['Corte sin cierre confirmado', 'Corte anulado', 'Restablecimiento según vecinos', 'Estado en disputa', 'Consenso revertido']) {
-      expect(screen.getByText(nombre)).toBeInTheDocument()
+    // ADR-104: lo que pasó en palabras del vecino, según el tipo.
+    for (const nombre of ['Nadie confirmó si volvió el agua', 'Se retiró un corte publicado por error', 'Volvió el agua', 'Los vecinos reportan algo distinto', 'Se retiró lo que confirmaron los vecinos']) {
+      expect(screen.getAllByText(nombre).length).toBeGreaterThan(0)
     }
     expect(screen.queryByText('Evento registrado')).not.toBeInTheDocument()
   })
@@ -76,8 +79,11 @@ describe('Bitácora', () => {
       descripcion: 'Vecinos confirman', estado: 'CON_SERVICIO', fuente: 'VECINOS', respaldo: { vecinos: 11, umbral: 12 },
     }]
     render(<Bitacora />)
-    expect(screen.getByText('Reportes de vecinos · 11 de 12 vecinos')).toBeInTheDocument()
-    expect(screen.getByText(/Restablecimiento según vecinos/)).toBeInTheDocument()
+    const evento = screen.getByText('Lo confirmaron 11 vecinos (hacían falta 12)').closest('li')!
+    expect(evento).toHaveTextContent('Torices · Volvió el agua')
+    expect(evento).toHaveTextContent('Lo confirmaron 11 vecinos (hacían falta 12)')
+    // La descripción del backend solo repetiría lo mismo: no se muestra.
+    expect(evento).not.toHaveTextContent('Vecinos confirman')
   })
 
   it('soloDebeEnlazarLaFuenteOriginalSiEsHttpOHttps', () => {
@@ -102,14 +108,14 @@ describe('Bitácora', () => {
     expect(screen.queryByText('Sin enlace a la fuente')).not.toBeInTheDocument()
     expect(screen.queryByText('Informativo')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Boletín de Acuacar' })).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: /Sustentado por/ })).toHaveLength(1)
-    expect(screen.getByRole('button', { name: 'Sustentado por 5 reportes' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /^Ver sustento/ })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Ver sustento: 5 reportes' })).toBeInTheDocument()
   })
 
   it('debeAbrirElSustentoSoloTrasLaAccion', async () => {
     render(<Bitacora />)
     expect(estado.sustentoAbierto).toBe(false)
-    await userEvent.click(screen.getByRole('button', { name: 'Sustentado por 5 reportes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Ver sustento: 5 reportes' }))
     expect(estado.sustentoAbierto).toBe(true)
     expect(screen.getByText('reporte-1')).toBeInTheDocument()
   })

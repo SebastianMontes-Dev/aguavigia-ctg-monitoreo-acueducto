@@ -28,11 +28,11 @@ test('debeConsultarElSustentoSoloAlAbrirloYNoNombrarLoQueNoExiste', async ({ pag
   let consultas = 0
   page.on('request', (peticion) => { if (new URL(peticion.url()).pathname.endsWith('/sustento')) consultas++ })
   await page.goto('/bitacora')
-  await expect(page.getByRole('button', { name: 'Sustentado por 5 reportes' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Ver sustento: 5 reportes' })).toBeVisible()
   await expect(page.getByText('Informativo')).toHaveCount(0)
   await expect(page.getByText('Sin enlace a la fuente')).toHaveCount(0)
   expect(consultas).toBe(0)
-  await page.getByRole('button', { name: 'Sustentado por 5 reportes' }).click()
+  await page.getByRole('button', { name: 'Ver sustento: 5 reportes' }).click()
   await expect(page.getByText('reporte-1')).toBeVisible()
   expect(consultas).toBe(1)
   await expect(page.getByText('Referencias de trazabilidad; el contenido de los reportes no es público.')).toBeVisible()

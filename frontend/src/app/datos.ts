@@ -258,6 +258,22 @@ export function useUltimoAviso(sectorId: string) {
   })
 }
 
+/** El último boletín o nota de toda la ciudad, o del barrio filtrado: el lateral de la bitácora (ADR-104). */
+export function useUltimoBoletin(sectorId?: string) {
+  return useQuery({
+    queryKey: ['ultimo-boletin', sectorId ?? 'todos'],
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/bitacora', {
+        params: { query: { sectorId, tipo: 'CORTE_DETECTADO_POR_INGESTA', pagina: 0, tamano: 1 } },
+        signal,
+      }).catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return (data as components['schemas']['EventoBitacoraRespuesta'][])[0] ?? null
+    },
+    staleTime: 60_000,
+  })
+}
+
 /**
  * La pestaña «Todos»: el total sin filtrar por tipo. No sale de sumar las demás, porque cinco tipos de evento se ven en
  * la lista pero la API no los deja filtrar (solo acepta cuatro).

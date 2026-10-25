@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { descripcionLegible, enlaceExterno, esTipoBitacora, esTipoEvento, FILTRO_TIPO, imagenDeBitacora, limiteDiaCartagena, NOMBRE_TIPO, rangoDiasValido, TIPOS_BITACORA, TIPOS_EVENTO } from './historia'
+import { descripcionAporta, descripcionLegible, procedenciaEnPalabras, quePasoEnPalabras, enlaceExterno, esTipoBitacora, esTipoEvento, FILTRO_TIPO, imagenDeBitacora, limiteDiaCartagena, NOMBRE_TIPO, rangoDiasValido, TIPOS_BITACORA, TIPOS_EVENTO } from './historia'
 import { claveDiaCartagena, etiquetaDia } from './tiempo'
 
 describe('enlaceExterno', () => {
@@ -91,5 +91,36 @@ describe('descripciones de la bitácora', () => {
     expect(descripcionLegible('Servicio normalizado en el sector SAN ANTONIO.', nombreDe, { original: 'SAN ANTONIO', legible: 'San Antonio' }))
       .toBe('Servicio normalizado en el sector San Antonio.')
     expect(descripcionLegible('Corte en EL BOSQUE', nombreDe, { original: 'Manga', legible: 'Manga' })).toBe('Corte en EL BOSQUE')
+  })
+})
+
+describe('eventos en palabras del vecino', () => {
+  it('debeDecirLoQuePasoSegunElTipoYElEstadoYNoSegunLaDescripcion', () => {
+    expect(quePasoEnPalabras('CORTE_CONFIRMADO_POR_CIUDADANOS', 'SIN_SERVICIO')).toBe('Se quedó sin agua')
+    expect(quePasoEnPalabras('CORTE_CONFIRMADO_POR_CIUDADANOS', 'PRESION_BAJA')).toBe('Llega poca agua')
+    expect(quePasoEnPalabras('RESTABLECIMIENTO_POR_VECINOS', 'CON_SERVICIO')).toBe('Volvió el agua')
+    expect(quePasoEnPalabras('CORTE_RESTABLECIDO', null)).toBe('Volvió el agua')
+    expect(quePasoEnPalabras('CORTE_ANULADO', null)).toBe('Se retiró un corte publicado por error')
+    expect(quePasoEnPalabras(null, null)).toBe('Evento registrado')
+    for (const tipo of TIPOS_EVENTO) expect(quePasoEnPalabras(tipo, null)).not.toBe('Evento registrado')
+  })
+
+  it('debeContarElQuorumComoVecinosQueLoConfirmaronYCuantosHacianFalta', () => {
+    expect(procedenciaEnPalabras('RESTABLECIMIENTO_POR_VECINOS', { vecinos: 8, umbral: 3 }, 'Reportes de vecinos')).toBe('Lo confirmaron 8 vecinos (hacían falta 3)')
+    expect(procedenciaEnPalabras('CORTE_CONFIRMADO_POR_CIUDADANOS', { vecinos: 1, umbral: 3 }, null)).toBe('Lo confirmó 1 vecino (hacían falta 3)')
+    expect(procedenciaEnPalabras('ESTADO_EN_DISPUTA', { vecinos: 11, umbral: 12 }, null)).toBe('11 de 12 vecinos')
+    expect(procedenciaEnPalabras('CORTE_DETECTADO_POR_INGESTA', null, 'Aviso oficial de Acuacar')).toBe('Aviso oficial de Acuacar')
+    expect(procedenciaEnPalabras('CORTE_ANUNCIADO', null, null)).toBeNull()
+  })
+
+  it('debeOcultarSoloLasDescripcionesQueRepitenElTipoYElRespaldo', () => {
+    expect(descripcionAporta('CORTE_CONFIRMADO_POR_CIUDADANOS')).toBe(false)
+    expect(descripcionAporta('RESTABLECIMIENTO_POR_VECINOS')).toBe(false)
+    expect(descripcionAporta('CORTE_DETECTADO_POR_INGESTA')).toBe(true)
+    expect(descripcionAporta(null)).toBe(true)
+  })
+
+  it('debeDecodificarLasEntidadesNumericasQueTraenLosBoletines', () => {
+    expect(descripcionLegible('#2878 &#8211; AGUAS DE CARTAGENA', () => undefined)).toBe('#2878 – AGUAS DE CARTAGENA')
   })
 })

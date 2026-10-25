@@ -1,3 +1,5 @@
+import { formatearNumero } from './formato'
+
 /** Los cuatro tipos por los que `GET /api/bitacora?tipo=` filtra: con otro valor el servidor responde 400 (docs/api). */
 export const TIPOS_BITACORA = [
   'CORTE_ANUNCIADO',
@@ -57,12 +59,59 @@ export function descripcionLegible(
   barrio?: { original: string; legible: string },
 ): string {
   const legible = texto
+    .replace(/&#(\d{2,5});/g, (_, codigo: string) => String.fromCodePoint(Number(codigo)))
     .replace(/\b(SIN_SERVICIO|CON_SERVICIO|PRESION_BAJA|CORTE_PROGRAMADO)\b/g, (estado) => ESTADO_EN_TEXTO[estado] ?? estado)
     .replace(/'([a-z0-9]+(?:-[a-z0-9]+)*)'/g, (original, id: string) => nombreDe(id) ?? original)
   // El nombre oficial del barrio viene en mayúsculas («en el sector SAN ANTONIO»); solo se cambia el del propio evento.
   return barrio && barrio.original.length > 2 && barrio.original === barrio.original.toUpperCase()
     ? legible.split(barrio.original).join(barrio.legible)
     : legible
+}
+
+/**
+ * ADR-104: lo que pasó, en palabras del vecino. Sale del `tipo` y del `estado` del evento, no de su descripción, que el
+ * backend arma para el registro y repite lo mismo con el enum y el id del barrio.
+ */
+export function quePasoEnPalabras(tipo: TipoEvento | null, estado: string | null | undefined): string {
+  switch (tipo) {
+    case 'CORTE_CONFIRMADO_POR_CIUDADANOS':
+      if (estado === 'SIN_SERVICIO') return 'Se quedó sin agua'
+      if (estado === 'PRESION_BAJA') return 'Llega poca agua'
+      if (estado === 'CON_SERVICIO') return 'Volvió el agua'
+      return 'Lo confirmaron los vecinos'
+    case 'RESTABLECIMIENTO_POR_VECINOS':
+    case 'CORTE_RESTABLECIDO': return 'Volvió el agua'
+    case 'CORTE_ANUNCIADO': return 'Se anunció un corte'
+    case 'CORTE_DETECTADO_POR_INGESTA': return 'Aviso de un corte'
+    case 'CORTE_EXPIRADO': return 'Nadie confirmó si volvió el agua'
+    case 'CORTE_ANULADO': return 'Se retiró un corte publicado por error'
+    case 'ESTADO_EN_DISPUTA': return 'Los vecinos reportan algo distinto'
+    case 'CONSENSO_REVERTIDO': return 'Se retiró lo que confirmaron los vecinos'
+    default: return 'Evento registrado'
+  }
+}
+
+/** Las descripciones de estos tipos solo repiten lo que ya dicen el tipo y el respaldo: no se muestran (ADR-104). */
+const DESCRIPCION_REDUNDANTE: ReadonlySet<TipoEvento> = new Set(['CORTE_CONFIRMADO_POR_CIUDADANOS', 'RESTABLECIMIENTO_POR_VECINOS'])
+
+export function descripcionAporta(tipo: TipoEvento | null): boolean {
+  return !tipo || !DESCRIPCION_REDUNDANTE.has(tipo)
+}
+
+/** «Lo confirmaron 8 vecinos (hacían falta 3)» cuando el evento nace de un quórum; si no, quién lo sostiene. */
+export function procedenciaEnPalabras(
+  tipo: TipoEvento | null,
+  respaldo: { vecinos?: number; umbral?: number } | null | undefined,
+  fuente: string | null,
+): string | null {
+  if (respaldo?.vecinos != null && respaldo.umbral != null) {
+    const vecinos = `${formatearNumero(respaldo.vecinos)} ${respaldo.vecinos === 1 ? 'vecino' : 'vecinos'}`
+    if (tipo === 'CORTE_CONFIRMADO_POR_CIUDADANOS' || tipo === 'RESTABLECIMIENTO_POR_VECINOS') {
+      return `Lo ${respaldo.vecinos === 1 ? 'confirmó' : 'confirmaron'} ${vecinos} (hacían falta ${formatearNumero(respaldo.umbral)})`
+    }
+    return `${formatearNumero(respaldo.vecinos)} de ${formatearNumero(respaldo.umbral)} vecinos`
+  }
+  return fuente
 }
 
 export function esTipoBitacora(valor: unknown): valor is TipoBitacora {
