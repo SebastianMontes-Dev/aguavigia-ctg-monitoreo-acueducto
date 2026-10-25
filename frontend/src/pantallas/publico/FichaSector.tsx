@@ -3,10 +3,10 @@ import { lazy, Suspense, useMemo } from 'react'
 import { useAhora } from '../../app/ahora'
 import { useCortes, useListado } from '../../app/datos'
 import { CorteAbierto } from '../../componentes/CorteAbierto'
-import { CortesCerrados } from '../../componentes/CortesCerrados'
+import { CortesCerrados, CortesSinHoraReal } from '../../componentes/CortesCerrados'
 import { EstadoListado } from '../../componentes/EstadoListado'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
-import { estaAbierto, estaCerrado } from '../../dominio/cortes'
+import { estaAbierto, estaCerrado, sinHoraRealEnPalabras } from '../../dominio/cortes'
 import { presentarEstado } from '../../dominio/estados'
 import { sinVerificacionReciente } from '../../dominio/frescura'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
@@ -39,7 +39,7 @@ function useCortesDelSector(sector: Sector) {
 
 function Horario({ sector, ahora }: { sector: Sector; ahora: Date }) {
   const { consulta, cortes } = useCortesDelSector(sector)
-  const abiertos = cortes.filter(estaAbierto)
+  const abiertos = cortes.filter((corte) => estaAbierto(corte, sector.id))
   const afectado = sector.estado && sector.estado !== 'CON_SERVICIO'
   if (!consulta.isPending && !consulta.isError && abiertos.length === 0 && !afectado) return null
 
@@ -63,15 +63,17 @@ function Horario({ sector, ahora }: { sector: Sector; ahora: Date }) {
 
 function Historial({ sector, ahora }: { sector: Sector; ahora: Date }) {
   const { consulta, cortes } = useCortesDelSector(sector)
-  const cerrados = cortes.filter(estaCerrado)
+  const cerrados = cortes.filter((corte) => estaCerrado(corte, sector.id))
+  const sinHoraReal = cortes.filter((corte) => sinHoraRealEnPalabras(corte) !== null)
   return (
     <section aria-labelledby="titulo-cerrados" className={estilos.bloque}>
       <h2 id="titulo-cerrados" className={estilos.seccion}>Cortes cerrados en {nombreLegible(sector.nombre)}</h2>
       {consulta.isPending || (consulta.isError && cortes.length === 0) ? null : cerrados.length === 0 ? (
         <p className={estilos.nota}>No hay cortes cerrados registrados para este barrio.</p>
       ) : (
-        <CortesCerrados cortes={cerrados} ahora={ahora} />
+        <CortesCerrados cortes={cerrados} sectorId={sector.id} ahora={ahora} />
       )}
+      {sinHoraReal.length > 0 && <CortesSinHoraReal cortes={sinHoraReal} ahora={ahora} />}
       {consulta.hasNextPage && (
         <button
           type="button"
