@@ -6,7 +6,7 @@ const backend = process.env.AGUAVIGIA_BACKEND ?? 'http://localhost:8081'
 
 // El proxy hace que la SPA y la API compartan origen: el proyecto corre solo en local, sin nginx (ADR-080).
 const proxy: Record<string, ProxyOptions> = Object.fromEntries(
-  ['/api', '/fotos'].map((ruta) => [ruta, {
+  ['/api'].map((ruta) => [ruta, {
     target: backend,
     changeOrigin: true,
     configure: (servidor: import('vite').HttpProxy.ProxyServer) => {
