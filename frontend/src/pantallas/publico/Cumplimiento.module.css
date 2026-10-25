@@ -16,11 +16,13 @@
   .sentido { font-size: 1.5rem; font-weight: 600; }
   .sinCorte { white-space: nowrap; }
   .frase { max-width: 34ch; margin-top: var(--espacio-2); font-size: var(--texto-m); }
-  .pie { padding-top: var(--espacio-4); border-top: 1px solid color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); font-size: var(--texto-s); color: var(--tinta-2); }
+  .pie { max-width: none; padding-top: var(--espacio-4); border-top: 1px solid color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); font-size: var(--texto-s); color: var(--tinta-2); }
   .pie + .pie { padding-top: 0; border-top: 0; }
   .pie strong { color: var(--tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .linea { display: grid; gap: var(--espacio-1); }
+  /* Los rótulos van alineados con la línea, que ocupa todo el bloque: sin la medida de lectura de los párrafos. */
+  .linea > p { max-width: none; }
   .anunciada { text-align: center; font-size: var(--texto-xs); font-weight: 600; }
   .extremos { display: flex; justify-content: space-between; gap: var(--espacio-2); font-size: var(--texto-xs); color: var(--tinta-2); }
   .leyendaPunto { display: inline-flex; align-items: center; gap: 6px; }
@@ -34,11 +36,11 @@
   .tramo { position: absolute; top: calc(50% - var(--grosor)); height: calc(var(--grosor) * 2); border-radius: var(--grosor); background: var(--cardenillo); }
   .tramo[data-sentido='antes'] { transform-origin: right center; }
   .tramo[data-sentido='tarde'] { transform-origin: left center; }
-  .punto { position: absolute; top: calc(50% - var(--punto) / 2); width: var(--punto); height: var(--punto); margin-left: calc(var(--punto) / -2); border: 2px solid var(--elevada); border-radius: 50%; background: var(--cardenillo); box-shadow: 0 0 0 1px var(--cardenillo); }
+  .punto { position: absolute; top: calc(50% - var(--punto) / 2); width: var(--punto); height: var(--punto); margin-left: calc(var(--punto) / -2); border: 2px solid var(--elevada); border-radius: 50%; background: var(--cardenillo); outline: 1px solid var(--cardenillo); }
 
   .meses { display: grid; padding: 0; list-style: none; }
   .mes { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 8.5rem; align-items: center; gap: var(--espacio-4); min-height: 56px; border-top: 1px solid var(--linea-suave); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
-  .guia { min-height: 24px; border-top: 0; font-size: var(--texto-xs); color: var(--tinta-2); }
+  .guia { max-width: none; min-height: 24px; border-top: 0; font-size: var(--texto-xs); color: var(--tinta-2); }
   .guiaLinea { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--espacio-2); white-space: nowrap; }
   .guiaLinea strong { color: var(--tinta); font-weight: 600; }
   .guiaLinea span:last-child { text-align: right; }
