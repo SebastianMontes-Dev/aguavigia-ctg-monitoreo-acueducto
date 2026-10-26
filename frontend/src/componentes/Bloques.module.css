@@ -8,13 +8,46 @@
     padding: var(--espacio-5);
     border: 1px solid var(--linea);
     border-radius: var(--radio-flotante);
-    background: var(--elevada);
+    background: var(--tarjeta);
   }
 
   /* La respuesta de la página: teñida de cardenillo, nunca de un color de estado (aquí no hay uno). */
   .tenido {
     border-color: color-mix(in srgb, var(--cardenillo) 30%, var(--linea));
-    background: color-mix(in srgb, var(--cardenillo) 8%, var(--elevada));
+    background: color-mix(in srgb, var(--cardenillo) 8%, var(--tarjeta));
+  }
+
+  /* ADR-105: una fila de cifras secundarias separadas por reglas finas, sin una tarjeta por cifra. */
+  .cifras {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    margin: 0;
+    border-top: 1px solid var(--linea);
+  }
+
+  .cifras > div {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    padding: var(--espacio-3) var(--espacio-4) 0 0;
+  }
+
+  .cifras > div + div {
+    padding-left: var(--espacio-4);
+    border-left: 1px solid var(--linea);
+  }
+
+  .cifras dt {
+    order: 2;
+    font-size: var(--texto-xs);
+    color: var(--tinta-2);
+  }
+
+  .cifras dd {
+    margin: 0;
+    font-size: var(--texto-l);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
   }
 
   .compacto {
@@ -110,7 +143,7 @@
     gap: var(--espacio-2);
     min-height: var(--objetivo-tactil);
     padding: 0 var(--espacio-4);
-    border: 1px solid var(--linea);
+    border: 1px solid var(--tinta-3);
     border-radius: var(--radio-pastilla);
     background: var(--elevada);
     color: var(--tinta);

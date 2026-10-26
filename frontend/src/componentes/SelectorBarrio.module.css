@@ -8,7 +8,7 @@
   .opcion { padding: var(--espacio-2) var(--espacio-3); min-height: var(--objetivo-tactil); cursor: pointer; }
   .opcion[data-focused], .opcion[data-selected] { background: var(--cardenillo-suave); }
   .vacio { padding: var(--espacio-3); color: var(--tinta-2); }
-  .pastilla { display: flex; align-items: center; gap: var(--espacio-2); min-height: var(--objetivo-tactil); padding: 0 var(--espacio-4); border: 1px solid var(--linea); border-radius: var(--radio-pastilla); background: var(--elevada); color: var(--tinta-2); }
+  .pastilla { display: flex; align-items: center; gap: var(--espacio-2); min-height: var(--objetivo-tactil); padding: 0 var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background: var(--elevada); color: var(--tinta-2); }
   .pastilla:focus-within { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
   .entradaPastilla { flex: 1; min-width: 0; min-height: 42px; border: 0; background: transparent; color: var(--tinta); font-size: var(--texto-s); outline: none; }
   .entradaPastilla::placeholder { color: var(--tinta-2); }
