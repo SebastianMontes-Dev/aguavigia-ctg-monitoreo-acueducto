@@ -58,6 +58,21 @@ test('debeDecirQueTodaviaNoHayCortesPorBarrio', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Un corte dura 2 horas y media en promedio')
 })
 
+test('noDebeNombrarElDiaConMasCortesConMenosDeCincoNiConfundirSinDatoConCero', async ({ page }) => {
+  await simularEstadisticas(page, {
+    sectoresMasAfectados: [{ sectorId: 'manga', nombre: 'MANGA', cantidadCortes: 1 }],
+    cortesPorDiaDeSemana: { Lunes: 1, Martes: 0, Miércoles: 0, Jueves: 0, Viernes: 0, Sábado: 0 },
+    duracionPromedioHoras: 0,
+  })
+  await page.goto('/estadisticas')
+  await expect(page.getByText(/Con 1 corte registrado todavía no se puede sacar una conclusión: hacen falta al menos 5\./)).toBeVisible()
+  await expect(page.locator('dl').getByText('Lunes', { exact: true })).toHaveCount(0)
+  await expect(page.getByText(/el día con más cortes/)).toHaveCount(0)
+  const dias = page.getByRole('list', { name: 'Cortes de lunes a domingo' }).getByRole('listitem')
+  await expect(dias.nth(1)).toContainText('0')
+  await expect(dias.last()).toContainText('Sin dato')
+})
+
 test('debeTitularLaPreguntaYExplicarLaAusenciaSinDatos', async ({ page }) => {
   await simularEstadisticas(page, {
     sectoresMasAfectados: [],

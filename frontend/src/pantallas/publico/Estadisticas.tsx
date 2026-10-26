@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useEstadisticas } from '../../app/datos'
-import { Icono, type NombreIcono } from '../../componentes/Icono'
+import { Icono } from '../../componentes/Icono'
 import { formatearNumero } from '../../dominio/formato'
+import { conclusionPendiente, muestraSuficiente } from '../../dominio/muestra'
 import { diasExtremos, disponibilidadEstadisticas, empateDeBarrios, listaDeDias, ordenarDias, titularEstadisticas } from '../../dominio/estadisticas'
 import { nombreLegible } from '../../dominio/sectores'
 import bloques from '../../componentes/Bloques.module.css'
@@ -16,17 +17,21 @@ const ABREVIADO: Record<string, string> = {
 
 const cortes = (cantidad: number) => `${formatearNumero(cantidad)} ${cantidad === 1 ? 'corte' : 'cortes'}`
 
-function Dato({ icono, valor, que }: { icono: NombreIcono; valor: string; que: string }) {
+/** Más de dos días empatados no caben en una cifra: se cuentan («6 días») en vez de listarse. */
+const nombrarDias = (dias: readonly string[]) => (dias.length > 2 ? `${formatearNumero(dias.length)} días` : listaDeDias(dias))
+
+function Extremo({ extremo, criterio }: { extremo: ReturnType<typeof diasExtremos>; criterio: 'más' | 'menos' }) {
+  if (!extremo) return <div><dt>Sin diferencias entre días</dt><dd>Iguales</dd></div>
+  const varios = extremo.dias.length > 1
   return (
-    <div className={estilos.dato}>
-      <span className={bloques.circulo}><Icono nombre={icono} tamano={20} /></span>
-      <dt className={estilos.que}>{que}</dt>
-      <dd className={estilos.valor}>{valor}</dd>
+    <div>
+      <dt>{varios ? `empatan con ${criterio} cortes: ${formatearNumero(extremo.cortes)} cada uno` : `el día con ${criterio} cortes: ${formatearNumero(extremo.cortes)}`}</dt>
+      <dd>{nombrarDias(extremo.dias)}</dd>
     </div>
   )
 }
 
-/** RF023, RF025 · `ADR-079` y `ADR-104`: el titular es la duración promedio; tres cifras, los días y los barrios en bloques. */
+/** RF023, RF025 · `ADR-079`, `ADR-104` y `ADR-105`: el titular es la duración promedio; las cifras en una fila, los días y los barrios en bloques. */
 export function Estadisticas() {
   const [todosLosBarrios, setTodosLosBarrios] = useState(false)
   const consulta = useEstadisticas()
@@ -44,12 +49,15 @@ export function Estadisticas() {
   }))
   const empate = empateDeBarrios(barrios.map((barrio) => barrio.cortes))
   const barriosVisibles = todosLosBarrios ? barrios : barrios.slice(0, BARRIOS_VISIBLES)
+  // ADR-105: con menos de 5 cortes se muestran los conteos, pero no se nombra el día con más ni el de menos.
+  const suficiente = disponibilidad ? muestraSuficiente(disponibilidad.totalCortes) : false
+  const destacados = suficiente ? mas?.dias ?? [] : []
 
   return (
-    <div className={`${estilosPagina.pagina} ${estilos.pagina}`}>
-      <header className={estilos.cabecera}>
+    <div className={`${estilosPagina.pagina} ${estilosPagina.vista}`}>
+      <header className={estilosPagina.cabeceraVista}>
         <p className={bloques.rotulo}>Estadísticas · todos los cortes registrados</p>
-        <h1 className={`${estilosPagina.titular} ${estilos.titular}`}>
+        <h1 className={`${estilosPagina.titular} ${estilosPagina.titularVista}`}>
           {titularEstadisticas(disponibilidad?.duracionMedible ?? null)}
         </h1>
       </header>
@@ -65,32 +73,37 @@ export function Estadisticas() {
 
       {datos && disponibilidad && !disponibilidad.vacioGeneral && (
         <>
-          <div>
-            <dl className={estilos.datos}>
-              <Dato icono="calendario" valor={formatearNumero(disponibilidad.totalCortes)} que="cortes registrados" />
-              <Dato icono="mas" valor={mas ? listaDeDias(mas.dias) : 'Sin diferencia'} que={mas ? `el día con más cortes: ${formatearNumero(mas.cortes)}` : 'entre días'} />
-              <Dato icono="menos" valor={menos ? listaDeDias(menos.dias) : 'Sin diferencia'} que={menos ? `el día con menos cortes: ${formatearNumero(menos.cortes)}` : 'entre días'} />
+          <section className={`${bloques.bloque} ${estilos.resumen}`} aria-label="Resumen" data-pocos={!suficiente || undefined}>
+            <dl className={`${bloques.cifras} ${estilos.datos}`}>
+              <div><dt>cortes registrados</dt><dd>{formatearNumero(disponibilidad.totalCortes)}</dd></div>
+              {suficiente && <Extremo extremo={mas} criterio="más" />}
+              {suficiente && <Extremo extremo={menos} criterio="menos" />}
             </dl>
             <p className={estilos.nota}>
+              {!suficiente && `${conclusionPendiente(disponibilidad.totalCortes, 'registrado')} `}
               {disponibilidad.duracionMedible === null
                 ? 'La duración promedio aparece cuando haya cortes cerrados.'
                 : 'La duración promedio cuenta solo los cortes cerrados.'}
             </p>
-          </div>
+          </section>
 
           <div className={estilos.columnas}>
             <section className={bloques.bloque} aria-labelledby="titulo-dias">
               <header className={estilos.cabeceraBloque}>
                 <h2 id="titulo-dias" className={bloques.titulo}>Cortes por día de la semana</h2>
-                <p className={bloques.bajada}>{mas ? `Más los ${listaDeDias(mas.dias).toLowerCase()}: ${cortes(mas.cortes)}` : 'Sin diferencias entre días'}</p>
+                {suficiente && (
+                  <p className={bloques.bajada}>{mas ? `Más los ${nombrarDias(mas.dias).toLowerCase()}: ${cortes(mas.cortes)}` : 'Sin diferencias entre días'}</p>
+                )}
               </header>
               {disponibilidad.totalCortes === 0 ? (
                 <p className={estilos.nota}>Todavía no hay cortes registrados.</p>
               ) : (
                 <ol className={estilos.columnasDias} aria-label="Cortes de lunes a domingo">
                   {dias.map(({ dia, cortes: cantidad }) => (
-                    <li key={dia} className={mas?.dias.includes(dia) ? estilos.destacado : undefined}>
-                      <strong>{cantidad === null ? '–' : formatearNumero(cantidad)}</strong>
+                    <li key={dia} className={destacados.includes(dia) ? estilos.destacado : undefined} data-sin-dato={cantidad === null || undefined}>
+                      <strong>
+                        {cantidad === null ? <><span aria-hidden="true">–</span><span className={estilos.oculto}>Sin dato</span></> : formatearNumero(cantidad)}
+                      </strong>
                       <span className={estilos.columna} aria-hidden="true">
                         <span style={{ height: `${(cantidad ?? 0) / maximo * 100}%` }} />
                       </span>
