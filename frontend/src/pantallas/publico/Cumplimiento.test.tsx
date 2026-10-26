@@ -51,7 +51,7 @@ describe('Cumplimiento', () => {
   it('debeDecirQueLaDiferenciaSeSaleDeLaEscalaDeUnaHora', () => {
     estado.solidez = { desviacionSegundos: 10 * 2 * 3600 }
     render(<Cumplimiento />)
-    expect(screen.getByRole('region', { name: 'En promedio' })).toHaveTextContent('Volvió el agua: más de 1 hora tarde')
+    expect(screen.getByRole('region', { name: 'En promedio' })).toHaveTextContent('Fuera de la escala: volvió más de 1 hora tarde.')
   })
 
   it('noDebeInventarElPromedioSinLaSerie', () => {

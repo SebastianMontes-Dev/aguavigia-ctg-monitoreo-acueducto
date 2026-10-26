@@ -64,8 +64,12 @@
   }
 
   @media (max-width: 599px) {
-    .datos dd { font-size: var(--texto-l); }
-    .datos dt { font-size: var(--texto-xs); }
+    /* Tres cifras no caben a lo ancho: una fila por cifra, qué es a la izquierda y la cifra a la derecha. */
+    .datos { grid-template-columns: minmax(0, 1fr); }
+    .datos > div, .datos > div + div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--espacio-3); padding: var(--espacio-2) 0; border-left: 0; }
+    .datos > div + div { border-top: 1px solid var(--linea-suave); }
+    .datos dt { order: 0; }
+    .datos dd { font-size: var(--texto-l); text-align: right; }
     .columnasDias { gap: var(--espacio-2); }
     .columnasDias li { grid-template-rows: auto 120px auto; }
   }

@@ -88,12 +88,10 @@ function Respuesta({ resumen, indice }: { resumen: ResumenCumplimiento; indice: 
         <LineaTiempo segundos={diferencia} grande />
         <p className={estilos.extremos}>
           <span>← 1 hora antes</span>
-          <span className={estilos.leyendaPunto}>
-            <span className={estilos.muestraPunto} aria-hidden="true" />
-            {fueraDeEscala ? `Volvió el agua: más de 1 hora ${diferencia > 0 ? 'tarde' : 'antes'}` : 'Volvió el agua'}
-          </span>
+          <span className={estilos.leyendaPunto}><span className={estilos.muestraPunto} aria-hidden="true" />Volvió el agua</span>
           <span>1 hora tarde →</span>
         </p>
+        {fueraDeEscala && <p className={estilos.fueraDeEscala}>Fuera de la escala: volvió más de 1 hora {diferencia > 0 ? 'tarde' : 'antes'}.</p>}
       </div>
       <dl className={`${bloques.cifras} ${estilos.cifras}`}>
         <div><dt>{unico ? 'Se anunció' : 'Se anuncia por corte'}</dt><dd>{duracionCorta(resumen.prometidoPorCorte)}</dd></div>

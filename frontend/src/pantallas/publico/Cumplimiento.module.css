@@ -23,6 +23,7 @@
   .anunciada { text-align: center; font-size: var(--texto-xs); font-weight: 600; }
   .extremos { display: flex; justify-content: space-between; gap: var(--espacio-2); font-size: var(--texto-xs); color: var(--tinta-2); }
   .leyendaPunto { display: inline-flex; align-items: center; gap: 6px; }
+  .fueraDeEscala { text-align: center; font-size: var(--texto-xs); font-weight: 600; }
   .muestraPunto { width: 10px; height: 10px; border-radius: 50%; background: var(--cardenillo); }
 
   /* La línea de tiempo: eje de tinta-3, marca de la hora anunciada en tinta y el punto de lo que pasó en cardenillo. */
