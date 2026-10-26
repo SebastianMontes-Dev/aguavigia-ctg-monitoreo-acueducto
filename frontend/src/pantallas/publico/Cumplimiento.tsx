@@ -8,6 +8,7 @@ import {
   diferenciaEnPalabras,
   diferenciaMensualPorCorte,
   duracionCorta,
+  ESCALA_LINEA_SEGUNDOS,
   faltanteEnPalabras,
   indiceCompleto,
   mesEnPalabras,
@@ -24,6 +25,7 @@ import {
   type ResumenCumplimiento,
 } from '../../dominio/cumplimiento'
 import { formatearNumero, formatearPorcentaje } from '../../dominio/formato'
+import { conclusionPendiente, muestraSuficiente } from '../../dominio/muestra'
 import { nombreLegible } from '../../dominio/sectores'
 import bloques from '../../componentes/Bloques.module.css'
 import estilosPagina from './Pagina.module.css'
@@ -59,31 +61,45 @@ function Solidez({ indice }: { indice: Indice }) {
   return frases.length ? <p className={estilos.pie}>{frases.join(' ')}</p> : null
 }
 
+/**
+ * ADR-105: la cifra grande se queda; las duraciones pasan a cifras secundarias. Con menos de 5 cortes la frase dice que aún no hay
+ * conclusión, y si la diferencia se sale de la escala de una hora, la leyenda lo dice en vez de dejar el punto como si fuera 1 hora.
+ */
 function Respuesta({ resumen, indice }: { resumen: ResumenCumplimiento; indice: Indice }) {
   const diferencia = resumen.diferenciaPorCorte
   const [cifra, sentido] = diferenciaEnPalabras(diferencia).split(/ (?=antes$|tarde$)/)
+  const unico = resumen.cortes === 1
+  const rotulo = unico ? 'En el único corte cerrado' : 'En promedio'
+  const fueraDeEscala = Math.abs(diferencia) > ESCALA_LINEA_SEGUNDOS
   return (
-    <section className={`${bloques.bloque} ${bloques.tenido} ${estilos.respuesta}`} aria-label="En promedio">
+    <section className={`${bloques.bloque} ${bloques.tenido} ${estilos.respuesta}`} aria-label={rotulo}>
       <div>
-        <p className={bloques.rotulo}>En promedio</p>
+        <p className={bloques.rotulo}>{rotulo}</p>
         <p className={estilos.cifraGrande}>
           <span className="cifra">{cifra}</span>
           {sentido && <span className={estilos.sentido}>{sentido}</span>}
         </p>
-        <p className={estilos.frase}>{respuestaEnPalabras(diferencia)}</p>
+        <p className={estilos.frase}>
+          {muestraSuficiente(resumen.cortes) ? respuestaEnPalabras(diferencia) : conclusionPendiente(resumen.cortes, 'cerrado')}
+        </p>
       </div>
       <div className={estilos.linea}>
         <p className={estilos.anunciada}>Hora anunciada</p>
         <LineaTiempo segundos={diferencia} grande />
         <p className={estilos.extremos}>
           <span>← 1 hora antes</span>
-          <span className={estilos.leyendaPunto}><span className={estilos.muestraPunto} aria-hidden="true" />Volvió el agua</span>
+          <span className={estilos.leyendaPunto}>
+            <span className={estilos.muestraPunto} aria-hidden="true" />
+            {fueraDeEscala ? `Volvió el agua: más de 1 hora ${diferencia > 0 ? 'tarde' : 'antes'}` : 'Volvió el agua'}
+          </span>
           <span>1 hora tarde →</span>
         </p>
       </div>
+      <dl className={`${bloques.cifras} ${estilos.cifras}`}>
+        <div><dt>{unico ? 'Se anunció' : 'Se anuncia por corte'}</dt><dd>{duracionCorta(resumen.prometidoPorCorte)}</dd></div>
+        <div><dt>{unico ? 'Duró' : 'Dura por corte'}</dt><dd>{duracionCorta(resumen.realPorCorte)}</dd></div>
+      </dl>
       <p className={estilos.pie}>
-        Un corte se anuncia de <span className={estilos.sinCorte}>{duracionCorta(resumen.prometidoPorCorte)}</span> y dura{' '}
-        <span className={estilos.sinCorte}>{duracionCorta(resumen.realPorCorte)}</span>.{' '}
         <strong>Índice {formatearPorcentaje(resumen.porcentaje)}</strong>: {significadoIndice(resumen.porcentaje)}.
       </p>
       <Solidez indice={indice} />
@@ -203,20 +219,22 @@ export function Cumplimiento() {
   const cargando = !barrioNoEncontrado && (indice.isPending || (indice.isSuccess && serie.isPending))
   const csv = `/api/cumplimiento/serie.csv${buscar.sector ? `?sectorId=${encodeURIComponent(buscar.sector)}` : ''}`
 
-  const titular = resumen
+  // ADR-105: el veredicto solo con muestra suficiente; con menos, el titular nombra lo que se compara.
+  const suficiente = !!resumen && muestraSuficiente(resumen.cortes)
+  const titular = resumen && suficiente
     ? titularVeredicto(resumen.diferenciaPorCorte, barrio)
     : barrio ? `Lo prometido y lo que duró en ${barrio}` : 'Lo prometido y lo que duró'
 
   return (
-    <div className={`${estilosPagina.pagina} ${estilos.pagina}`}>
+    <div className={`${estilosPagina.pagina} ${estilosPagina.vista}`}>
       <header className={estilos.cabecera}>
-        <div className={estilos.encabezado}>
+        <div className={estilosPagina.cabeceraVista}>
           <p className={bloques.rotulo}>
             Cumplimiento
             {resumen && <> · {formatearNumero(resumen.cortes)} {resumen.cortes === 1 ? 'corte cerrado' : 'cortes cerrados'}</>}
             {periodo && <> · {periodo}</>}
           </p>
-          <h1 className={`${estilosPagina.titular} ${estilos.titular}`}>{titular}</h1>
+          <h1 className={`${estilosPagina.titular} ${estilosPagina.titularVista}`}>{titular}</h1>
         </div>
         <div className={estilos.barra}>
           <SelectorBarrio sectores={sectores} valor={buscar.sector} etiqueta="Barrio" forma="pastilla"
@@ -243,7 +261,8 @@ export function Cumplimiento() {
           </div>
           <div className={estilos.columna}>
             {serie.isError && <p role="alert">No pudimos consultar el mes a mes. <button type="button" className={estilos.accion} onClick={() => void serie.refetch()}>Reintentar</button></p>}
-            {serie.data && serie.data.length > 0 && <MesAMes puntos={serie.data} />}
+            {/* ADR-105: un mes, o pocos cortes, no son una tendencia; las cifras siguen en «Ver los datos». */}
+            {serie.data && serie.data.length > 1 && suficiente && <MesAMes puntos={serie.data} />}
             <Detalles puntos={serie.data} csv={csv} />
           </div>
         </div>

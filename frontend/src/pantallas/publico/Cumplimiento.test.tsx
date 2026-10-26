@@ -4,7 +4,7 @@ import { cumplimientoDeEjemplo, serieDeEjemplo } from '../../pruebas/datos/histo
 import { sectoresDeEjemplo } from '../../pruebas/datos/sectores'
 import { Cumplimiento } from './Cumplimiento'
 
-const estado = vi.hoisted(() => ({ sinCortes: false, barrioDesconocido: false, sinSerie: false, solidez: {} as object }))
+const estado = vi.hoisted(() => ({ sinCortes: false, barrioDesconocido: false, sinSerie: false, unCorte: false, solidez: {} as object }))
 
 vi.mock('@tanstack/react-router', () => ({
   useSearch: () => estado.barrioDesconocido ? { sector: 'desconocido' } : {},
@@ -20,11 +20,11 @@ vi.mock('../../app/datos', () => ({
   }),
   useSerieCumplimiento: () => estado.sinSerie
     ? { isPending: false, isError: true, data: undefined, refetch: vi.fn<() => void>() }
-    : { isPending: false, isError: false, data: [serieDeEjemplo[2], serieDeEjemplo[0]] },
+    : { isPending: false, isError: false, data: estado.unCorte ? [serieDeEjemplo[1]] : [serieDeEjemplo[2], serieDeEjemplo[0]] },
 }))
 
 describe('Cumplimiento', () => {
-  afterEach(() => { estado.sinCortes = false; estado.barrioDesconocido = false; estado.sinSerie = false; estado.solidez = {} })
+  afterEach(() => { estado.sinCortes = false; estado.barrioDesconocido = false; estado.sinSerie = false; estado.unCorte = false; estado.solidez = {} })
 
   it('debeTitularConElVeredictoYPromediarPorCorte', () => {
     render(<Cumplimiento />)
@@ -36,6 +36,22 @@ describe('Cumplimiento', () => {
     expect(respuesta).toHaveTextContent('El agua vuelve 15 minutos más tarde de la hora anunciada, en promedio.')
     expect(screen.getByText(/Índice 80/)).toBeInTheDocument()
     expect(screen.queryByText('marzo de 2026')).not.toBeInTheDocument()
+  })
+
+  it('noDebeSacarVeredictoNiTendenciaConUnSoloCorte', () => {
+    estado.unCorte = true
+    render(<Cumplimiento />)
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Lo prometido y lo que duró')
+    const respuesta = screen.getByRole('region', { name: 'En el único corte cerrado' })
+    expect(respuesta).toHaveTextContent('Con 1 corte cerrado todavía no se puede sacar una conclusión: hacen falta al menos 5.')
+    expect(respuesta).not.toHaveTextContent('en promedio')
+    expect(screen.queryByRole('heading', { name: 'Mes a mes' })).not.toBeInTheDocument()
+  })
+
+  it('debeDecirQueLaDiferenciaSeSaleDeLaEscalaDeUnaHora', () => {
+    estado.solidez = { desviacionSegundos: 10 * 2 * 3600 }
+    render(<Cumplimiento />)
+    expect(screen.getByRole('region', { name: 'En promedio' })).toHaveTextContent('Volvió el agua: más de 1 hora tarde')
   })
 
   it('noDebeInventarElPromedioSinLaSerie', () => {

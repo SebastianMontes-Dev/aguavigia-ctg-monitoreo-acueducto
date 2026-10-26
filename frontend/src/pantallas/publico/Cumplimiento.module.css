@@ -1,10 +1,7 @@
 @layer componentes {
-  /* identidad.md §4.1 y ADR-104: rótulo y titular-respuesta con el barrio al lado; respuesta y evidencia a dos columnas, en bloques. */
-  .pagina { gap: var(--espacio-6); padding-top: var(--espacio-6); }
+  /* identidad.md §4.1, ADR-104 y ADR-105: rótulo y titular-respuesta con el barrio al lado; respuesta y evidencia a dos columnas, en bloques. */
 
   .cabecera { display: grid; gap: var(--espacio-4); }
-  .encabezado { display: grid; gap: var(--espacio-2); }
-  .titular { max-width: 24ch; font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.08; text-wrap: balance; }
   .barra { display: grid; gap: var(--espacio-2); max-width: 360px; }
 
   .columnas { display: grid; gap: var(--espacio-5); align-items: start; }
@@ -14,10 +11,10 @@
   .cifraGrande { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--espacio-3); margin-top: var(--espacio-2); }
   .cifraGrande :global(.cifra) { font-size: clamp(2.5rem, 4.4vw, 3.5rem); font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
   .sentido { font-size: 1.5rem; font-weight: 600; }
-  .sinCorte { white-space: nowrap; }
-  .frase { max-width: 34ch; margin-top: var(--espacio-2); font-size: var(--texto-m); }
-  .pie { max-width: none; padding-top: var(--espacio-4); border-top: 1px solid color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); font-size: var(--texto-s); color: var(--tinta-2); }
-  .pie + .pie { padding-top: 0; border-top: 0; }
+  .frase { max-width: 46ch; margin-top: var(--espacio-2); font-size: var(--texto-m); }
+  .cifras { border-top-color: color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); }
+  .cifras > div + div { border-left-color: color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); }
+  .pie { max-width: none; font-size: var(--texto-s); color: var(--tinta-2); }
   .pie strong { color: var(--tinta); font-weight: 600; font-variant-numeric: tabular-nums; }
 
   .linea { display: grid; gap: var(--espacio-1); }
@@ -36,7 +33,7 @@
   .tramo { position: absolute; top: calc(50% - var(--grosor)); height: calc(var(--grosor) * 2); border-radius: var(--grosor); background: var(--cardenillo); }
   .tramo[data-sentido='antes'] { transform-origin: right center; }
   .tramo[data-sentido='tarde'] { transform-origin: left center; }
-  .punto { position: absolute; top: calc(50% - var(--punto) / 2); width: var(--punto); height: var(--punto); margin-left: calc(var(--punto) / -2); border: 2px solid var(--elevada); border-radius: 50%; background: var(--cardenillo); outline: 1px solid var(--cardenillo); }
+  .punto { position: absolute; top: calc(50% - var(--punto) / 2); width: var(--punto); height: var(--punto); margin-left: calc(var(--punto) / -2); border: 2px solid var(--tarjeta); border-radius: 50%; background: var(--cardenillo); outline: 1px solid var(--cardenillo); }
 
   .meses { display: grid; padding: 0; list-style: none; }
   .mes { display: grid; grid-template-columns: 7.5rem minmax(0, 1fr) 8.5rem; align-items: center; gap: var(--espacio-4); min-height: 56px; border-top: 1px solid var(--linea-suave); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
@@ -72,12 +69,10 @@
   @media (min-width: 1100px) {
     .cabecera { grid-template-columns: minmax(0, 1fr) 320px; column-gap: var(--espacio-6); align-items: end; }
     .barra { max-width: none; }
-    .columnas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); column-gap: var(--espacio-5); }
+    .columnas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: var(--espacio-5); }
   }
 
   @media (max-width: 599px) {
-    .pagina { gap: var(--espacio-4); padding-top: var(--espacio-4); padding-bottom: var(--espacio-5); }
-    .titular { font-size: 1.75rem; }
     .barra { max-width: none; }
     .respuesta { gap: var(--espacio-4); }
     .mes { grid-template-columns: 3.5rem minmax(0, 1fr) 6.5rem; gap: var(--espacio-3); min-height: 48px; }
