@@ -28,6 +28,31 @@ test('debeElegirVariosBarriosYMostrarSiempreLaRespuestaNeutra', async ({ page })
   await expect(page.getByRole('textbox', { name: 'Tu correo' })).toHaveValue('')
 })
 
+test('debeDecirElErrorJuntoACadaCampoSinEnviarNada', async ({ page }) => {
+  await simularApi(page)
+  let enviados = 0
+  await page.route('**/api/suscripciones', (ruta) => { enviados++; return ruta.fulfill({ status: 201, contentType: 'application/json', body: '{}' }) })
+  await page.goto('/avisos')
+  const boton = page.getByRole('button', { name: /Enviar enlace de confirmación/ })
+  const correo = page.getByRole('textbox', { name: 'Tu correo' })
+  await boton.click()
+  await expect(page.getByText('Elige al menos un barrio de la lista.')).toBeVisible()
+  await expect(page.getByText('Escribe tu correo.')).toBeVisible()
+  await expect(page.getByRole('combobox', { name: 'Busca tu barrio' })).toBeFocused()
+  await page.getByRole('combobox', { name: 'Busca tu barrio' }).fill('Manga')
+  await page.getByRole('option', { name: 'Manga' }).click()
+  await expect(page.getByText('Elige al menos un barrio de la lista.')).toHaveCount(0)
+  await correo.fill('vecina@')
+  await correo.blur()
+  await expect(correo).toHaveAttribute('aria-invalid', 'true')
+  await expect(correo).toHaveAccessibleDescription('Revisa el correo: debe tener la forma nombre@correo.com.')
+  await boton.click()
+  await expect(correo).toBeFocused()
+  await correo.fill('vecina@example.com')
+  await expect(correo).not.toHaveAttribute('aria-invalid')
+  expect(enviados).toBe(0)
+})
+
 test('debeMostrarValidacionLimiteYFalloDeRedSinReintentoAutomatico', async ({ page }) => {
   await simularApi(page)
   let intentos = 0

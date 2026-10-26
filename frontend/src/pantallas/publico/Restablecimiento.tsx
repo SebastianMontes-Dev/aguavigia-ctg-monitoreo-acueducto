@@ -69,10 +69,10 @@ export function Restablecimiento() {
   )
 
   return (
-    <div className={`${pagina.pagina} ${estilos.pagina}`}>
-      <header className={estilos.cabecera}>
+    <div className={`${pagina.pagina} ${pagina.vista}`}>
+      <header className={pagina.cabeceraVista}>
         <p className={estilos.rotulo}>Avisos por correo</p>
-        <h1 className={`${pagina.titular} ${estilos.titular}`}>¿Ya volvió el agua a {barrio ?? 'tu barrio'}?</h1>
+        <h1 className={`${pagina.titular} ${pagina.titularVista}`}>¿Ya volvió el agua a {barrio ?? 'tu barrio'}?</h1>
         {sector && (
           <p className={estilos.estado}>
             <GlifoEstado estado={sector.estado} tamano={16} />
