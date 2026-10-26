@@ -5,10 +5,10 @@ import { bitacoraDeEjemplo } from '../../pruebas/datos/historia'
 import { sectoresDeEjemplo } from '../../pruebas/datos/sectores'
 import { Bitacora } from './Bitacora'
 
-const estado = vi.hoisted(() => ({ error: false, fallo: false, vacio: false, sustentoAbierto: false, extras: [] as object[] }))
+const estado = vi.hoisted(() => ({ error: false, fallo: false, vacio: false, sustentoAbierto: false, extras: [] as object[], sector: undefined as string | undefined }))
 
 vi.mock('@tanstack/react-router', () => ({
-  useSearch: () => ({}),
+  useSearch: () => (estado.sector ? { sector: estado.sector } : {}),
   useNavigate: () => vi.fn<() => void>(),
   Link: ({ children, className, to }: { children: unknown; className?: string; to?: string }) => <a href={to} className={className}>{children as never}</a>,
 }))
@@ -31,7 +31,7 @@ vi.mock('../../app/datos', () => ({
 }))
 
 describe('Bitácora', () => {
-  afterEach(() => { estado.error = false; estado.fallo = false; estado.vacio = false; estado.sustentoAbierto = false; estado.extras = [] })
+  afterEach(() => { estado.error = false; estado.fallo = false; estado.vacio = false; estado.sustentoAbierto = false; estado.extras = []; estado.sector = undefined })
 
   it('debeTitularConElUltimoCambioYAgruparPorDia', () => {
     render(<Bitacora />)
@@ -84,6 +84,19 @@ describe('Bitácora', () => {
     expect(evento).toHaveTextContent('Lo confirmaron 11 vecinos (hacían falta 12)')
     // La descripción del backend solo repetiría lo mismo: no se muestra.
     expect(evento).not.toHaveTextContent('Vecinos confirman')
+  })
+
+  it('noDebeRepetirEnCadaFilaElBarrioFiltrado', () => {
+    estado.sector = 'torices'
+    estado.extras = [{
+      id: 'evt-q', tipo: 'RESTABLECIMIENTO_POR_VECINOS', timestamp: '2026-09-25T19:50:00Z', sectorId: 'torices',
+      estado: 'CON_SERVICIO', fuente: 'VECINOS', respaldo: { vecinos: 11, umbral: 12 },
+    }]
+    render(<Bitacora />)
+    expect(screen.getByText(/^Bitácora · Torices/)).toBeInTheDocument()
+    const evento = screen.getByText('Lo confirmaron 11 vecinos (hacían falta 12)').closest('li')!
+    expect(evento).toHaveTextContent('Volvió el agua')
+    expect(evento).not.toHaveTextContent('Torices ·')
   })
 
   it('soloDebeEnlazarLaFuenteOriginalSiEsHttpOHttps', () => {

@@ -73,13 +73,15 @@ function Portada({ url }: { url: string }) {
 }
 
 /**
- * ADR-104: cada evento es una tarjeta de dos líneas. Arriba, el barrio y lo que pasó en palabras del vecino; abajo, quién lo
- * sostiene. La descripción solo si dice algo que el tipo y el respaldo no dicen ya; lo que no existe no se nombra.
+ * ADR-105: cada evento es una fila del bloque de su día. El barrio y lo que pasó en palabras del vecino, la hora y, en su propia
+ * columna en escritorio, quién lo sostiene. La descripción solo si dice algo que el tipo y el respaldo no dicen ya; lo que no existe
+ * no se nombra, y con un barrio filtrado no se repite en cada fila.
  */
-function EventoBitacora({ evento, nombreDe, originalDe }: {
+function EventoBitacora({ evento, nombreDe, originalDe, conBarrio }: {
   evento: Evento
   nombreDe: (id: string) => string | undefined
   originalDe: (id: string) => string | undefined
+  conBarrio: boolean
 }) {
   const estado = estadoValido(evento.estado)
   const imagen = imagenDeBitacora(evento.imagenUrl)
@@ -92,40 +94,43 @@ function EventoBitacora({ evento, nombreDe, originalDe }: {
   const descripcion = evento.descripcion && descripcionAporta(tipo)
     ? descripcionLegible(evento.descripcion, nombreDe, original && barrio ? { original, legible: barrio } : undefined)
     : null
+  const conAcciones = Boolean(fuenteOriginal || (sustento > 0 && evento.id))
   return (
     <li className={estilos.evento} data-estado={estado ?? undefined}>
       <span className={estilos.glifo}>
-        {estado ? <GlifoEstado estado={estado} tamano={20} /> : <Icono nombre="documento" tamano={18} />}
+        {estado ? <GlifoEstado estado={estado} tamano={16} /> : <Icono nombre="documento" tamano={16} />}
       </span>
       <p className={estilos.queP}>
-        {barrio && <><strong>{barrio}</strong> · </>}
+        {barrio && conBarrio && <><strong>{barrio}</strong> · </>}
         {quePasoEnPalabras(tipo, evento.estado)}
       </p>
       <time className={estilos.hora} dateTime={evento.timestamp}>{evento.timestamp ? formatearHora(evento.timestamp) : 'Sin hora'}</time>
-      <div className={estilos.detalle}>
-        {descripcion && <p className={estilos.descripcion}>{descripcion}</p>}
-        {(procedencia || fuenteOriginal || (sustento > 0 && evento.id)) && (
-          <div className={estilos.pie}>
-            {procedencia && (
-              <p className={estilos.procedencia}>
-                {evento.respaldo?.vecinos != null && <Icono nombre="personas" tamano={16} />}
-                {procedencia}
-              </p>
-            )}
-            {(fuenteOriginal || (sustento > 0 && evento.id)) && (
-              <p className={estilos.acciones}>
-            {fuenteOriginal && (
-              <a href={fuenteOriginal} target="_blank" rel="noopener noreferrer" className={estilos.enlace}>
-                {tipo === 'CORTE_DETECTADO_POR_INGESTA' ? 'Boletín de Acuacar' : 'Ver fuente original'}
-              </a>
-            )}
-                {sustento > 0 && evento.id && <Sustento id={evento.id} cantidad={sustento} />}
-              </p>
-            )}
-          </div>
-        )}
-        {imagen && <Portada url={imagen} />}
-      </div>
+      {(descripcion || imagen) && (
+        <div className={estilos.detalle}>
+          {descripcion && <p className={estilos.descripcion}>{descripcion}</p>}
+          {imagen && <Portada url={imagen} />}
+        </div>
+      )}
+      {(procedencia || conAcciones) && (
+        <div className={estilos.fuente}>
+          {procedencia && (
+            <p className={estilos.procedencia}>
+              {evento.respaldo?.vecinos != null && <Icono nombre="personas" tamano={16} />}
+              {procedencia}
+            </p>
+          )}
+          {conAcciones && (
+            <div className={estilos.acciones}>
+              {fuenteOriginal && (
+                <a href={fuenteOriginal} target="_blank" rel="noopener noreferrer" className={estilos.enlace}>
+                  {tipo === 'CORTE_DETECTADO_POR_INGESTA' ? 'Boletín de Acuacar' : 'Ver fuente original'}
+                </a>
+              )}
+              {sustento > 0 && evento.id && <Sustento id={evento.id} cantidad={sustento} />}
+            </div>
+          )}
+        </div>
+      )}
     </li>
   )
 }
@@ -222,12 +227,12 @@ export function Bitacora() {
   const alternar = (cual: 'barrio' | 'fechas') => setPanel(panel === cual ? null : cual)
 
   return (
-    <div className={`${estilosPagina.pagina} ${estilos.pagina}`}>
-      <header className={estilos.cabecera}>
+    <div className={`${estilosPagina.pagina} ${estilosPagina.vista}`}>
+      <header className={estilosPagina.cabeceraVista}>
         <p className={bloques.rotulo}>
           Bitácora{barrioFiltrado && <> · {barrioFiltrado}</>}{total !== null && <> · {formatearNumero(total)} {total === 1 ? 'evento' : 'eventos'}</>}
         </p>
-        <h1 className={`${estilosPagina.titular} ${estilos.titular}`}>{titular}</h1>
+        <h1 className={`${estilosPagina.titular} ${estilosPagina.titularVista}`}>{titular}</h1>
       </header>
 
       <section className={estilos.filtros} aria-label="Filtros de la bitácora">
@@ -280,10 +285,13 @@ export function Bitacora() {
           )}
           {consulta.data && eventos.length === 0 && <p className={`${bloques.bloque} ${estilos.vacio}`}>No hay eventos con esos filtros</p>}
           {agruparPorDia(eventos, ahora).map((grupo) => (
-            <section key={grupo.clave} className={estilos.dia} aria-label={grupo.etiqueta}>
+            <section key={grupo.clave} className={`${bloques.bloque} ${estilos.dia}`} aria-label={grupo.etiqueta}>
               <h2 className={estilos.etiquetaDia}>{grupo.etiqueta}</h2>
               <ol className={estilos.lista}>
-                {grupo.eventos.map((evento, indice) => <EventoBitacora key={evento.id ?? `${grupo.clave}-${indice}`} evento={evento} nombreDe={nombreDe} originalDe={originalDe} />)}
+                {grupo.eventos.map((evento, indice) => (
+                  <EventoBitacora key={evento.id ?? `${grupo.clave}-${indice}`} evento={evento} nombreDe={nombreDe} originalDe={originalDe}
+                    conBarrio={!buscar.sector} />
+                ))}
               </ol>
             </section>
           ))}
