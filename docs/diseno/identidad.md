@@ -109,7 +109,7 @@ Historial (Bitácora, Cumplimiento y Estadísticas) y Avisos. El panel del veedo
 - **Mapa:** panel contextual compacto de 400–460 px a la izquierda (buscador, respuesta, historial) y mapa a la derecha, sin tarjetas
   flotando encima salvo leyenda, zoom y crédito. Sin barrio elegido, el panel muestra Cartagena ahora: barra de la
   ciudad por estado, conteos y barrios con novedades.
-- **Páginas de lectura:** ancho máximo 1180 px; rótulo, titular-respuesta y barra de filtros arriba (§4.1); debajo,
+- **Páginas de lectura:** ancho máximo 1180 px (1320 px en Cumplimiento, Bitácora, Estadísticas y Avisos, `ADR-105`); rótulo, titular-respuesta y barra de filtros arriba (§4.1); debajo,
   dos columnas 1 : 1,2 dentro del primer pliegue: la respuesta y sus cifras a la izquierda, la evidencia a la derecha.
 - **Márgenes:** `max(20px, 3vw)` a los lados; 64 px entre bloques de página, 32 px dentro del panel.
 

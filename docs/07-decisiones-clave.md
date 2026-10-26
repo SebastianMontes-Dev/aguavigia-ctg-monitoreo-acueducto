@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7) y el **ADR-104** (§8) son los últimos usados; el siguiente libre es el 105.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8) y el **ADR-105** (§9) son los últimos usados; el siguiente libre es el 106.
 
 ## 1. Decisiones que se conservan
 
@@ -615,3 +615,32 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Cada página dice su respuesta con una cifra y una forma que se leen solas, y en escritorio llena el primer pliegue. **Pierde.** El sitio deja de ser, salvo el
   mapa, la composición de reglas finas de ADR-070.
 - **Se revierte** restaurando `Cumplimiento`, `Bitacora`, `Estadisticas`, `Avisos` y `EnlaceAvisos` y sus estilos del commit anterior a este ADR.
+
+## 9. Grafito y composición compacta de las páginas de historia y Avisos (2026-10-25)
+
+### ADR-105 — Cumplimiento, Bitácora, Estadísticas y Avisos usan el grafito en oscuro, más ancho y sin conclusiones con muestras pequeñas
+
+- **Contexto.** Con la composición en bloques (ADR-104), Yordy pidió una mejora visual de las cuatro páginas: una paleta oscura de grafito con verde agua,
+  más ancho en pantallas grandes, filas compactas en la bitácora y que ninguna página saque conclusiones que los datos no sostienen. Con los datos de la
+  simulación, Cumplimiento titulaba «El agua vuelve antes de la hora anunciada» con **un** corte cerrado y Estadísticas nombraba «el día con más cortes» con
+  un solo corte. El mapa quedaba fuera: lee sus colores de `:root` mientras corre (`estilo-base.ts`, `capas-sectores.ts`).
+- **Decisión.**
+  1. **Grafito** (`DESIGN.md` §3.1, `identidad.md` §2). En el tema oscuro, estas páginas redeclaran los neutros y el cardenillo sobre
+     `[data-paleta="grafito"]` en `<body>`; el marco pone el atributo solo en sus rutas. Nunca en `:root`: el mapa, la ficha y el tema claro no cambian, y
+     los cuatro estados y el latón tampoco (ADR-042). Un token nuevo, `--tarjeta`, es el fondo de un bloque; fuera del grafito vale `--elevada`, así que
+     nada cambia allí, y dentro deja `--elevada` (`#242c2f`) para lo que flota.
+  2. **Bordes que se ven.** `--linea` solo separa (1,3–1,7:1). El borde de un campo o de una opción que se elige es `--tinta-3` (≥ 3:1, WCAG 1.4.11), también
+     en claro.
+  3. **Muestra suficiente: 5 cortes** (`MUESTRA_SUFICIENTE`, `dominio/muestra.ts`). Por debajo, las cifras se muestran con su cantidad, pero sin
+     veredicto en el titular, sin tendencia mes a mes y sin «el día con más cortes»; una frase dice cuántos hay y cuántos hacen falta.
+  4. **Composición.** Ancho de 1320 px y un solo rótulo, titular y espaciado (`Pagina.module.css`). **Cumplimiento:** la cifra grande se queda; las
+     duraciones pasan a cifras secundarias y, si la diferencia rebasa la escala de una hora, una línea lo dice. **Bitácora:** un bloque por día con una
+     fila por evento (glifo, lo que pasó, la fuente en su columna en escritorio y la hora), filtros fijos al bajar y sin repetir el barrio filtrado.
+     **Estadísticas:** las cifras en una fila de un solo bloque; más de dos días empatados se cuentan («6 días») y un día sin dato lleva guion y base
+     punteada, distinto del cero. **Avisos:** cada campo dice su error junto a él (el formato del correo lo juzga el navegador), los barrios elegidos van
+     resaltados en cardenillo suave con «Sin datos verificados» en trama, y «Así funciona» es un bloque con un paso por fila.
+- **Alcance.** Estas cuatro páginas y los enlaces de avisos del correo (`/avisos/confirmar`, `/avisos/baja`). El mapa, la ficha, el Historial del celular
+  y el tema claro conservan su paleta.
+- **Gana.** Las cuatro páginas comparten paleta, ancho, titular y bloque; el dato pequeño se dice como pequeño. **Pierde.** En oscuro, la cabecera cambia
+  levemente de tono al pasar del mapa a estas páginas.
+- **Se revierte** quitando los dos bloques `[data-paleta='grafito']` de `tokens.css` y el efecto de `Marco.tsx`; lo demás sigue funcionando con la paleta oscura.
