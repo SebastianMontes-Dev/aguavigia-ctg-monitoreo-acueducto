@@ -1,3 +1,4 @@
+import { useLayoutEffect } from 'react'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
 import { useModoSistema } from './datos'
@@ -20,6 +21,14 @@ const DESTINOS_CELULAR = [
 ] as const
 
 const HISTORIAL = ['/historial', '/bitacora', '/cumplimiento', '/estadisticas']
+
+// ADR-105: estas páginas toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
+// ahí) y nunca en <html>, de donde el mapa lee sus colores.
+const CON_GRAFITO = ['/cumplimiento', '/bitacora', '/estadisticas', '/avisos']
+
+export function usaGrafito(ruta: string): boolean {
+  return CON_GRAFITO.some((prefijo) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))
+}
 
 // Un barrio abierto (/sectores/…) sigue siendo «Mapa»; en el celular, las tres páginas de historia son «Historial».
 export function destinoActivo(ruta: string, destino: string, celular = false): boolean {
@@ -46,6 +55,11 @@ export function Marco() {
   const { pathname } = useLocation()
   // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
   const simulacion = useModoSistema().data?.modo === 'SIMULACION'
+  const grafito = usaGrafito(pathname)
+  useLayoutEffect(() => {
+    if (grafito) document.body.dataset.paleta = 'grafito'
+    else delete document.body.dataset.paleta
+  }, [grafito])
   return (
     <div className={estilos.marco} data-simulacion={simulacion || undefined}>
       <a href="#contenido" className={estilos.saltar}>Saltar al contenido</a>

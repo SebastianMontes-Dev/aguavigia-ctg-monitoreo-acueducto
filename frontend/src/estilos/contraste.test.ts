@@ -4,17 +4,20 @@ import { contraste } from './contraste'
 
 const tokens = readFileSync(resolve(import.meta.dirname, 'tokens.css'), 'utf8')
 
-type Tema = 'claro' | 'oscuro'
+type Tema = 'claro' | 'oscuro' | 'grafito'
 
 const BLOQUES: Record<Tema, string> = {
   claro: ":root[data-theme='light'] {",
   oscuro: ":root[data-theme='dark'] {",
+  grafito: ":root[data-theme='dark'] [data-paleta='grafito'] {",
 }
 
 function colores(tema: Tema): Map<string, string> {
   const inicio = tokens.indexOf(BLOQUES[tema])
   const bloque = tokens.slice(inicio, tokens.indexOf('}', inicio))
-  return new Map([...bloque.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6});/g)].map((m) => [m[1] ?? '', m[2] ?? '']))
+  const propios = new Map([...bloque.matchAll(/--([a-z0-9-]+):\s*(#[0-9a-f]{6});/g)].map((m) => [m[1] ?? '', m[2] ?? '']))
+  // El grafito (ADR-105) solo redeclara neutros y cardenillo: los estados y el latón los hereda del oscuro.
+  return tema === 'grafito' ? new Map([...colores('oscuro'), ...propios]) : propios
 }
 
 const ESTADOS = ['estado-con-servicio', 'estado-sin-servicio', 'estado-presion-baja', 'estado-corte-programado']
@@ -31,7 +34,7 @@ const NO_TEXTO: ReadonlyArray<[string, string]> = ['tinta-3', 'cardenillo', 'lat
   (c): Array<[string, string]> => FONDOS.map((f) => [c, f]),
 )
 
-describe.each<Tema>(['claro', 'oscuro'])('contraste en el tema %s', (tema) => {
+describe.each<Tema>(['claro', 'oscuro', 'grafito'])('contraste en el tema %s', (tema) => {
   const paleta = colores(tema)
   const medir = (primero: string, fondo: string) => {
     const a = paleta.get(primero)
@@ -75,9 +78,22 @@ const MEDIDO: Record<Tema, ReadonlyArray<[string, string, number]>> = {
     ['sobre-cardenillo', 'cardenillo', 9.39],
     ['laton', 'papel', 8.11],
   ],
+  grafito: [
+    ['tinta', 'papel', 16.34],
+    ['tinta-2', 'papel', 9.23],
+    ['tinta-3', 'papel', 4.99],
+    ['tinta-3', 'elevada', 3.92],
+    ['cardenillo', 'papel', 9.54],
+    ['sobre-cardenillo', 'cardenillo', 9.54],
+    ['laton', 'papel', 7.81],
+    ['estado-con-servicio', 'papel', 7.88],
+    ['estado-sin-servicio', 'papel', 5.52],
+    ['estado-presion-baja', 'papel', 8.16],
+    ['estado-corte-programado', 'papel', 7.1],
+  ],
 }
 
-describe.each<Tema>(['claro', 'oscuro'])('cifras documentadas en el tema %s', (tema) => {
+describe.each<Tema>(['claro', 'oscuro', 'grafito'])('cifras documentadas en el tema %s', (tema) => {
   const paleta = colores(tema)
 
   it.each(MEDIDO[tema])('debeDarElContrasteDocumentado: --%s sobre --%s = %s:1', (color, fondo, esperado) => {

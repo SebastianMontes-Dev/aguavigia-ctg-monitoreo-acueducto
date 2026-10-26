@@ -76,6 +76,27 @@ la fuente; `frontend/src/estilos/tokens.css` la reproduce. **Tinta 3 nunca es te
 Los neutros tienen un sesgo verde sutil, no son grises puros. Es una decisión: el gris neutro se lee
 como plantilla sin criterio; un neutro con temperatura se lee como elegido.
 
+### 3.1 Grafito — el oscuro de las páginas de historia y Avisos (`ADR-105`)
+
+Cumplimiento, Bitácora, Estadísticas y Avisos usan en el tema oscuro esta variante; el tema claro y el mapa siguen con la tabla de
+arriba. Se declara sobre `[data-paleta="grafito"]` en `<body>`, nunca en `:root`, porque el mapa lee sus colores de `:root`. Los
+cuatro estados y el latón no cambian. `Tarjeta` es el fondo de los bloques; fuera del grafito vale lo mismo que `Elevada`.
+
+```
+Papel             #111719
+Superficie        #1a1f22
+Elevada           #242c2f
+Tarjeta           #1a1f22
+Tinta             #f1f4f2
+Tinta 2           #b1bbbd
+Tinta 3           #7e888c
+Línea             #354044
+Línea suave       #283135
+Cardenillo        #8cc8b8
+Sobre cardenillo  #111719
+Cardenillo suave  #1e2e2a
+```
+
 **Ambos temas son obligatorios.** Se definen como custom properties en `:root`, se redefinen bajo
 `@media (prefers-color-scheme: dark)` y de nuevo bajo `:root[data-theme="dark"]` /
 `:root[data-theme="light"]` para que el interruptor del usuario gane en las dos direcciones.
