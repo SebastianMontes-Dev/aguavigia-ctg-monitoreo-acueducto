@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8) y el **ADR-105** (§9) son los últimos usados; el siguiente libre es el 106.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) y el **ADR-106** (§10) son los últimos usados; el siguiente libre es el 107.
 
 ## 1. Decisiones que se conservan
 
@@ -644,3 +644,34 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Las cuatro páginas comparten paleta, ancho, titular y bloque; el dato pequeño se dice como pequeño. **Pierde.** En oscuro, la cabecera cambia
   levemente de tono al pasar del mapa a estas páginas.
 - **Se revierte** quitando los dos bloques `[data-paleta='grafito']` de `tokens.css` y el efecto de `Marco.tsx`; lo demás sigue funcionando con la paleta oscura.
+
+## 10. Selector de gráficas e informe impreso de Estadísticas (2026-10-30)
+
+### ADR-106 — Estadísticas reúne cuatro gráficas en un bloque con selector y se imprime como una hoja A4 propia
+
+- **Contexto.** Yordy pidió una tarjeta de cifras uniforme, la gráfica y la tabla a ras, más información útil y un PDF presentable. Una gráfica nueva en su
+  propio bloque alargaba la página (de 900 a 1.190 px en escritorio y a 1.550 px en el celular). El PDF salía de imprimir la pantalla: primera hoja casi vacía,
+  texto del tema oscuro sobre papel blanco y ninguna barra, porque los navegadores no imprimen los fondos por defecto.
+- **Decisión.**
+  1. **Un bloque, cuatro gráficas:** Por día, Duración, Cierres y Novedades, con un selector de texto y el subrayado de latón de la navegación, en el pie del
+     bloque. Abre en «Por día». «Cómo se mide» y «Ver los datos» siguen a la gráfica elegida.
+  2. **Duración** es `duracionRealSegundos ÷ cantidadCortes` de `/api/cumplimiento/serie`, una cifra que no está en otra vista. Cuenta cierres (corte por barrio),
+     así que su promedio puede diferir del titular, que cuenta por corte: «Cómo se mide» lo dice con las dos cifras. Un mes con menos de 5 cierres no se resalta
+     ni se nombra, y un mes sin cierres se dibuja sin dato, nunca como cero ni pegando a sus vecinos.
+  3. **Novedades** reutiliza `useConteosBitacora`: cuenta eventos, no cortes, y lo aclara.
+  4. **Barrios:** los empates van por orden alfabético en el cliente, y «Cómo se mide» dice que la cifra son apariciones en avisos aprobados, como pide
+     `EstadisticasMongoAdapter`.
+  5. **Bloques a ras:** cabecera, regla, cuerpo y pie; la nota de la duración pasa bajo el titular y la tarjeta queda solo con cifras.
+  6. **Informe impreso:** una hoja A4 con membrete, las cuatro gráficas, los barrios y todas las aclaraciones. `imprimirEnClaro` pone el tema claro mientras se
+     imprime y lo devuelve sin tocar la preferencia guardada; `print-color-adjust` conserva las barras; `@page informe` y los selectores con `:has` limitan el
+     cambio a esta vista, y sigue vigente para quien imprime con `Cmd+P`.
+  7. **Descarga directa:** «Descargar en PDF» baja `aguavigia-estadisticas-AAAA-MM-DD.pdf` sin pasar por el diálogo de impresión, porque `window.print()` siempre lo
+     abre y el backend no genera archivos. Se compone en el navegador con `@react-pdf/renderer`, que se carga solo al pulsar el botón, con los mismos datos y textos
+     de la pantalla y los colores del tema claro leídos de `tokens.css`. El texto es seleccionable y la hoja es A4. Newsreader va en dos `.ttf` estáticos (300 y 500)
+     sacados del `woff2` de la página, porque la librería no incrusta fuentes variables; Helvetica es una fuente estándar del PDF y no se incrusta.
+- **Alcance.** Solo `/estadisticas`. No cambia el contrato ni los estilos compartidos.
+- **Gana.** Más información en el mismo alto y un PDF que se lee solo. **Pierde.** Solo se ve una gráfica a la vez en pantalla, las seis peticiones de las
+  gráficas salen al abrir la página porque el papel las necesita todas, aunque nadie toque el selector, y la hoja vive dos veces, en `@media print` y en
+  `InformeEstadisticas.tsx`: un cambio de composición se hace en ambas. Es una dependencia más, aunque no pesa en la carga inicial.
+- **Se revierte** con el commit que la introduce: `Estadisticas.tsx`, su hoja de estilos, `InformeEstadisticas.tsx`, las funciones nuevas de `dominio/estadisticas.ts`,
+  `fechaYHora`, `imprimirEnClaro`, la dependencia y las dos fuentes estáticas.
