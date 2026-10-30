@@ -107,6 +107,11 @@ export function momento(valor: string | Date, ahora: Date): string {
   return `el ${dia} a las ${hora}`
 }
 
+/** «30 de octubre de 2026 a las 3:12 p. m.», para un documento que se lee fuera de la página. */
+export function fechaYHora(valor: string | Date): string {
+  return `${formatoDiaConAnio.format(aFecha(valor))} a las ${formatearHora(valor)}`
+}
+
 export function haceCuanto(valor: string | Date, ahora: Date): string {
   const transcurrido = Math.max(0, ahora.getTime() - aFecha(valor).getTime())
   if (transcurrido < MINUTO) return 'hace menos de un minuto'
