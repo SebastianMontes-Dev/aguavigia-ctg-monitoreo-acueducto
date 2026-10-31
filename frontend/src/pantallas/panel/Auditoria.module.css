@@ -1,0 +1,18 @@
+@layer componentes {
+  /* FE5: la auditoría usa la tabla de las cuentas (Cuentas.module.css); aquí solo lo que cambia entre columnas. */
+  .cuando { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .que { font-weight: 600; }
+  .actor, .sujeto, .detalle { overflow-wrap: anywhere; min-width: 0; }
+  .detalle { color: var(--tinta-2); max-width: 32ch; }
+  .ip { font-variant-numeric: tabular-nums; color: var(--tinta-2); white-space: nowrap; }
+
+  /* Debajo de 900 px cada asiento son cuatro líneas: cuándo y desde dónde, qué pasó, quién sobre quién y el detalle. */
+  @media (max-width: 899px) {
+    .cuando { order: 1; }
+    .ip { order: 2; text-align: right; }
+    .que { order: 3; grid-column: 1 / -1; }
+    .actor { order: 4; }
+    .sujeto { order: 5; }
+    .detalle { order: 6; grid-column: 1 / -1; max-width: none; }
+  }
+}

@@ -59,6 +59,7 @@ export function MarcoPanel() {
               key={seccion.to}
               to={seccion.to}
               className={estilos.seccion}
+              activeOptions={{ exact: true }}
               aria-current={seccionActiva(pathname, seccion.to) ? 'page' : undefined}
             >
               {seccion.texto}
