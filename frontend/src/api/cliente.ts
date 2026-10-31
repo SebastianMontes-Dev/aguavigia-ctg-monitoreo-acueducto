@@ -1,6 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 import type { components, paths } from './generado/esquema'
 import { sesion } from './sesion'
+import { sesionVecino } from './sesion-vecino'
 
 export type Problema = components['schemas']['ProblemDetail'] & Record<string, unknown>
 
@@ -18,6 +19,8 @@ export type TipoProblema =
   | 'metodo-no-permitido'
   | 'formato-no-aceptable'
   | 'conflicto-de-estado'
+  | 'ubicacion-fuera-del-barrio'
+  | 'ubicacion-imprecisa'
   | 'tipo-de-contenido-no-soportado'
   | 'formato-no-permitido'
   | 'archivo-demasiado-grande'
@@ -96,16 +99,31 @@ export function normalizarError(respuesta: Response | null, cuerpo: unknown): Er
   }
 }
 
+/** De quién es el token que lleva una ruta: el panel solo manda el suyo a `/api/veedor/**` y el vecino, a `/api/vecino/**` y a los reportes. */
+type Dueno = 'panel' | 'vecino' | null
+
+function duenoDeLaRuta(ruta: string): Dueno {
+  if (ruta.startsWith('/api/veedor/')) return 'panel'
+  // Iniciar sesión no lleva el token de una sesión anterior.
+  if (ruta === '/api/vecino/sesion') return null
+  if (ruta.startsWith('/api/vecino/') || ruta === '/api/reportes' || /^\/api\/reportes\/[^/]+\/confirmar$/.test(ruta)) return 'vecino'
+  return null
+}
+
 export const middlewareSesion: Middleware = {
   onRequest({ request }) {
-    const token = sesion.token()
+    const dueno = duenoDeLaRuta(new URL(request.url).pathname)
+    const token = dueno === 'panel' ? sesion.token() : dueno === 'vecino' ? sesionVecino.token() : null
     if (token) request.headers.set('Authorization', `Bearer ${token}`)
     return request
   },
-  async onResponse({ response }) {
-    if (response.status !== 401 || !sesion.token()) return response
+  async onResponse({ response, request }) {
+    if (response.status !== 401) return response
+    const dueno = duenoDeLaRuta(new URL(request.url).pathname)
+    const almacen = dueno === 'panel' ? sesion : dueno === 'vecino' ? sesionVecino : null
+    if (!almacen?.token()) return response
     const tipo = tipoDeProblema(await response.clone().json().catch(() => null))
-    if (tipo === null || !TIPOS_QUE_NO_CIERRAN_SESION.has(tipo)) sesion.limpiar()
+    if (tipo === null || !TIPOS_QUE_NO_CIERRAN_SESION.has(tipo)) almacen.limpiar()
     return response
   },
 }

@@ -162,9 +162,15 @@ export function Ingreso() {
             <Button type="submit" className={`${botones.principal} ${botones.ancho}`} isDisabled={enviando}>
               {enviando ? 'Ingresando…' : <>Ingresar <span className={botones.flecha} aria-hidden="true">→</span></>}
             </Button>
-            {conCodigo && (
+            {conCodigo ? (
               <div className={estilos.acciones}>
                 <button type="button" className={estilos.enlaceBoton} onClick={cambiarDeCuenta}>Ingresar con otra cuenta</button>
+              </div>
+            ) : (
+              <div className={estilos.acciones}>
+                <Link to="/cuenta/olvide" className={estilos.enlaceBoton}>Olvidé mi clave</Link>
+                <Link to="/cuenta/solicitar" className={estilos.enlaceBoton}>Solicitar acceso</Link>
+                <Link to="/cuenta/reenviar" className={estilos.enlaceBoton}>¿No te llegó el correo?</Link>
               </div>
             )}
           </form>

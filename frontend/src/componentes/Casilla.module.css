@@ -1,0 +1,15 @@
+@layer componentes {
+  /* FE6: la casilla de los formularios de cuenta. Mismo borde de 3:1 y mismo foco de latón que los campos de texto. */
+  .casilla { display: grid; gap: 0; min-width: 0; }
+  .fila { display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: start; column-gap: var(--espacio-3); min-height: var(--objetivo-tactil); padding-block: 10px; cursor: pointer; }
+  .casilla:has(.ayuda, .error) .fila { padding-bottom: 4px; }
+  .cuadro { appearance: none; position: relative; width: 24px; height: 24px; margin: 0; border: 1px solid var(--tinta-3); border-radius: 6px; background: var(--elevada); cursor: pointer; }
+  .cuadro:checked { border-color: var(--cardenillo); background: var(--cardenillo); }
+  .cuadro:checked::after { content: ''; position: absolute; left: 7px; top: 3px; width: 6px; height: 12px; border: solid var(--sobre-cardenillo); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+  .cuadro:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .cuadro[aria-invalid='true'] { border-color: var(--tinta); border-width: 2px; }
+  .texto { font-size: var(--texto-s); color: var(--tinta); }
+  .ayuda { padding: 0 0 var(--espacio-1) calc(24px + var(--espacio-3)); font-size: var(--texto-xs); color: var(--tinta-2); }
+  .error { display: flex; align-items: flex-start; gap: var(--espacio-2); padding: var(--espacio-1) 0 var(--espacio-1) calc(24px + var(--espacio-3)); font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
+  .error::before { content: '!' / ''; display: grid; place-items: center; flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: var(--radio-pastilla); background: var(--tinta); color: var(--papel); font-size: 12px; line-height: 1; }
+}

@@ -55,7 +55,7 @@ Las filas ya están en [`guia-frontend.md` §5.3/§5.4](../diseno/guia-frontend.
 ## Terminado cuando
 
 - Pasa la puerta completa.
-- Yordy archivó y borró `feat/f5-ingreso-panel` (a mano, después de fusionar).
+- Yordy archivó y borró `feat/f5-ingreso-panel` (a mano, después de fusionar). **Pendiente (2026-10-31):** la rama está integrada pero no archivada.
 
 ## Prompt para Claude Code
 

@@ -1,6 +1,7 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet } from '@tanstack/react-router'
 import { Marco } from './Marco'
 import { esMotivoIngreso, type MotivoIngreso } from './panel'
+import { esMotivoVecino, type MotivoVecino } from './vecino'
 import { ConfirmarReporte } from '../pantallas/publico/ConfirmarReporte'
 import { FichaSector } from '../pantallas/publico/FichaSector'
 import { Historial, NoEncontrada } from '../pantallas/publico/Pendiente'
@@ -13,6 +14,12 @@ import { esTipoBitacora } from '../dominio/historia'
 import { Avisos } from '../pantallas/publico/Avisos'
 import { BajaAvisos, ConfirmarAvisos } from '../pantallas/publico/EnlaceAvisos'
 import { Restablecimiento } from '../pantallas/publico/Restablecimiento'
+import { IngresoVecino } from '../pantallas/cuentas/IngresoVecino'
+import { OlvideClave } from '../pantallas/cuentas/OlvideClave'
+import { PerfilVecino } from '../pantallas/cuentas/PerfilVecino'
+import { RegistroVecino } from '../pantallas/cuentas/RegistroVecino'
+import { ReenviarCorreo } from '../pantallas/cuentas/ReenviarCorreo'
+import { SolicitarAcceso } from '../pantallas/cuentas/SolicitarAcceso'
 
 const raiz = createRootRoute({ component: Outlet, notFoundComponent: NoEncontrada })
 
@@ -73,6 +80,20 @@ const bajaAvisos = createRoute({
   component: BajaAvisos,
 })
 
+// Cuentas públicas (FE6): solicitar acceso al panel, recuperar la clave y la cuenta del vecino. Los enlaces de los correos abren las páginas del backend.
+const cuentaSolicitar = createRoute({ getParentRoute: () => publico, path: 'cuenta/solicitar', component: SolicitarAcceso })
+const cuentaOlvide = createRoute({ getParentRoute: () => publico, path: 'cuenta/olvide', component: OlvideClave })
+const cuentaReenviar = createRoute({ getParentRoute: () => publico, path: 'cuenta/reenviar', component: ReenviarCorreo })
+const vecinoRegistro = createRoute({ getParentRoute: () => publico, path: 'vecino/registro', component: RegistroVecino })
+const vecinoIngreso = createRoute({
+  getParentRoute: () => publico,
+  path: 'vecino/ingreso',
+  validateSearch: (busqueda: Record<string, unknown>): { motivo?: MotivoVecino } =>
+    esMotivoVecino(busqueda.motivo) ? { motivo: busqueda.motivo } : {},
+  component: IngresoVecino,
+})
+const vecinoPerfil = createRoute({ getParentRoute: () => publico, path: 'vecino/perfil', component: PerfilVecino })
+
 // Provisional de F0–F1: tokens y contraste medidos en pantalla, fuera de la navegación ciudadana.
 const muestrario = createRoute({
   getParentRoute: () => raiz, path: 'muestrario', component: lazyRouteComponent(() => import('./Muestrario'), 'Muestrario'),
@@ -129,6 +150,7 @@ const arbol = raiz.addChildren([
   publico.addChildren([
     mapa.addChildren([inicio, sector]),
     restablecimiento, confirmar, historial, cumplimiento, bitacora, estadisticas, avisos, confirmarAvisos, bajaAvisos,
+    cuentaSolicitar, cuentaOlvide, cuentaReenviar, vecinoRegistro, vecinoIngreso, vecinoPerfil,
   ]),
   panelIngreso,
   panelSegundoFactor,
