@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) el **ADR-106** (§10) y el **ADR-107** (§11) son los últimos usados; el siguiente libre es el 108.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) el **ADR-106** (§10), el **ADR-107** (§11) y el **ADR-108** (§12) son los últimos usados; el siguiente libre es el 109.
 
 ## 1. Decisiones que se conservan
 
@@ -698,3 +698,22 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Un solo sitio, con una paleta, un ancho y un bloque; las fases siguientes no vuelven a decidir el diseño. **Pierde.** El panel no se distingue del sitio público por su paleta:
   el marco y el título de cada sección tienen que decir dónde está la persona.
 - **Se revierte** quitando las rutas nuevas de `CON_GRAFITO` y rehaciendo las pantallas con la composición que se escoja; ninguna pantalla existe aún.
+
+## 12. Recomposición de Avisos (2026-10-31)
+
+### ADR-108 — Avisos: el formulario y la respuesta de la página en dos bloques de la misma altura
+
+- **Contexto.** Yordy encontró la vista de Avisos «demasiado básica y sin armonía visual» con el resto: dos bloques de alturas distintas con vacío debajo, pasos numerados en círculos negros
+  y los barrios elegidos como pastillas sueltas. No cambia el contrato ni la lógica de suscripción; los textos son los de antes (más una línea de vacío, abajo).
+- **Decisión.**
+  1. **Dos bloques con la misma altura** (`align-items: stretch`) desde 900 px, en proporción 1,2 : 1. En celular, el formulario primero y «Así funciona» debajo.
+  2. **«Así funciona» es la respuesta de la página**, así que va teñido de cardenillo (`identidad.md` §4.1, regla 4 de `rediseno-vigente.md`); sus tres pasos se reparten toda la altura, uno por fila
+     con regla fina y un icono funcional junto a su palabra. Los enlaces del correo (confirmar, baja, «¿Ya volvió el agua?») comparten el bloque, con el paso en número.
+  3. **El formulario se lee de arriba abajo**: cada paso abre con su número en un círculo de `--cardenillo-suave` y un título de 20 px; una regla fina separa los pasos. Los barrios elegidos son
+     **filas** (nombre, glifo y palabra del estado de ahora, quitar de 44 px) en vez de pastillas; sin barrios, una línea dice qué aparecerá ahí. El error de barrios va junto al selector, que lo anuncia
+     (`aria-invalid`, `aria-describedby`) y toma el borde de 2 px de los campos inválidos.
+  4. **`SelectorBarrio` gana la forma `campo`** (la pastilla a 48 px, la altura de los campos del formulario) y las propiedades `invalido` y `descritoPor`. Las demás formas no cambian.
+- **Sin colores, sombras ni animaciones nuevas.** Solo tokens; la marca de recibido sigue dibujándose como en `identidad.md` §5.
+- **Gana.** Una composición con jerarquía y sin huecos entre bloques, que el panel y las cuentas (ADR-107) pueden copiar. **Pierde.** En los enlaces del correo el bloque de la tarea queda con aire
+  debajo del botón, porque se estira a la altura del bloque teñido.
+- **Se revierte** con los archivos `Avisos.tsx`, `Avisos.module.css` y `SelectorBarrio`; no toca datos.
