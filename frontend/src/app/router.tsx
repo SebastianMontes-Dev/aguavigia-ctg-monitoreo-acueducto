@@ -113,7 +113,9 @@ const panelCortes = createRoute({
 const panelDisputas = createRoute({
   getParentRoute: () => panel, path: 'disputas', component: lazyRouteComponent(() => import('../pantallas/panel/Disputas'), 'Disputas'),
 })
-const panelIngesta = seccionPanel('ingesta', 'Ingesta')
+const panelIngesta = createRoute({
+  getParentRoute: () => panel, path: 'ingesta', component: lazyRouteComponent(() => import('../pantallas/panel/Ingesta'), 'Ingesta'),
+})
 const panelCuentas = seccionPanel('cuentas', 'Cuentas')
 const panelAuditoria = seccionPanel('auditoria', 'Auditoría')
 const panelSeguridad = createRoute({
