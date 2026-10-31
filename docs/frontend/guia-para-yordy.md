@@ -33,7 +33,7 @@ Si solo tienes 5 minutos: lee §1, §2 y §5.1, y arranca FE0.
 | Rutas que el frontend consume | **27** | [`README.md`](README.md#punto-de-partida-main-2026-10-06): el último commit en `frontend/` es `f81f6f6`, del 2026-09-29 |
 | Pantallas que existen | Mapa, ficha, reporte, confirmar, cumplimiento, estadísticas, bitácora, avisos (3), muestrario | `frontend/src/pantallas/publico` |
 | Pantallas que no existen | Panel, cuentas, vecino, «¿ya volvió el agua?» | — |
-| Rama tuya pendiente | `feat/f5-ingreso-panel` (2 commits, ingreso al panel con TOTP). **No se borra ni se toca**; se integra en FE2 | `git ls-remote` |
+| Rama tuya pendiente | `feat/f5-ingreso-panel` (2 commits, ingreso al panel con TOTP). Ya está integrada en FE2 y archivada como la etiqueta `archivo/yordy-2026-10-31/f5-ingreso-panel`; la rama se borró (2026-10-31) | `git ls-remote` |
 
 ### 1.2 El Frontend CI está rojo, y desde antes de esta semana
 
@@ -441,13 +441,13 @@ Guía: [`FE7-integracion-y-entrega.md`](FE7-integracion-y-entrega.md). Depende d
 
 Marca cada línea con fecha y PR cuando se cumpla.
 
-- [ ] FE0 · contrato al día · CI en verde
-- [ ] FE1 · lo público, completo
-- [ ] FE2 · ingreso al panel (rama `feat/f5-ingreso-panel` archivada)
-- [ ] FE3 · moderación y cortes
-- [ ] FE4 · ingesta
-- [ ] FE5 · administración (con el bloque «Copia analítica»)
-- [ ] FE6 · cuentas públicas y vecino
+- [x] FE0 · contrato al día · en `develop` (2026-10-30, #122; el #121 se cerró sin fusionar)
+- [x] FE1 · lo público, completo · en `develop` (2026-10-30, #122)
+- [ ] FE2 · ingreso al panel · construido · PR a `develop` #130 (la rama `feat/f5-ingreso-panel` ya se archivó como la etiqueta `archivo/yordy-2026-10-31/f5-ingreso-panel`)
+- [ ] FE3 · moderación y cortes · construido · PR a `develop` #130
+- [ ] FE4 · ingesta · construido · PR a `develop` #130 (antes #126)
+- [ ] FE5 · administración (con «Copia analítica» en `/panel/sistema`) · construido · PR a `develop` #130 (antes #127)
+- [ ] FE6 · cuentas públicas y vecino · construido · PR a `develop` #130 (antes #129)
 - [ ] FE7 · integración y entrega
 - [ ] Cobertura del contrato sin huecos fuera de las exclusiones
 - [ ] axe en verde; prueba de los cinco segundos anotada

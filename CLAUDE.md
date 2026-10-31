@@ -8,7 +8,7 @@ Proyecto académico de dos personas que corre **en local**. Resuelve un vacío d
 
 - **Backend: Sebastian. Frontend: Yordy Pardo (`Jordy-Lv`).** No se crea ni edita nada en `frontend/` salvo que Yordy lo pida.
   Si el backend cambia el contrato (`backend/openapi.yaml`, rutas, correos), se avisa qué debe adaptar el frontend.
-- El frontend sigue su plan por fases en [`docs/frontend/`](docs/frontend/README.md) (FE0–FE7), con una rama `feature/fe<n>-<tema>` por fase desde `develop`. La rama `feat/f5-ingreso-panel` es de Yordy: no se borra ni se toca (se integra en FE2).
+- El frontend sigue su plan por fases en [`docs/frontend/`](docs/frontend/README.md) (FE0–FE7), con una rama `feature/fe<n>-<tema>` por fase desde `develop`. La rama `feat/f5-ingreso-panel` es de Yordy: no se borra ni se toca; su contenido ya se integró en FE2 y se archivó como la etiqueta `archivo/yordy-2026-10-31/f5-ingreso-panel` (la rama ya no existe).
 
 ## Stack
 
@@ -70,5 +70,5 @@ Arquitectura Limpia (puertos y adaptadores), dependencias siempre hacia adentro:
 Vive en `docs/`, una guía por tema (índice en `docs/README.md`). `docs/api/` y `docs/diseno/` son referencia para el frontend.
 La documentación anterior sigue en el historial: `git show pre-limpieza-docs:<ruta>`. Un dato vive en un solo archivo.
 Números de ADR: 087–097 son los de `docs/07` §4; el registro histórico reutiliza 087–089 con otro sentido (citarlos como «histórico ADR-0xx»),
-098–099 los consumió la reducción cancelada y el 100 es PostgreSQL (copia analítica), el 101 y el 102 la lectura de la ficha del barrio, el 103 su composición en bloques, el 104 la de las páginas de historia y Avisos, el 105 su grafito y su composición compacta, el 106 el selector de gráficas y el informe impreso de Estadísticas, el 107 el diseño del ingreso, las cuentas y el panel, y el siguiente libre es el 108.
+098–099 los consumió la reducción cancelada y el 100 es PostgreSQL (copia analítica), el 101 y el 102 la lectura de la ficha del barrio, el 103 su composición en bloques, el 104 la de las páginas de historia y Avisos, el 105 su grafito y su composición compacta, el 106 el selector de gráficas y el informe impreso de Estadísticas, el 107 el diseño del ingreso, las cuentas y el panel, el 108 la recomposición de Avisos, y el siguiente libre es el 109.
 Verificar antes de afirmar: si se dice que un endpoint funciona, se prueba.

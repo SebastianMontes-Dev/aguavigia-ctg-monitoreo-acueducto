@@ -1,9 +1,8 @@
 import { Link, useSearch } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
 import { useRef, useState, type FormEvent } from 'react'
 import { Button } from 'react-aria-components'
-import { api, normalizarError } from '../../api/cliente'
 import { MAXIMO_BARRIOS_POR_AVISO, MENSAJE_NEUTRO, pedirAvisos, type ResultadoAlta } from '../../api/avisos'
+import { useBarrios } from '../../app/datos'
 import { GlifoEstado } from '../../componentes/GlifoEstado'
 import { Icono, type NombreIcono } from '../../componentes/Icono'
 import { MarcaRecibido } from '../../componentes/MarcaRecibido'
@@ -14,19 +13,6 @@ import { formatearNumero } from '../../dominio/formato'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
 import pagina from './Pagina.module.css'
 import estilos from './Avisos.module.css'
-
-/** Un GET puntual y no `useListado()`: el listado abriría el canal en vivo en una página que no muestra el mapa. */
-function useBarrios() {
-  return useQuery({
-    queryKey: ['barrios-avisos'],
-    queryFn: async () => {
-      const { data, error, response } = await api.GET('/api/sectores').catch(() => ({ data: undefined, error: undefined, response: null }))
-      if (!response?.ok || !data) throw normalizarError(response ?? null, error)
-      return data.sectores as Sector[]
-    },
-    staleTime: 60_000,
-  })
-}
 
 function mensajeAdicional(resultado: ResultadoAlta): string | null {
   switch (resultado.tipo) {
@@ -55,7 +41,7 @@ const PASOS: { icono: NombreIcono; titulo: string; detalle: string }[] = [
   { icono: 'campana', titulo: 'Te escribimos cuando cambie el agua', detalle: 'Cada correo trae un enlace para darte de baja.' },
 ]
 
-/** `identidad.md` §4.1 y ADR-104: los pasos se leen de un vistazo, cada uno en su tarjeta con icono. */
+/** ADR-108: la respuesta de la página, en un bloque teñido de cardenillo; los tres pasos se reparten toda su altura, uno por fila. */
 export function ComoFunciona() {
   return (
     <aside className={estilos.explicacion} aria-labelledby="titulo-como-funciona">
@@ -81,7 +67,7 @@ function errorDeCorreo(entrada: HTMLInputElement | null, correo: string): string
   return null
 }
 
-/** RF012–RF015 · `ADR-079` y `ADR-105`: los barrios van primero y muestran su estado de ahora; el correo, después. Cada campo dice su error. */
+/** RF012–RF015 · `ADR-079`, `ADR-105` y `ADR-108`: los barrios van primero y muestran su estado de ahora; el correo, después. Cada campo dice su error. */
 export function Avisos() {
   const { sector } = useSearch({ from: '/publico/avisos' })
   const barrios = useBarrios()
@@ -151,23 +137,26 @@ export function Avisos() {
           </section>
         ) : (
           <form ref={formulario} className={estilos.tarea} onSubmit={(evento) => void enviar(evento)} noValidate>
-            <fieldset className={estilos.grupo} aria-describedby={errores.barrios ? 'error-barrios' : undefined}
-              aria-invalid={errores.barrios ? true : undefined}>
+            <fieldset className={estilos.grupo}>
               <legend className={estilos.paso}><span className={estilos.numero} aria-hidden="true">1</span>Elige tus barrios</legend>
-              {barrios.isPending ? <output className={estilos.nota}>Cargando barrios…</output> : barrios.isError ? (
-                <p role="alert">No pudimos cargar los barrios. <button type="button" className={estilos.enlace} onClick={() => void barrios.refetch()}>Volver a intentar</button></p>
+              {barrios.isPending ? <output className={estilos.vacio}>Cargando barrios…</output> : barrios.isError ? (
+                <div role="alert" className={estilos.error}>
+                  <span>No pudimos cargar los barrios. <button type="button" className={estilos.enlace} onClick={() => void barrios.refetch()}>Volver a intentar</button></span>
+                </div>
               ) : (
                 <>
-                  <SelectorBarrio key={elegidosValidos.join(',')} forma="pastilla"
+                  <SelectorBarrio key={elegidosValidos.join(',')} forma="campo" marcador="Escribe el nombre del barrio"
                     sectores={disponibles.filter((barrio) => !elegidosValidos.includes(barrio.id ?? ''))}
                     etiqueta={elegidosValidos.length ? 'Agregar otro barrio' : 'Busca tu barrio'}
+                    invalido={Boolean(errores.barrios)} descritoPor={errores.barrios ? 'error-barrios' : undefined}
                     alCambiar={(id) => { if (id && !elegidos.includes(id)) elegir([...elegidosValidos, id]) }} />
-                  {elegidosValidos.length > 0 && (
+                  {errores.barrios && <p id="error-barrios" className={estilos.error}>{errores.barrios}</p>}
+                  {elegidosValidos.length > 0 ? (
                     <ul className={estilos.elegidos} aria-label="Barrios elegidos">
                       {elegidosValidos.map((id) => {
                         const estado = estadoDe(porId.get(id))
                         return (
-                          <li key={id} className={estilos.chip}>
+                          <li key={id} className={estilos.fila}>
                             <span className={estilos.barrio}>{nombreDe(id)}</span>
                             <span className={estilos.estado}>
                               {estado
@@ -182,9 +171,10 @@ export function Avisos() {
                         )
                       })}
                     </ul>
+                  ) : (
+                    <p className={estilos.vacio}>Aún no elegiste ningún barrio. Los que elijas aparecen aquí con su estado de ahora.</p>
                   )}
-                  {errores.barrios && <p id="error-barrios" className={estilos.error}>{errores.barrios}</p>}
-                  {barrioDesconocido && <p role="alert">El barrio del enlace no está disponible. Elige uno de la lista.</p>}
+                  {barrioDesconocido && <p role="alert" className={estilos.error}>El barrio del enlace no está disponible. Elige uno de la lista.</p>}
                 </>
               )}
             </fieldset>

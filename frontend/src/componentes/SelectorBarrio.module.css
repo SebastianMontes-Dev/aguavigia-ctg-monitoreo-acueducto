@@ -12,8 +12,11 @@
   .pastilla:focus-within { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
   .entradaPastilla { flex: 1; min-width: 0; min-height: 42px; border: 0; background: transparent; color: var(--tinta); font-size: var(--texto-s); outline: none; }
   .entradaPastilla::placeholder { color: var(--tinta-2); }
-  .conjunto[data-forma='pastilla'] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--espacio-3); }
-  .conjunto[data-forma='pastilla'] .selector { flex: 1; min-width: 220px; }
+  .pastilla[data-invalido] { border-color: var(--tinta); border-width: 2px; padding-inline: calc(var(--espacio-4) - 1px); }
+  .conjunto[data-forma='pastilla'], .conjunto[data-forma='campo'] { display: flex; flex-wrap: wrap; align-items: center; column-gap: var(--espacio-3); }
+  .conjunto[data-forma='pastilla'] .selector, .conjunto[data-forma='campo'] .selector { flex: 1; min-width: 220px; }
+  .conjunto[data-forma='campo'] .pastilla { min-height: 48px; }
+  .conjunto[data-forma='campo'] .entradaPastilla { min-height: 44px; font-size: var(--texto-m); }
   .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .limpiar { border: 0; padding: var(--espacio-2) 0; min-height: var(--objetivo-tactil); background: transparent; color: var(--cardenillo); text-decoration: underline; cursor: pointer; }
 }

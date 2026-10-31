@@ -2,7 +2,9 @@ import { useId, useRef, useState } from 'react'
 import { Button, Dialog, DialogTrigger, Heading, Modal, ModalOverlay } from 'react-aria-components'
 import { recordarPropio } from '../../api/memoria-reportes'
 import { enviarFoto, enviarReporte, TIPOS_FOTO, type ResultadoEnvio, type ResultadoFoto, type TipoReporte } from '../../api/reportes'
+import { useListado } from '../../app/datos'
 import { ubicacionPara } from '../../app/ubicacion'
+import { useHaySesionVecino, usePerfilVecino } from '../../app/vecino'
 import { Icono } from '../../componentes/Icono'
 import { MarcaRecibido } from '../../componentes/MarcaRecibido'
 import { nombreLegible, type Sector } from '../../dominio/sectores'
@@ -21,11 +23,12 @@ const PARA_COMPARTIR: Record<TipoReporte, (barrio: string) => string> = {
   SERVICIO_RESTABLECIDO: (barrio) => `En ${barrio} ya volvió el agua a mi casa. Si a la tuya también, confirma mi reporte en AguaVigía:`,
 }
 
-function mensajeEnvio(resultado: Exclude<ResultadoEnvio, { tipo: 'recibido' }>): string {
+/** El cupo por barrio es de 3 reportes cada 30 minutos para un dispositivo y de 5 para un vecino registrado (docs/api/reportes.md). */
+function mensajeEnvio(resultado: Exclude<ResultadoEnvio, { tipo: 'recibido' }>, conCuenta: boolean): string {
   switch (resultado.tipo) {
     case 'sin-red': return 'No pudimos enviar tu reporte. Cuando recuperes la conexión, inténtalo otra vez.'
     case 'incierto': return 'No pudimos confirmar si se recibió tu reporte. Revisa tu conexión antes de enviarlo otra vez.'
-    case 'cupo-agotado': return 'Ya enviaste tres reportes de este barrio en la última media hora. Los que enviaste siguen contando.'
+    case 'cupo-agotado': return `Ya enviaste ${conCuenta ? 'cinco' : 'tres'} reportes de este barrio en la última media hora. Los que enviaste siguen contando.`
     case 'esperar': return resultado.segundos
       ? `Espera antes de volver a intentarlo. Podrás hacerlo en unos ${resultado.segundos} segundos.`
       : 'Espera antes de volver a intentarlo.'
@@ -139,6 +142,10 @@ export function Reporte({ sector }: { sector: Sector }) {
   const [enviado, setEnviado] = useState<TipoReporte>('SIN_AGUA')
   const nombre = nombreLegible(sector.nombre)
   const ubicacion = ubicacionPara(sector.id ?? '')
+  const conCuenta = useHaySesionVecino()
+  const perfil = usePerfilVecino().data
+  const { porId } = useListado()
+  const barrioDelVecino = perfil?.barrioId ? porId.get(perfil.barrioId) : undefined
 
   async function enviar(tipo: TipoReporte) {
     if (enviando) return
@@ -178,8 +185,14 @@ export function Reporte({ sector }: { sector: Sector }) {
               <>
                 <Heading slot="title" className={estilos.titulo}>¿Qué pasa con el agua en tu casa?</Heading>
                 <p className={estilos.contexto}>
-                  Reportas en <strong>{nombre}</strong>{ubicacion && ', con la ubicación que compartiste'}. No hace falta cuenta.
+                  Reportas en <strong>{nombre}</strong>{ubicacion && ', con la ubicación que compartiste'}.
+                  {!(conCuenta && perfil?.nombre) && ' No hace falta cuenta.'}
                 </p>
+                {conCuenta && perfil?.nombre && (
+                  <p className={estilos.contexto}>
+                    Reportas como <strong>{perfil.nombre}</strong>{barrioDelVecino ? <>, vecino de <strong>{nombreLegible(barrioDelVecino.nombre)}</strong></> : null}.
+                  </p>
+                )}
                 <div className={estilos.opciones} aria-busy={enviando !== null}>
                   {OPCIONES.map((opcion) => (
                     <Button
@@ -192,7 +205,7 @@ export function Reporte({ sector }: { sector: Sector }) {
                     </Button>
                   ))}
                 </div>
-                {resultado && <p className={estilos.error} role="alert">{mensajeEnvio(resultado)}</p>}
+                {resultado && <p className={estilos.error} role="alert">{mensajeEnvio(resultado, conCuenta)}</p>}
                 <Button className={estilos.cancelar} onPress={close}>Cancelar</Button>
               </>
             )}

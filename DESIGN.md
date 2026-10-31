@@ -101,6 +101,9 @@ Cardenillo suave  #1e2e2a
 `@media (prefers-color-scheme: dark)` y de nuevo bajo `:root[data-theme="dark"]` /
 `:root[data-theme="light"]` para que el interruptor del usuario gane en las dos direcciones.
 
+**Excepción: el código QR del segundo factor** (`--qr-modulo` `#15191c` sobre `--qr-fondo` `#ffffff`) no cambia
+con el tema. Invertido en oscuro, algunos lectores no lo reconocen.
+
 ---
 
 ## 4. Tipografía

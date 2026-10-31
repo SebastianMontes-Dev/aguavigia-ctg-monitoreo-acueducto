@@ -1,0 +1,40 @@
+@layer componentes {
+  /* ADR-107 (D1): el ingreso, el segundo factor y la seguridad usan el bloque de Avisos, con el grafito, en 1320 px y sin colores nuevos. */
+  .columna { display: grid; gap: var(--espacio-4); width: 100%; max-width: 520px; align-content: start; }
+  .rejilla { display: grid; gap: var(--espacio-5); align-items: stretch; }
+
+  .formulario { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-5); }
+  /* Una acción aparte dentro del mismo bloque, separada por una regla fina. */
+  .aparte { padding-top: var(--espacio-5); border-top: 1px solid var(--linea-suave); }
+  .subtitulo { font-size: var(--texto-l); font-weight: 600; }
+  .nota { font-size: var(--texto-s); color: var(--tinta-2); max-width: var(--medida-lectura); }
+  .nota strong { color: var(--tinta); }
+
+  .aviso { display: block; padding: var(--espacio-3) var(--espacio-4); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--elevada); font-size: var(--texto-s); }
+
+  .acciones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-3) var(--espacio-5); }
+
+  .enlaceBoton { min-height: var(--objetivo-tactil); padding: 0; border: 0; background: transparent; color: var(--tinta); font-size: var(--texto-s); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; cursor: pointer; }
+  .enlaceBoton:hover { text-decoration-color: var(--laton); }
+  .enlaceBoton:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 3px; }
+
+  /* Pasos del alta del TOTP: un bloque con una fila por paso, como el «Cómo funciona» de Avisos. */
+  .pasos { display: grid; padding: 0; list-style: none; counter-reset: paso; }
+  .paso { display: grid; grid-template-columns: 40px minmax(0, 1fr); column-gap: var(--espacio-3); row-gap: var(--espacio-2); padding: var(--espacio-4) 0; counter-increment: paso; }
+  .paso + .paso { border-top: 1px solid var(--linea-suave); }
+  .paso::before { content: counter(paso); display: grid; place-items: center; grid-row: span 4; width: 40px; height: 40px; border-radius: var(--radio-pastilla); background: var(--cardenillo-suave); color: var(--cardenillo); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .paso > * { grid-column: 2; min-width: 0; }
+  .paso h2 { font-size: var(--texto-m); font-weight: 600; }
+  .secreto { font-family: var(--fuente-utilidad); font-size: var(--texto-m); word-spacing: 0.4em; overflow-wrap: anywhere; }
+
+  /* La acción que cierra sesiones se dice antes de pulsarla y se confirma aparte. */
+  .advertencia { display: grid; gap: var(--espacio-3); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
+
+  @media (min-width: 1100px) {
+    .rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--espacio-5); }
+  }
+
+  @media (max-width: 599px) {
+    .formulario > button { justify-self: stretch; }
+  }
+}
