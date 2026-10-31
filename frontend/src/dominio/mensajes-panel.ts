@@ -99,9 +99,12 @@ export function mensajeSegundoFactor(resultado: ResultadoAlta | ResultadoConfirm
   }
 }
 
-export type ContextoAccion = 'aprobar' | 'descartar' | 'foto' | 'alta' | 'cierre' | 'cierre-barrio' | 'confirmacion' | 'anulacion'
+export type ContextoAccion =
+  | 'aprobar' | 'descartar' | 'foto' | 'alta' | 'cierre' | 'cierre-barrio' | 'confirmacion' | 'anulacion'
+  | 'aprobar-propuesta' | 'descartar-propuesta' | 'anular-propuesta'
 
 const SOBRE_REPORTE: ContextoAccion[] = ['aprobar', 'descartar', 'foto']
+const SOBRE_PROPUESTA: ContextoAccion[] = ['aprobar-propuesta', 'descartar-propuesta', 'anular-propuesta']
 
 /** panel-veedor.md, tabla de códigos: cada `409` dice qué ya estaba hecho, para que nadie piense que su clic falló. */
 const CONFLICTOS: Record<ContextoAccion, string> = {
@@ -113,11 +116,15 @@ const CONFLICTOS: Record<ContextoAccion, string> = {
   'cierre-barrio': 'Este barrio ya estaba cerrado. Actualizamos el corte.',
   confirmacion: 'Este cierre ya estaba confirmado. Actualizamos el corte.',
   anulacion: 'Este corte ya estaba anulado. Actualizamos el corte.',
+  'aprobar-propuesta': 'No se pudo aprobar: la propuesta ya fue descartada o su barrio ya no existe. Actualizamos la lista.',
+  'descartar-propuesta': 'No se pudo descartar: la propuesta ya fue aprobada. Si fue un error, anula la aprobación. Actualizamos la lista.',
+  'anular-propuesta': 'No hay nada que anular: la propuesta no estaba aprobada. Actualizamos la lista.',
 }
 
 const RECHAZOS: Partial<Record<ContextoAccion, string>> = {
   alta: 'El servidor no aceptó los datos. Revisa que los barrios existan y que el fin prometido sea posterior al inicio.',
   anulacion: 'Falta el motivo de la anulación.',
+  'anular-propuesta': 'Falta el motivo de la anulación.',
   cierre: 'El servidor no aceptó esa hora real. Revisa la fecha y la hora.',
   'cierre-barrio': 'El servidor no aceptó esa hora real. Revisa la fecha y la hora.',
   confirmacion: 'El servidor no aceptó esa hora real. Revisa la fecha y la hora.',
@@ -130,6 +137,7 @@ export function mensajeAccion(resultado: ResultadoAccion<unknown>, contexto: Con
     case 'sesion-terminada':
       return null
     case 'no-existe':
+      if (SOBRE_PROPUESTA.includes(contexto)) return 'Esta propuesta ya no existe. Actualizamos la lista.'
       return SOBRE_REPORTE.includes(contexto)
         ? 'Este reporte ya no está en la cola. Actualizamos la lista.'
         : 'Este corte ya no existe. Actualizamos la lista.'

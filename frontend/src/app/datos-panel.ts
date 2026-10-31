@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react'
 import type { ResultadoAccion } from '../api/acciones-panel'
 import { api, normalizarError } from '../api/cliente'
 import { leerCorte, leerCortesDelBarrio, leerDisputas, leerVencidos } from '../api/cortes-veedor'
+import { leerFallidos, leerPropuestas, leerSalud } from '../api/ingesta'
 import { blobADataUrl, leerFotoDelPanel, leerPendientes } from '../api/moderacion'
 import type { Sector } from '../dominio/sectores'
 
@@ -68,6 +69,25 @@ export function useVencidos() {
 
 export function useDisputas() {
   return useQuery({ queryKey: ['panel', 'disputas'], queryFn: ({ signal }) => leerDisputas({ signal }), staleTime: 15_000 })
+}
+
+/** FE4 · Las propuestas de la ingesta que esperan a un veedor; cada página es una petición, pedida al pulsar «Cargar más». */
+export function usePropuestas() {
+  return useInfiniteQuery({
+    queryKey: ['panel', 'ingesta', 'propuestas'],
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) => leerPropuestas(pageParam, { signal }),
+    getNextPageParam: (ultima) => (ultima.paginacion.hayMas ? ultima.paginacion.pagina + 1 : undefined),
+    staleTime: 15_000,
+  })
+}
+
+export function useFallidos() {
+  return useQuery({ queryKey: ['panel', 'ingesta', 'fallidos'], queryFn: ({ signal }) => leerFallidos({ signal }), staleTime: 15_000 })
+}
+
+export function useSaludColectores() {
+  return useQuery({ queryKey: ['panel', 'ingesta', 'salud'], queryFn: ({ signal }) => leerSalud({ signal }), staleTime: 15_000 })
 }
 
 /**

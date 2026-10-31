@@ -1,5 +1,5 @@
 import type { Page, Route } from '@playwright/test'
-import { problema, simularApi } from './api-simulada'
+import { listado, problema, simularApi } from './api-simulada'
 
 export const PERMISOS_COMPLETOS = ['VER_PANEL', 'MODERAR_REPORTES', 'GESTIONAR_CORTES', 'REVISAR_INGESTA', 'CONFIGURAR_SEGUNDO_FACTOR']
 export const PERMISOS_OBSERVADOR = ['VER_PANEL', 'CONFIGURAR_SEGUNDO_FACTOR']
@@ -60,6 +60,73 @@ export function cortesDeEjemplo(ahora = Date.now()): Corte[] {
   ]
 }
 
+export interface Propuesta {
+  id: string
+  sectorId: string
+  estadoPropuesto: string
+  fuente: string
+  urlOriginal: string | null
+  citaTextual: string
+  confianza: number
+  detectadaEn: string
+  estadoRevision: string
+  inicioDeclarado: string | null
+  finPrometido: string | null
+  motivoDeRevision: string | null
+}
+
+export interface Colector {
+  nombre: string
+  ultimaEjecucionExitosa: string | null
+  ultimoFallo: string | null
+  motivoDelUltimoFallo: string | null
+  itemsProcesados: number
+  tasaDeError: number
+  fallosConsecutivos: number
+}
+
+export interface Fallido {
+  fuente: string
+  urlOriginal: string
+  titulo: string | null
+  motivo: string
+  primerIntento: string
+  ultimoIntento: string
+  reintentos: number
+}
+
+export const CITA_MANGA = 'Por trabajos en la línea de 24 pulgadas, el servicio se suspenderá en Manga entre las 8:00 a. m. y las 4:00 p. m.'
+
+export function propuestasDeEjemplo(ahora = Date.now()): Propuesta[] {
+  const hace = (horas: number) => new Date(ahora - horas * 3_600_000).toISOString()
+  const desde = (horas: number) => new Date(ahora + horas * 3_600_000).toISOString()
+  return [
+    // Con ventana declarada: aprobarla puede cambiar el mapa.
+    { id: 'q1', sectorId: 'manga', estadoPropuesto: 'SIN_SERVICIO', fuente: 'acuacar', urlOriginal: 'https://www.acuacar.com.co/aviso-manga', citaTextual: CITA_MANGA, confianza: 0.45, detectadaEn: hace(2), estadoRevision: 'PENDIENTE', inicioDeclarado: desde(-1), finPrometido: desde(7), motivoDeRevision: 'Confianza baja: la nota nombra a Manga en una mención suelta' },
+    // De prensa y sin ventana horaria: aprobarla responde 200 sin cambiar el estado.
+    { id: 'q2', sectorId: 'armenia', estadoPropuesto: 'PRESION_BAJA', fuente: 'zona-cero', urlOriginal: 'https://www.zonacero.com/nota-armenia', citaTextual: 'Vecinos de Armenia reportan poca presión desde la madrugada, según Aguas de Cartagena.', confianza: 0.75, detectadaEn: hace(5), estadoRevision: 'PENDIENTE', inicioDeclarado: null, finPrometido: null, motivoDeRevision: 'Viene de prensa: espera siempre a un veedor' },
+    // Sin la frase del boletín ni enlace: no hay evidencia y no se debe aprobar.
+    { id: 'q3', sectorId: 'el-bosque', estadoPropuesto: 'CORTE_PROGRAMADO', fuente: 'google-news', urlOriginal: null, citaTextual: '', confianza: 0.3, detectadaEn: hace(8), estadoRevision: 'PENDIENTE', inicioDeclarado: null, finPrometido: null, motivoDeRevision: null },
+  ]
+}
+
+export function saludDeEjemplo(ahora = Date.now()): Colector[] {
+  const hace = (minutos: number) => new Date(ahora - minutos * 60_000).toISOString()
+  return [
+    { nombre: 'acuacar', ultimaEjecucionExitosa: hace(10), ultimoFallo: null, motivoDelUltimoFallo: null, itemsProcesados: 120, tasaDeError: 0, fallosConsecutivos: 0 },
+    { nombre: 'zona-cero', ultimaEjecucionExitosa: hace(90), ultimoFallo: hace(20), motivoDelUltimoFallo: 'Tiempo de espera agotado', itemsProcesados: 60, tasaDeError: 0.1, fallosConsecutivos: 1 },
+    { nombre: 'caracol-radio', ultimaEjecucionExitosa: hace(300), ultimoFallo: hace(15), motivoDelUltimoFallo: 'El feed devolvió 503', itemsProcesados: 33, tasaDeError: 0.5, fallosConsecutivos: 4 },
+  ]
+}
+
+export function fallidosDeEjemplo(ahora = Date.now()): Fallido[] {
+  const hace = (horas: number) => new Date(ahora - horas * 3_600_000).toISOString()
+  return [
+    { fuente: 'acuacar', urlOriginal: 'https://www.acuacar.com.co/boletin-roto', titulo: 'Boletín de suspensión del servicio', motivo: 'No se pudo leer el horario del boletín', primerIntento: hace(30), ultimoIntento: hace(1), reintentos: 12 },
+    { fuente: 'w-radio', urlOriginal: 'https://www.wradio.com.co/nota-sin-titulo', titulo: null, motivo: 'JSON ilegible', primerIntento: hace(6), ultimoIntento: hace(2), reintentos: 3 },
+  ]
+}
+
 export interface OpcionesGestion {
   permisos?: string[]
   reportes?: Reporte[]
@@ -69,6 +136,13 @@ export interface OpcionesGestion {
   conflictos?: string[]
   /** `PATCH` de moderación que tardan, para comprobar que no se envían dos veces. */
   retardoMs?: number
+  /** FE4 · Propuestas de la ingesta. Solo las `PENDIENTE` salen en la lista, como en el servidor. */
+  propuestas?: Propuesta[]
+  /** Un arreglo, o `'error'` para que el servidor responda `500`. */
+  salud?: Colector[] | 'error'
+  fallidos?: Fallido[] | 'error'
+  /** Si es cierto, aprobar una propuesta aplica su estado al barrio en `GET /api/sectores`; si no, el mapa queda como estaba. */
+  aprobarCambiaElMapa?: boolean
 }
 
 /**
@@ -86,7 +160,10 @@ export async function simularGestion(page: Page, opciones: OpcionesGestion = {})
     fotos: [] as { nombre: string; autorizacion: string | null }[],
     altas: [] as unknown[],
     cierres: [] as { ruta: string; cuerpo: unknown }[],
+    decisiones: [] as { id: string; accion: string; motivo?: string }[],
   }
+  const propuestas = (opciones.propuestas ?? propuestasDeEjemplo()).map((propuesta) => structuredClone(propuesta))
+  const estadosDelMapa = new Map<string, string>()
 
   await page.addInitScript(() => {
     sessionStorage.setItem('aguavigia.panel.token', 'token-de-prueba')
@@ -178,10 +255,52 @@ export async function simularGestion(page: Page, opciones: OpcionesGestion = {})
     return route.fulfill(json(corte))
   })
 
+  // FE4 · la ingesta. Los `PATCH` siguen las reglas del servidor: repetir la misma decisión es 200, contradecirla es 409.
+  await page.route(/\/api\/veedor\/ingesta\/propuestas(?:\?.*)?$/, (route) => {
+    const pendientes = propuestas.filter((propuesta) => propuesta.estadoRevision === 'PENDIENTE')
+    return route.fulfill(json(pendientes, 200, { 'X-Total-Count': String(pendientes.length), 'X-Total-Pages': '1', 'X-Page': '0', 'X-Page-Size': '20' }))
+  })
+  await page.route(/\/api\/veedor\/ingesta\/propuestas\/[^/]+\/(aprobar|descartar|anulacion)$/, async (route) => {
+    const partes = new URL(route.request().url()).pathname.split('/')
+    const accion = partes.at(-1) ?? ''
+    const id = partes.at(-2) ?? ''
+    const motivo = accion === 'anulacion' ? (route.request().postDataJSON() as { motivo?: string }).motivo : undefined
+    visto.decisiones.push({ id, accion, ...(motivo === undefined ? {} : { motivo }) })
+    if (opciones.retardoMs) await new Promise((resolver) => setTimeout(resolver, opciones.retardoMs))
+    if (conflictos.has(`propuesta-${accion}`)) return route.fulfill(problema(409, 'conflicto-de-estado', 'Ya estaba decidida'))
+    const propuesta = propuestas.find((otra) => otra.id === id)
+    if (!propuesta) return route.fulfill(problema(404, 'recurso-no-encontrado', 'No existe'))
+    if (accion === 'anulacion') {
+      if (!motivo) return route.fulfill(problema(400, 'peticion-invalida', 'Falta el motivo'))
+      if (propuesta.estadoRevision !== 'APROBADA') return route.fulfill(problema(409, 'conflicto-de-estado', 'No estaba aprobada'))
+      propuesta.estadoRevision = 'ANULADA'
+      estadosDelMapa.delete(propuesta.sectorId)
+    } else if (accion === 'aprobar') {
+      if (propuesta.estadoRevision === 'DESCARTADA') return route.fulfill(problema(409, 'conflicto-de-estado', 'Ya descartada'))
+      if (propuesta.estadoRevision === 'PENDIENTE') {
+        propuesta.estadoRevision = 'APROBADA'
+        if (opciones.aprobarCambiaElMapa) estadosDelMapa.set(propuesta.sectorId, propuesta.estadoPropuesto)
+      }
+    } else {
+      if (propuesta.estadoRevision === 'APROBADA') return route.fulfill(problema(409, 'conflicto-de-estado', 'Ya aprobada'))
+      propuesta.estadoRevision = 'DESCARTADA'
+    }
+    return route.fulfill(json(propuesta))
+  })
+  await page.route(/\/api\/veedor\/ingesta\/fallidos$/, (route) =>
+    opciones.fallidos === 'error' ? route.fulfill(problema(500, 'error-interno', 'Falló')) : route.fulfill(json(opciones.fallidos ?? fallidosDeEjemplo())))
+  await page.route(/\/api\/veedor\/ingesta\/salud$/, (route) =>
+    opciones.salud === 'error' ? route.fulfill(problema(500, 'error-interno', 'Falló')) : route.fulfill(json(opciones.salud ?? saludDeEjemplo())))
+  // Playwright prueba primero la ruta registrada al final: ésta va tras la genérica de `simularApi` y deja ver lo que se aprobó.
+  await page.route('**/api/sectores', (route) => {
+    const base = listado()
+    return route.fulfill(json({ ...base, sectores: base.sectores.map((sector) => ({ ...sector, estado: estadosDelMapa.get(sector.id) ?? sector.estado })) }))
+  })
+
   await page.route(/\/api\/veedor\/disputas$/, (route) => route.fulfill(json(opciones.disputas ?? [
     { id: 'el-bosque', nombre: 'EL BOSQUE', poblacion: 6754, estado: 'CON_SERVICIO', origen: 'VECINOS', enDisputa: true, reportesEnContra: 5, respaldo: { vecinos: 12, umbral: 12 } },
     { id: 'armenia', nombre: 'ARMENIA', poblacion: 1061, estado: 'SIN_SERVICIO', origen: 'ACUACAR', enDisputa: true, reportesEnContra: 1 },
   ])))
 
-  return { cola, cortes, visto }
+  return { cola, cortes, propuestas, visto }
 }

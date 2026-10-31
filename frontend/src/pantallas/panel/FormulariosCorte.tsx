@@ -71,8 +71,24 @@ export function FormularioHora({ titulo, boton, enviandoTexto, inicial, corte, a
   )
 }
 
-/** Anular un corte publicado por error: el motivo es obligatorio y queda en la bitácora pública y en la auditoría. */
-export function FormularioAnulacion({ enviando, alEnviar, alCancelar }: { enviando: boolean; alEnviar: (motivo: string) => void; alCancelar: () => void }) {
+interface PropiedadesAnulacion {
+  enviando: boolean
+  alEnviar: (motivo: string) => void
+  alCancelar: () => void
+  /** Qué se anula; por defecto, un corte. */
+  objeto?: { titulo: string; vacio: string; ayuda: string; boton: string; enviandoTexto: string }
+}
+
+const ANULAR_CORTE = {
+  titulo: 'Anular el corte',
+  vacio: 'Escribe por qué se anula el corte.',
+  ayuda: 'Queda a la vista del público en la bitácora y en la auditoría. El corte sale del Índice de Cumplimiento.',
+  boton: 'Sí, anular el corte',
+  enviandoTexto: 'Anulando…',
+}
+
+/** Anular algo publicado por error: el motivo es obligatorio y queda en la bitácora pública y en la auditoría. */
+export function FormularioAnulacion({ enviando, alEnviar, alCancelar, objeto = ANULAR_CORTE }: PropiedadesAnulacion) {
   const [motivo, setMotivo] = useState('')
   const [error, setError] = useState<string | null>(null)
   const campo = useRef<HTMLInputElement>(null)
@@ -83,7 +99,7 @@ export function FormularioAnulacion({ enviando, alEnviar, alCancelar }: { envian
     evento.preventDefault()
     if (enviando) return
     if (!motivo.trim()) {
-      setError('Escribe por qué se anula el corte.')
+      setError(objeto.vacio)
       campo.current?.focus()
       return
     }
@@ -92,17 +108,17 @@ export function FormularioAnulacion({ enviando, alEnviar, alCancelar }: { envian
   }
 
   return (
-    <form className={estilos.formulario} onSubmit={enviar} noValidate aria-label="Anular el corte">
+    <form className={estilos.formulario} onSubmit={enviar} noValidate aria-label={objeto.titulo}>
       <Campo
         etiqueta="Motivo de la anulación"
         value={motivo}
         onChange={(evento) => setMotivo(evento.target.value)}
         error={error}
-        ayuda="Queda a la vista del público en la bitácora y en la auditoría. El corte sale del Índice de Cumplimiento."
+        ayuda={objeto.ayuda}
         ref={campo}
       />
       <div className={estilos.acciones}>
-        <Button type="submit" className={botones.principal} isDisabled={enviando}>{enviando ? 'Anulando…' : 'Sí, anular el corte'}</Button>
+        <Button type="submit" className={botones.principal} isDisabled={enviando}>{enviando ? objeto.enviandoTexto : objeto.boton}</Button>
         <Button className={botones.secundario} isDisabled={enviando} onPress={alCancelar}>Cancelar</Button>
       </div>
     </form>
