@@ -1,5 +1,7 @@
 # FE7 · Integración y entrega
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** cerrar el frontend para la sustentación. Cubrir todo el contrato, medir accesibilidad y rendimiento, retirar
 lo provisional y dejar un guion de demostración que funcione con un solo `docker compose up`.
 

@@ -40,6 +40,11 @@ No hay panel, cuentas ni vecino. El ingreso al panel con segundo factor ya está
 - `feat/f5-ingreso-panel` va ahora **117 commits** detrás de `main`. Sus dos commits (`95962ad`, `5dda089`) siguen siendo la base de FE2.
 - El frontend no ha recibido commits desde el 2026-09-29 (`f81f6f6`). Ninguna fase FE está empezada.
 
+**Actualización del 2026-10-30 (rediseño de las vistas de datos).** El [PR #122](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/122) rediseñó la ficha del barrio, Cumplimiento, Bitácora,
+Estadísticas y Avisos (ADR-103 a 106: bloques, grafito en oscuro, muestra mínima de 5 cortes, gráficas con selector y PDF directo) y trae FE1. **Las fases FE2–FE7 heredan ese diseño**:
+lo resume, con los archivos que lo llevan y las decisiones por tomar para el panel, [`rediseno-vigente.md`](rediseno-vigente.md). El frontend de hoy cubre lo público; el panel, las cuentas y el vecino
+(FE2–FE6) y el cierre (FE7) están sin empezar.
+
 ## Qué no cambia mientras se trabaja
 
 - **El contrato.** `backend/openapi.yaml` es la fuente de verdad. Si una prueba contra el backend real falla sin que el contrato haya cambiado, es un defecto del backend: se avisa a Sebastian y no se adapta el frontend.
@@ -99,7 +104,7 @@ Desde `frontend/`:
 | Fase | Guía | Qué entrega | Rutas del contrato que suma | Estado |
 |---|---|---|---|---|
 | FE0 | [Contrato al día](FE0-contrato-al-dia.md) | CI en verde; reportar funciona; se adoptan todos los cambios que **rompen** (F0–F3) | `POST /api/dispositivos` y `GET /api/fotos/{n}` | PR abierto: [#121](https://github.com/SebastianMontes-Dev/Agua-Vigia-CTG-privado/pull/121) (2026-10-25) |
-| FE1 | [Lo público, completo](FE1-publico-completo.md) | Insignias del estado del barrio, calidad del Índice, Índice por corte, banner de simulación, «¿ya volvió el agua?» | `cumplimiento/calidad`, `cumplimiento/cortes/{id}`, `sistema/modo`, `sectores/{id}/restablecimiento` | — |
+| FE1 | [Lo público, completo](FE1-publico-completo.md) | Insignias del estado del barrio, calidad del Índice, Índice por corte, banner de simulación, «¿ya volvió el agua?» | `cumplimiento/calidad`, `cumplimiento/cortes/{id}`, `sistema/modo`, `sectores/{id}/restablecimiento` | PR abierto: [#122](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/122) (2026-10-30), junto con el rediseño |
 | FE2 | [Ingreso al panel](FE2-ingreso-al-panel.md) | Rebasar `feat/f5-ingreso-panel`: ingreso, alta de TOTP con QR, marco con permisos, seguridad de la cuenta | `veedor/sesion`, `sesion/cierre`, `yo`, `segundo-factor/*`, `cuenta/clave` | — |
 | FE3 | [Moderación y cortes](FE3-moderacion-y-cortes.md) | Cola de reportes, fotos del panel, cortes (crear, cerrar, por barrio, confirmar, anular), vencidos, disputas | 14 operaciones de `veedor/reportes`, `veedor/fotos`, `veedor/cortes`, `veedor/disputas` | — |
 | FE4 | [Ingesta](FE4-ingesta.md) | Propuestas (aprobar, descartar, anular), documentos fallidos, salud de los colectores | 6 operaciones de `veedor/ingesta` | — |
