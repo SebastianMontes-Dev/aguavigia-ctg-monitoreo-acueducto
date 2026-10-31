@@ -1,0 +1,44 @@
+@layer componentes {
+  /* FE5 (ADR-107): métricas y copia son bloques lado a lado con la misma altura (`.rejilla` de Formulario.module.css). Nada se pinta
+     con colores de estado: el resultado de una copia se distingue por su glifo de forma distinta y por la palabra. */
+  .nota { font-size: var(--texto-xs); color: var(--tinta-2); max-width: var(--medida-lectura); }
+  /* Cinco cifras en filas de tres (de dos en el celular), sin la regla vertical al empezar cada fila. */
+  .cifrasMetricas { grid-template-columns: repeat(3, minmax(0, 1fr)); row-gap: var(--espacio-3); }
+  .cifrasMetricas > div:nth-child(3n + 1) { padding-left: 0; border-left: 0; }
+  @media (max-width: 599px) {
+    .cifrasMetricas { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .cifrasMetricas > div:nth-child(3n + 1) { padding-left: var(--espacio-4); border-left: 1px solid var(--linea); }
+    .cifrasMetricas > div:nth-child(2n + 1) { padding-left: 0; border-left: 0; }
+  }
+  .seccion { display: grid; gap: var(--espacio-2); padding-top: var(--espacio-3); border-top: 1px solid var(--linea); }
+  .tituloSeccion { font-size: var(--texto-s); font-weight: 600; }
+  .tiempo { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: var(--espacio-3); margin: 0; }
+  .tiempo div { display: grid; gap: 2px; }
+  .tiempo dt { order: 2; color: var(--tinta-2); font-size: var(--texto-xs); }
+  .tiempo dd { margin: 0; font-size: var(--texto-l); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .detalle { display: grid; gap: var(--espacio-3); }
+  .detalle > summary { display: inline-flex; align-items: center; min-height: var(--objetivo-tactil); color: var(--tinta); font-size: var(--texto-s); font-weight: 600; text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; cursor: pointer; }
+  .detalle > summary:hover { text-decoration-color: var(--laton); }
+  .detalle > summary:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .desgloses { display: grid; gap: var(--espacio-4); padding-top: var(--espacio-2); }
+  .desglose { display: grid; gap: var(--espacio-1); }
+  .tituloDesglose { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.04em; color: var(--tinta-2); }
+  .desglose ul { display: grid; margin: 0; padding: 0; list-style: none; font-size: var(--texto-s); }
+  .desglose li { display: flex; justify-content: space-between; gap: var(--espacio-3); padding: var(--espacio-1) 0; border-top: 1px solid var(--linea-suave); }
+  .desglose strong { font-variant-numeric: tabular-nums; }
+
+  .copia { display: grid; gap: var(--espacio-3); }
+  .resultado { display: inline-flex; align-items: center; gap: var(--espacio-2); font-size: var(--texto-l); font-weight: 600; }
+  .resultado[data-resultado='fallida'], .resultado[data-resultado='con-diferencias'] { justify-self: start; padding: 2px var(--espacio-4) 2px var(--espacio-3); border: 2px solid var(--tinta); border-radius: var(--radio-pastilla); }
+  .conteos { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
+  .conteos th, .conteos td { padding: var(--espacio-2) var(--espacio-3) var(--espacio-2) 0; border-bottom: 1px solid var(--linea-suave); text-align: left; font-variant-numeric: tabular-nums; }
+  .conteos thead th { color: var(--tinta-2); font-size: var(--texto-xs); font-weight: 600; }
+  .conteos tbody th { font-weight: 600; }
+  .detalleCopia { padding: var(--espacio-3) var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: 8px; background: var(--elevada); font-size: var(--texto-s); overflow-wrap: anywhere; }
+  .apagada > button { justify-self: start; }
+  .apagada { display: grid; gap: var(--espacio-2); padding: var(--espacio-4); border: 1px dashed var(--tinta-3); border-radius: 8px; }
+  .anteriores { display: grid; margin: 0; padding: 0; list-style: none; font-size: var(--texto-s); }
+  .anteriores li { display: flex; align-items: center; gap: var(--espacio-2); padding: var(--espacio-2) 0; border-top: 1px solid var(--linea-suave); }
+  .cuando { margin-left: auto; color: var(--tinta-2); font-size: var(--texto-xs); font-variant-numeric: tabular-nums; }
+}

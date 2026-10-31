@@ -1,0 +1,88 @@
+@layer componentes {
+  /* FE5 (ADR-107, D2): las cuentas son una tabla con columnas dentro de un bloque `--tarjeta`. El estado de una cuenta se dice con
+     palabras y una pastilla de tinta: los colores de estado son del servicio de agua y no pintan decisiones ni estados de cuenta. */
+  .nota { font-size: var(--texto-xs); color: var(--tinta-2); max-width: var(--medida-lectura); }
+  .origen { color: var(--tinta-2); font-size: var(--texto-xs); }
+
+  .aviso { display: block; }
+  .bloqueTabla { gap: var(--espacio-4); }
+  .cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--espacio-3); }
+  .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-3) var(--espacio-4); align-items: end; }
+  .interruptor { display: flex; align-items: flex-start; gap: var(--espacio-3); min-height: 48px; font-size: var(--texto-s); font-weight: 600; cursor: pointer; }
+  .interruptor input, .casilla input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--cardenillo); }
+  .interruptor input:focus-visible, .casilla input:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .interruptor .origen { display: block; font-weight: 400; }
+
+  .invitar { display: grid; gap: var(--espacio-4); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
+  .camposInvitacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-4); align-items: start; }
+
+  .contenedorTabla { min-width: 0; overflow-x: auto; }
+  .tabla { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
+  .tabla th { padding: var(--espacio-2) var(--espacio-3); border-bottom: 1px solid var(--linea); color: var(--tinta-2); font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.06em; text-align: left; text-transform: uppercase; }
+  .tabla td { padding: var(--espacio-3); vertical-align: middle; }
+  .fila td { border-bottom: 1px solid var(--linea-suave); }
+  .fila[data-abierta] td { border-bottom-color: transparent; }
+  .filaDetalle td { padding: 0 var(--espacio-3) var(--espacio-4); border-bottom: 1px solid var(--linea-suave); }
+  .celdaCuenta { min-width: 0; overflow-wrap: anywhere; }
+  .datosCuenta { display: grid; gap: 2px; min-width: 0; }
+  .nombre { font-size: var(--texto-m); font-weight: 600; }
+  .tuya { font-weight: 400; color: var(--tinta-2); }
+  .correo { color: var(--tinta-2); font-size: var(--texto-xs); }
+  .estado { display: inline-flex; align-items: center; min-height: 24px; padding: 0 var(--espacio-3); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); font-size: var(--texto-xs); font-weight: 600; }
+  .celdaAccion { text-align: right; }
+  .tabla td[data-etiqueta='Alta'] { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .pie { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--espacio-3); }
+
+  /* El detalle de una cuenta: lo que tiene y lo que se puede hacer, en dos columnas. */
+  .panel { display: grid; gap: var(--espacio-4); padding: var(--espacio-4); border: 1px solid var(--linea); border-radius: 8px; background: var(--elevada); min-width: 0; }
+  .cuerpoPanel { display: grid; gap: var(--espacio-5); align-items: start; }
+  .detalle, .acciones { display: grid; gap: var(--espacio-2); align-content: start; min-width: 0; }
+  .rotuloDetalle { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); }
+  .permisos { display: grid; gap: var(--espacio-1); margin: 0; padding: 0; list-style: none; font-size: var(--texto-s); }
+  .permisos li::before { content: '✓'; margin-right: var(--espacio-2); color: var(--tinta-2); }
+  .izquierda { display: grid; gap: var(--espacio-3); align-content: start; min-width: 0; }
+
+  .formularioAcceso { display: grid; gap: var(--espacio-4); }
+  .editor { display: grid; gap: var(--espacio-4); }
+  .grupo { display: grid; gap: var(--espacio-2); min-width: 0; margin: 0; padding: 0; border: 0; }
+  .casillas { display: grid; gap: var(--espacio-1); margin: 0; padding: 0; list-style: none; }
+  .casilla { display: flex; align-items: flex-start; gap: var(--espacio-3); min-height: var(--objetivo-tactil); padding: var(--espacio-1) 0; font-size: var(--texto-s); cursor: pointer; }
+  .casilla input:disabled { cursor: not-allowed; }
+  .confirmar { min-width: 0; margin: 0; display: grid; gap: var(--espacio-3); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--tarjeta); }
+  .confirmar:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .confirmar p { font-size: var(--texto-s); }
+  .resumen { display: grid; gap: var(--espacio-1); margin: 0; padding-left: var(--espacio-5); font-size: var(--texto-s); }
+
+  /* Tres cifras: en el celular, una línea por cifra con el número delante en vez de una fila apretada. */
+  @media (max-width: 599px) {
+    .cifrasResumen { grid-template-columns: 1fr; }
+    .cifrasResumen > div, .cifrasResumen > div + div { display: flex; align-items: baseline; gap: var(--espacio-3); padding: var(--espacio-2) 0 0; border-left: 0; }
+    .cifrasResumen dd { order: 1; min-width: 2ch; }
+    .cifrasResumen dt { order: 2; font-size: var(--texto-s); }
+  }
+
+  @media (min-width: 900px) {
+    .cuerpoPanel { grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr); }
+    .cuerpoPanel:has([data-ancha]) { grid-template-columns: minmax(0, 1fr); }
+    .editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+  }
+
+  /* Debajo de 900 px la tabla se vuelve una lista de cuentas: cada fila, un bloque con sus datos rotulados en dos columnas. */
+  @media (max-width: 899px) {
+    .tabla, .tabla tbody, .tabla tr, .tabla td { display: block; }
+    .tabla thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+    .tabla .fila { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--espacio-2) var(--espacio-4); padding: var(--espacio-3) 0; border-bottom: 1px solid var(--linea-suave); }
+    .tabla .fila td { padding: 0; border: 0; }
+    .fila td[data-etiqueta]:not([data-etiqueta='Cuenta'])::before { content: attr(data-etiqueta); display: block; color: var(--tinta-2); font-size: var(--texto-xs); }
+    .tabla .fila .celdaCuenta { grid-column: 1 / -1; }
+    .tabla .fila .celdaAccion { grid-column: 1 / -1; text-align: left; }
+    .tabla .filaDetalle td { padding: 0 0 var(--espacio-4); }
+    .fila[data-abierta] { border-bottom-color: transparent; }
+  }
+
+  @media (max-width: 599px) {
+    .cabecera > button { width: 100%; }
+    .pie .acciones { width: 100%; }
+  }
+}
