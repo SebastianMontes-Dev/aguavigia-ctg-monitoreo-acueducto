@@ -9,6 +9,8 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1214" />
     <meta name="description" content="¿Tengo agua o no, y hasta cuándo? Estado del acueducto de Cartagena por sector." />
     <title>AguaVigía CTG</title>
+    <!-- El orden de las capas se fija aquí, antes de cualquier hoja: en la build, la hoja compartida de GlifoEstado (solo `componentes`) se enlaza antes que index.css, y sin esto `componentes` quedaría debajo de `reset` y `base` (el `color: inherit` de los botones pisaba al principal). Debe ser idéntica a estilos/capas.css. -->
+    <style>@layer reset, tokens, base, componentes, utilidades;</style>
   </head>
   <body>
     <div id="raiz"></div>
