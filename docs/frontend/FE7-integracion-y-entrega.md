@@ -14,7 +14,7 @@ Rama: `feature/fe7-integracion`. Depende de FE0–FE6. Esfuerzo: 2 sesiones.
    - Se añade al CI.
 2. **Lo provisional:**
    - `/muestrario` se retira de la navegación o queda solo en desarrollo
-   - `Pendiente.tsx` desaparece: `/historial` lleva a las tres páginas de la historia pública o se elimina
+   - `Pendiente.tsx` desaparece. `/historial` pasa a ser una página mínima con las tres vistas de historia (Cumplimiento, Bitácora, Estadísticas), en grafito y con bloques (ADR-107, D5); `NoEncontrada` pasa a su propio archivo
 3. **Accesibilidad** ([`guia-frontend.md` §8.2](../diseno/guia-frontend.md#82-comprobaciones-posteriores-sobre-la-interfaz)):
    - axe sin violaciones en todas las pantallas, con `@axe-core/playwright` en e2e
    - todo recorrible con teclado y foco visible
