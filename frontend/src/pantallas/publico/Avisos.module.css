@@ -1,29 +1,33 @@
 @layer componentes {
   /*
-   * identidad.md §4.1, ADR-104 y ADR-105: la tarea en un bloque a la izquierda y cómo funciona, en otro bloque con un paso por fila, a la
-   * derecha. Lo comparten las pantallas de los enlaces del correo (confirmar, baja y «¿Ya volvió el agua?»).
+   * identidad.md §4.1, ADR-104, ADR-105 y ADR-108: la tarea en un bloque y la respuesta de la página («así funciona») en otro, teñido de
+   * cardenillo, con la misma altura. Lo comparten las pantallas de los enlaces del correo (confirmar, baja y «¿Ya volvió el agua?»).
    */
   .rotulo { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); }
 
-  .columnas { display: grid; gap: var(--espacio-5); align-items: start; }
+  .columnas { display: grid; gap: var(--espacio-4); align-items: stretch; }
 
-  .tarea { display: grid; gap: var(--espacio-5); align-content: start; justify-items: stretch; min-width: 0; padding: var(--espacio-5) var(--espacio-6); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--tarjeta); }
+  .tarea { display: grid; gap: var(--espacio-5); align-content: start; justify-items: stretch; min-width: 0; padding: var(--espacio-5); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--tarjeta); }
   .tarea > :global(a), .tarea > output { justify-self: start; }
 
-  .grupo { display: grid; gap: var(--espacio-3); min-width: 0; margin: 0; padding: 0; border: 0; }
-  .paso { display: flex; align-items: center; gap: var(--espacio-2); padding: 0; font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
+  /* Cada paso del formulario abre con su número y su título; una regla fina separa un paso del siguiente. */
+  .grupo { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-3); min-width: 0; margin: 0; padding: 0; border: 0; }
   .grupo legend { margin-bottom: var(--espacio-3); }
-  .numero { display: grid; place-items: center; width: 26px; height: 26px; border-radius: var(--radio-pastilla); background: var(--tinta); color: var(--papel); font-size: var(--texto-xs); font-variant-numeric: tabular-nums; }
+  .paso { display: flex; align-items: center; gap: var(--espacio-3); padding: 0; font-size: var(--texto-l); font-weight: 600; line-height: 1.2; color: var(--tinta); }
+  .numero { display: grid; place-items: center; flex: none; width: 28px; height: 28px; border-radius: var(--radio-pastilla); background: var(--cardenillo-suave); color: var(--cardenillo); font-size: var(--texto-s); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-  /* Cada barrio elegido, una pastilla resaltada con el glifo y la palabra de su estado: la persona ve a qué se suscribe. */
-  .elegidos { display: flex; flex-wrap: wrap; gap: var(--espacio-2); padding: 0; list-style: none; }
-  .chip { display: inline-flex; align-items: center; gap: var(--espacio-2); min-height: 40px; max-width: 100%; padding: 0 var(--espacio-1) 0 var(--espacio-3); border: 1px solid color-mix(in srgb, var(--cardenillo) 40%, var(--linea)); border-radius: var(--radio-pastilla); background: var(--cardenillo-suave); }
-  .barrio { font-size: var(--texto-s); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .estado { display: inline-flex; align-items: center; gap: var(--espacio-1); font-size: var(--texto-xs); color: var(--tinta-2); white-space: nowrap; }
+  /* Los barrios elegidos son filas: el nombre, el glifo y la palabra de su estado de ahora y quitar. La persona ve a qué se suscribe. */
+  .elegidos { display: grid; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--linea); }
+  .fila { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'nombre estado quitar'; align-items: center; column-gap: var(--espacio-4); min-height: 56px; border-bottom: 1px solid var(--linea-suave); }
+  .fila:last-child { border-bottom: 0; }
+  .barrio { grid-area: nombre; font-size: var(--texto-m); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .estado { display: inline-flex; align-items: center; gap: var(--espacio-1); font-size: var(--texto-s); color: var(--tinta-2); white-space: nowrap; }
+  .fila .estado { grid-area: estado; }
   /* «Sin datos verificados» con la trama del mapa (guía §2.4): un gris sin tono que no se confunde con ningún estado. */
   .sinDatos { width: 14px; height: 14px; border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background: repeating-linear-gradient(45deg, var(--tinta-3) 0 1px, transparent 1px 4px); }
+  .vacio { display: block; max-width: none; padding: var(--espacio-4) 0 0; border-top: 1px solid var(--linea); font-size: var(--texto-s); color: var(--tinta-2); }
 
-  .campo { display: grid; gap: var(--espacio-3); }
+  .campo { display: grid; gap: var(--espacio-3); padding-top: var(--espacio-5); border-top: 1px solid var(--linea); }
   .caja { display: flex; align-items: center; gap: var(--espacio-2); min-height: 48px; padding: 0 var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background: var(--elevada); color: var(--tinta-2); }
   .caja[data-invalido] { border-color: var(--tinta); border-width: 2px; padding-inline: calc(var(--espacio-4) - 1px); }
   .caja:focus-within { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
@@ -31,44 +35,52 @@
   .caja input::placeholder { color: var(--tinta-2); }
 
   /* El error va junto a su campo, en tinta y con su marca: el rojo es del estado «sin servicio» (DESIGN.md §2). */
-  .error { display: flex; align-items: flex-start; gap: var(--espacio-2); font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
+  .error { display: flex; max-width: none; align-items: flex-start; gap: var(--espacio-2); font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
   .error::before { content: '!' / ''; display: grid; place-items: center; flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: var(--radio-pastilla); background: var(--tinta); color: var(--papel); font-size: 12px; line-height: 1; }
 
-  .envio { display: grid; gap: var(--espacio-2); }
+  .envio { display: grid; gap: var(--espacio-3); }
   .envio .nota { text-align: center; justify-self: center; }
+  .envio button[data-disabled] { opacity: 0.65; }
 
-  .quitar { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: var(--radio-pastilla); background: none; color: var(--tinta-2); cursor: pointer; }
+  .quitar { grid-area: quitar; display: grid; place-items: center; width: var(--objetivo-tactil); height: var(--objetivo-tactil); margin-right: calc(var(--espacio-3) * -1); padding: 0; border: 0; border-radius: var(--radio-pastilla); background: none; color: var(--tinta-2); cursor: pointer; }
   .quitar:hover { color: var(--tinta); background: color-mix(in srgb, var(--tinta) 10%, transparent); }
   .enlace { min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta); font-size: var(--texto-s); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; cursor: pointer; }
   .enlace:hover { text-decoration-color: var(--laton); }
   .quitar:focus-visible, .enlace:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
-  .acciones { display: flex; flex-wrap: wrap; gap: var(--espacio-5); }
+  .acciones { display: flex; flex-wrap: wrap; gap: var(--espacio-5); padding-top: var(--espacio-3); border-top: 1px solid var(--linea); }
+  .acciones :global(a), .acciones .enlace { display: inline-flex; align-items: center; }
 
-  .subtitulo { font-size: var(--texto-l); font-weight: 600; }
-  .respuesta { font-size: var(--texto-m); }
+  .subtitulo { font-size: var(--texto-xl); font-weight: 600; line-height: 1.15; }
+  .respuesta { font-size: var(--texto-m); max-width: var(--medida-lectura); }
   .nota { color: var(--tinta-2); font-size: var(--texto-s); max-width: var(--medida-lectura); }
-  .alerta { display: block; padding-top: var(--espacio-3); border-top: 1px solid var(--linea); font-size: var(--texto-s); }
+  /* La respuesta del servidor (avisos, límite, fallo de red) queda a la vista bajo el botón, con su propio borde. */
+  .alerta { display: block; padding: var(--espacio-3) var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); font-size: var(--texto-s); }
 
-  /* Cómo funciona: un solo bloque, un paso por fila separado por reglas finas, con su icono o su número en un círculo de cardenillo suave. */
-  .explicacion { display: grid; gap: var(--espacio-2); align-content: start; padding: var(--espacio-4) var(--espacio-5) var(--espacio-2); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--tarjeta); }
-  .explicacion h2 { font-size: var(--texto-l); font-weight: 600; }
+  /* Así funciona: el bloque teñido de cardenillo (la respuesta de la página) con un paso por fila; las filas se reparten toda la altura. */
+  .explicacion { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: var(--espacio-4); min-width: 0; padding: var(--espacio-5); border: 1px solid color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); border-radius: var(--radio-flotante); background: color-mix(in srgb, var(--cardenillo) 8%, var(--tarjeta)); }
+  .explicacion h2 { font-size: var(--texto-l); font-weight: 600; line-height: 1.2; }
   .explicacion > :global(a) { justify-self: start; }
-  .pasos { display: grid; padding: 0; list-style: none; counter-reset: paso; }
-  .pasos li { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; column-gap: var(--espacio-3); row-gap: 2px; padding: var(--espacio-3) 0; counter-increment: paso; }
-  .pasos li + li { border-top: 1px solid var(--linea-suave); }
-  .pasos li::before { content: counter(paso); display: grid; place-items: center; grid-row: span 2; width: 40px; height: 40px; border-radius: var(--radio-pastilla); background: var(--cardenillo-suave); color: var(--cardenillo); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .pasos { display: grid; grid-auto-rows: minmax(0, 1fr); margin: 0; padding: 0; list-style: none; counter-reset: paso; border-top: 1px solid color-mix(in srgb, var(--cardenillo) 30%, var(--linea)); }
+  .pasos li { display: grid; grid-template-columns: 44px minmax(0, 1fr); align-items: center; align-content: center; column-gap: var(--espacio-4); row-gap: 2px; padding: var(--espacio-4) 0; counter-increment: paso; }
+  .pasos li + li { border-top: 1px solid var(--linea); }
+  .pasos li::before, .circulo { display: grid; place-items: center; grid-row: span 2; width: 44px; height: 44px; border: 1px solid color-mix(in srgb, var(--cardenillo) 40%, var(--linea)); border-radius: var(--radio-pastilla); background: var(--tarjeta); color: var(--cardenillo); }
+  .pasos li::before { content: counter(paso); font-weight: 600; font-variant-numeric: tabular-nums; }
   .conIconos li::before { content: none; }
-  .circulo { display: grid; place-items: center; grid-row: span 2; width: 40px; height: 40px; border-radius: var(--radio-pastilla); background: var(--cardenillo-suave); color: var(--cardenillo); }
-  .pasos strong { font-weight: 600; }
+  .pasos strong { font-size: var(--texto-m); font-weight: 600; line-height: 1.3; }
   .pasos li > span:last-child:not(.circulo) { color: var(--tinta-2); font-size: var(--texto-s); }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 900px) {
     .columnas { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: var(--espacio-5); }
+    .tarea, .explicacion { padding: var(--espacio-6); }
+    .pasos strong { font-size: var(--texto-l); }
   }
 
   @media (max-width: 599px) {
-    .columnas { gap: var(--espacio-4); }
-    .tarea { gap: var(--espacio-4); padding: var(--espacio-4); }
-    .explicacion { padding-inline: var(--espacio-4); }
+    .tarea { gap: var(--espacio-4); }
+    .campo { padding-top: var(--espacio-4); }
+    .paso { font-size: var(--texto-m); }
+    .subtitulo { font-size: var(--texto-l); }
+    .fila { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'nombre quitar' 'estado quitar'; min-height: 64px; padding-block: var(--espacio-2); row-gap: 0; }
+    .pasos li { padding: var(--espacio-3) 0; }
   }
 }
