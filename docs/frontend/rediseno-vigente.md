@@ -56,9 +56,10 @@ Salen de los ADR-103 a 106 y de [`identidad.md`](../diseno/identidad.md) §4.1; 
 
 ## 5. Lo que falta, y cómo lo recibe el rediseño
 
-Estado de las fases al 2026-10-30 (de `frontend/src/`, no de la tabla del README):
-FE0 en el [PR #121](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/121), abierto; FE1 construido y dentro del PR #122 (su puerta de
-cierre no se ha comprobado aquí; el PR #122 solo reporta la del rediseño); FE2–FE7 sin empezar (en `src/` no hay panel, sesión de veedor, segundo factor, cuentas ni vecino).
+Estado de las fases al 2026-10-31 (la tabla de [`README.md`](README.md) tiene el detalle y los PR):
+FE0 y FE1 están en `develop` desde el [PR #122](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/122); **FE2 a FE5 están construidas** y viven en la rama
+`claude/fe3-moderacion-y-cortes-6979a7`, que falta llevar a `develop`; FE6 está en el [PR #129](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/129); FE7 sin empezar. Las decisiones D1 a D5 se aplicaron
+(grafito, bloques con tablas, 1320 px); D5 sigue pendiente porque es de FE7. Lo que sigue, FE7, hereda además el rediseño de Avisos (ADR-108) y el del ingreso y el alta del segundo factor a dos columnas.
 
 ### Decisiones del panel (ADR-107, 2026-10-30)
 
@@ -86,6 +87,11 @@ Yordy las decidió el 2026-10-30 y están en el [ADR-107](../07-decisiones-clave
 ## 6. Pendientes del propio rediseño
 
 Quedaron fuera del PR #122 y no son de una fase:
+
+- **El rediseño del ingreso y del alta del segundo factor a dos columnas** (commit `7a5e674`, 2026-10-31) **no tiene ADR.** La skill `disenar-frontend` pide registrar una decisión visual nueva en `docs/07-decisiones-clave.md` y `identidad.md`; el siguiente número libre es el 109. Hay que registrarlo antes de cerrar FE7.
+- **El orden de las capas CSS** se fija ahora en `frontend/index.html` (commit `8b1861d`, del PR #129) y debe coincidir con `frontend/src/estilos/capas.css`. Cambió el aspecto de todas las pantallas de la build: hay que mirar las de FE2 a FE5 antes de dar por buena FE7.
+- **Las capturas de FE5 se perdieron** (`npm run test:e2e` borra `frontend/test-results/`): hay que sacarlas de nuevo después del último e2e, o respaldarlas fuera de esa carpeta.
+- **El e2e real del panel** (FE2 a FE5) no ha corrido nunca; ver la actualización del 2026-10-31 de [`README.md`](README.md).
 
 - **Descarga del PDF en Safari y Firefox:** sin probar (solo Chromium).
 - **Backend (aviso a Sebastian):** `EstadisticasMongoAdapter` ordena los barrios solo por cantidad y limita a 5; con empates, cuáles aparecen cambia entre consultas. El frontend solo estabiliza el orden. Falta un desempate.
