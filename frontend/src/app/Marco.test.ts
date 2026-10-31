@@ -7,6 +7,12 @@ describe('usaGrafito', () => {
     }
   })
 
+  it('debeUsarElGrafitoEnLasCuentasPublicasYElVecino', () => {
+    for (const ruta of ['/cuenta/solicitar', '/cuenta/olvide', '/cuenta/reenviar', '/vecino/registro', '/vecino/ingreso', '/vecino/perfil']) {
+      expect(usaGrafito(ruta), ruta).toBe(true)
+    }
+  })
+
   it('noDebeUsarElGrafitoEnElMapaNiEnLaFichaDelBarrio', () => {
     for (const ruta of ['/', '/sectores/manga', '/sectores/manga/restablecimiento', '/historial', '/confirmar/abc', '/avisosx']) {
       expect(usaGrafito(ruta), ruta).toBe(false)

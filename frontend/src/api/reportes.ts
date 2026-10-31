@@ -2,6 +2,7 @@ import type { components } from './generado/esquema'
 import type { UbicacionCompartida } from '../app/ubicacion'
 import { api, normalizarError, tipoDeProblema } from './cliente'
 import { obtenerDispositivo, renovarDispositivo, type ResultadoDispositivo } from './dispositivo'
+import { sesionVecino } from './sesion-vecino'
 
 export type TipoReporte = 'SIN_AGUA' | 'PRESION_BAJA' | 'SERVICIO_RESTABLECIDO'
 export type Reporte = components['schemas']['ReporteRespuesta']
@@ -41,15 +42,22 @@ type ConIdentidad = { tipo: 'respuesta'; respuesta: Response; cuerpo: unknown } 
 /**
  * `POST /api/reportes` y `/confirmar` exigen el token de dispositivo. Ante `401 dispositivo-invalido` no se contó nada,
  * así que pedir otro token y reintentar una vez no duplica el reporte (docs/api/reportes.md).
+ *
+ * Con sesión de vecino, el cliente HTTP suma su `Authorization` y manda la cuenta (FE6). Si ese token murió (un `401` de otro tipo),
+ * el cliente ya olvidó la sesión y el reintento sale solo con el dispositivo: tampoco se contó nada.
  */
 async function conIdentidad(enviar: (token: string) => Promise<{ respuesta: Response; cuerpo: unknown }>): Promise<ConIdentidad> {
   let dispositivo = await obtenerDispositivo()
-  for (let intento = 0; ; intento++) {
+  let reintentos = 0
+  for (;;) {
     if (dispositivo.tipo !== 'listo') return dispositivo
+    const conCuenta = sesionVecino.token() !== null
     const { respuesta, cuerpo } = await enviar(dispositivo.token)
-    const invalido = respuesta.status === 401 && tipoDeProblema(cuerpo) === 'dispositivo-invalido'
-    if (!invalido || intento === 1) return { tipo: 'respuesta', respuesta, cuerpo }
-    dispositivo = await renovarDispositivo()
+    const sinDispositivo = respuesta.status === 401 && tipoDeProblema(cuerpo) === 'dispositivo-invalido'
+    const sesionMuerta = respuesta.status === 401 && !sinDispositivo && conCuenta && sesionVecino.token() === null
+    if (reintentos === 1 || (!sinDispositivo && !sesionMuerta)) return { tipo: 'respuesta', respuesta, cuerpo }
+    reintentos++
+    if (sinDispositivo) dispositivo = await renovarDispositivo()
   }
 }
 

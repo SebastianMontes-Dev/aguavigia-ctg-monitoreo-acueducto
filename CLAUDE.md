@@ -8,7 +8,7 @@ Proyecto académico de dos personas que corre **en local**. Resuelve un vacío d
 
 - **Backend: Sebastian. Frontend: Yordy Pardo (`Jordy-Lv`).** No se crea ni edita nada en `frontend/` salvo que Yordy lo pida.
   Si el backend cambia el contrato (`backend/openapi.yaml`, rutas, correos), se avisa qué debe adaptar el frontend.
-- El frontend sigue su plan por fases en [`docs/frontend/`](docs/frontend/README.md) (FE0–FE7), con una rama `feature/fe<n>-<tema>` por fase desde `develop`. La rama `feat/f5-ingreso-panel` es de Yordy: no se borra ni se toca (se integra en FE2).
+- El frontend sigue su plan por fases en [`docs/frontend/`](docs/frontend/README.md) (FE0–FE7), con una rama `feature/fe<n>-<tema>` por fase desde `develop`. La rama `feat/f5-ingreso-panel` es de Yordy: no se borra ni se toca; su contenido ya se integró en FE2 y la archiva él a mano.
 
 ## Stack
 
