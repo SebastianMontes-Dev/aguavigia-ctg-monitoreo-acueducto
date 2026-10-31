@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) y el **ADR-106** (§10) son los últimos usados; el siguiente libre es el 107.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) el **ADR-106** (§10) y el **ADR-107** (§11) son los últimos usados; el siguiente libre es el 108.
 
 ## 1. Decisiones que se conservan
 
@@ -675,3 +675,26 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
   `InformeEstadisticas.tsx`: un cambio de composición se hace en ambas. Es una dependencia más, aunque no pesa en la carga inicial.
 - **Se revierte** con el commit que la introduce: `Estadisticas.tsx`, su hoja de estilos, `InformeEstadisticas.tsx`, las funciones nuevas de `dominio/estadisticas.ts`,
   `fechaYHora`, `imprimirEnClaro`, la dependencia y las dos fuentes estáticas.
+
+## 11. Diseño del ingreso, las cuentas y el panel (2026-10-30)
+
+### ADR-107 — El ingreso, las cuentas y el panel heredan el rediseño: grafito, bloques con tablas dentro y 1320 px
+
+- **Contexto.** FE2 a FE6 (`docs/frontend/`) construyen el panel del veedor, las cuentas y el perfil del vecino, y no tenían diseño: la guía §4.2 lo
+  describía con la composición anterior al rediseño (ADR-103 a 106) y ADR-105 limitó el grafito a cuatro páginas. Yordy decidió cuatro de los cinco puntos el 2026-10-30 (D1, D2, D3 y D5 de
+  [`rediseno-vigente.md`](frontend/rediseno-vigente.md) §5); la paleta la contestó con «ya no se cambiará el color, se mantendrá el de la PR de rediseño». El D4, los iconos, no se preguntó.
+- **Decisión.**
+  1. **Paleta (D1).** Sin colores nuevos. El ingreso, el segundo factor, las cuentas públicas, el perfil del vecino y el panel usan el grafito en oscuro (ADR-105) y la paleta clara de
+     siempre. Sus rutas se suman a `CON_GRAFITO` de `Marco.tsx`; el mapa y la ficha no cambian. Los cuatro colores de estado siguen siendo del servicio de agua: no pintan estados de cuenta ni decisiones de
+     moderación (guía §4.2).
+  2. **Composición (D2).** Bloques de `--tarjeta` (ADR-104). Las listas largas, como cuentas y auditoría, son una **tabla con columnas dentro de un bloque**, paginada por cabeceras.
+     La cola de reportes usa la fila compacta de la Bitácora y, en escritorio, la cola de 384 px junto al detalle (guía §4.2).
+  3. **Ancho (D3).** 1320 px, el de las páginas de lectura (`.vista`). La guía decía 1200 px para el panel.
+  4. **Iconos (D4).** No se discutió: sigue la regla de ADR-103 y ADR-104, solo funcionales y siempre junto a una palabra. Aprobar y descartar llevan texto («Aprobar», «Descartar») y
+     confirmación; los atajos no sustituyen los botones.
+  5. **Historial del celular (D5).** `/historial` pasa a ser una página mínima con las tres vistas de historia (Cumplimiento, Bitácora, Estadísticas), en grafito y con bloques. `Pendiente.tsx`
+     se elimina en FE7 y `NoEncontrada` pasa a su propio archivo.
+- **Alcance.** FE2 a FE7. No cambia el contrato ni el mapa.
+- **Gana.** Un solo sitio, con una paleta, un ancho y un bloque; las fases siguientes no vuelven a decidir el diseño. **Pierde.** El panel no se distingue del sitio público por su paleta:
+  el marco y el título de cada sección tienen que decir dónde está la persona.
+- **Se revierte** quitando las rutas nuevas de `CON_GRAFITO` y rehaciendo las pantallas con la composición que se escoja; ninguna pantalla existe aún.

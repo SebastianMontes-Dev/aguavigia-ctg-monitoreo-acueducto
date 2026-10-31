@@ -1,5 +1,7 @@
 # FE2 · Ingreso al panel
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** que un veedor o un ADMIN entre al panel con su clave y su segundo factor y vea un marco que solo le ofrece lo
 que sus permisos permiten. También gestiona la seguridad de su cuenta.
 

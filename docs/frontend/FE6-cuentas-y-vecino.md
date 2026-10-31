@@ -1,5 +1,7 @@
 # FE6 · Cuentas públicas y vecino
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** las dos formas de tener cuenta desde la parte pública:
 - **solicitar acceso al panel**, con recuperación de clave
 - **ser vecino registrado**: registrarse con su barrio, entrar, verificar el barrio con la ubicación del momento y gestionar su perfil

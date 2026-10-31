@@ -48,7 +48,7 @@ Los cuatro estados del servicio **no cambian**: son los de `DESIGN.md` §2 (`ADR
 en claro 4,56 (con servicio), 5,79 (sin servicio), 4,70 (presión baja) y 5,93 (corte programado). Aun así, el texto
 de un estado va en `--tinta` junto a su glifo de color; el color solo no es mensaje.
 
-**Grafito (`ADR-105`).** En el tema oscuro, Cumplimiento, Bitácora, Estadísticas y Avisos (con sus enlaces del correo) usan los
+**Grafito (`ADR-105`).** En el tema oscuro, Cumplimiento, Bitácora, Estadísticas y Avisos (con sus enlaces del correo), y por `ADR-107` el ingreso, las cuentas y el panel, usan los
 valores de `DESIGN.md` §3.1. Es la misma familia algo más clara, con una superficie más para separar el bloque de lo que flota. El
 tema claro, el mapa, la ficha y los estados no cambian. Contraste medido:
 
