@@ -1,5 +1,6 @@
 import { crearCliente, normalizarError, tipoDeProblema } from './cliente'
 import { sesion } from './sesion'
+import { sesionVecino } from './sesion-vecino'
 
 const PREFIJO = 'https://aguavigia.example/errores/'
 
@@ -110,9 +111,9 @@ describe('middleware de sesión', () => {
     expect(sesion.token()).toBe('a-medias')
   })
 
-  it('noDebeCerrarLaSesionCuandoElDispositivoDelReporteNoEsValido', async () => {
+  it('noDebeTocarLaSesionDelPanelAnteUn401DeUnReporte', async () => {
     sesion.guardar('vigente')
-    const { cliente } = clienteQueResponde(() => respuestaProblema(problema('dispositivo-invalido', 401), 401))
+    const { cliente } = clienteQueResponde(() => new Response(null, { status: 401 }))
     await cliente.POST('/api/reportes', { body: { tipo: 'SIN_AGUA', sectorId: 'manga' } })
     expect(sesion.token()).toBe('vigente')
   })
@@ -122,5 +123,61 @@ describe('middleware de sesión', () => {
     const { cliente } = clienteQueResponde(() => respuestaProblema(problema('acceso-denegado', 403), 403))
     await cliente.GET('/api/veedor/yo')
     expect(sesion.token()).toBe('vigente')
+  })
+
+  it('noDebeMandarElTokenDelPanelFueraDeLasRutasDelPanel', async () => {
+    sesion.guardar('del-panel')
+    const { cliente, peticiones } = clienteQueResponde(() => new Response('{}', { status: 200 }))
+    await cliente.GET('/api/vecino/yo')
+    await cliente.POST('/api/reportes', { body: { tipo: 'SIN_AGUA', sectorId: 'manga' } })
+    await cliente.GET('/api/sectores')
+    expect(peticiones.map((peticion) => peticion.headers.get('Authorization'))).toEqual([null, null, null])
+  })
+
+  it('debeMandarElTokenDelVecinoSoloAlPerfilYALosReportes', async () => {
+    sesionVecino.guardar('del-vecino')
+    const { cliente, peticiones } = clienteQueResponde(() => new Response('{}', { status: 200 }))
+    await cliente.GET('/api/vecino/yo')
+    await cliente.POST('/api/reportes', { body: { tipo: 'SIN_AGUA', sectorId: 'manga' } })
+    await cliente.POST('/api/reportes/{id}/confirmar', { params: { path: { id: 'r1' } } })
+    await cliente.GET('/api/veedor/yo')
+    await cliente.GET('/api/sectores')
+    expect(peticiones.map((peticion) => peticion.headers.get('Authorization'))).toEqual([
+      'Bearer del-vecino', 'Bearer del-vecino', 'Bearer del-vecino', null, null,
+    ])
+  })
+
+  it('noDebeLlevarUnTokenAnteriorAlIniciarSesionComoVecino', async () => {
+    sesionVecino.guardar('anterior')
+    const { cliente, peticiones } = clienteQueResponde(() => new Response('{}', { status: 200 }))
+    await cliente.POST('/api/vecino/sesion', { body: { correo: 'a@example.com', clave: 'una clave larga' } })
+    expect(peticiones[0]?.headers.get('Authorization')).toBeNull()
+  })
+
+  it('debeBorrarSoloLaSesionDeLaQueEraElTokenAnteUn401', async () => {
+    sesion.guardar('del-panel')
+    sesionVecino.guardar('del-vecino')
+    const { cliente } = clienteQueResponde(() => new Response(null, { status: 401 }))
+    await cliente.GET('/api/vecino/yo')
+    expect(sesionVecino.token()).toBeNull()
+    expect(sesion.token()).toBe('del-panel')
+    sesionVecino.guardar('otra-vez')
+    await cliente.GET('/api/veedor/yo')
+    expect(sesion.token()).toBeNull()
+    expect(sesionVecino.token()).toBe('otra-vez')
+  })
+
+  it('noDebeCerrarLaSesionDelVecinoCuandoElDispositivoDelReporteNoEsValido', async () => {
+    sesionVecino.guardar('vigente')
+    const { cliente } = clienteQueResponde(() => respuestaProblema(problema('dispositivo-invalido', 401), 401))
+    await cliente.POST('/api/reportes', { body: { tipo: 'SIN_AGUA', sectorId: 'manga' } })
+    expect(sesionVecino.token()).toBe('vigente')
+  })
+
+  it('debeCerrarLaSesionDelVecinoSiSuTokenMurioAlReportar', async () => {
+    sesionVecino.guardar('vencido')
+    const { cliente } = clienteQueResponde(() => new Response(null, { status: 401 }))
+    await cliente.POST('/api/reportes', { body: { tipo: 'SIN_AGUA', sectorId: 'manga' } })
+    expect(sesionVecino.token()).toBeNull()
   })
 })

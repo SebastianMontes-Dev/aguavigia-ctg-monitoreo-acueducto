@@ -1,0 +1,49 @@
+@layer componentes {
+  /*
+   * FE6 · ADR-107: las pantallas de cuenta son el bloque de Avisos. La tarea (480 px) a la izquierda y «Así funciona» a la derecha, los
+   * dos de la misma altura. En el celular solo queda la tarea: lo que explica el segundo bloque va en la bajada, bajo el titular.
+   */
+  .columnas { display: grid; grid-template-columns: minmax(0, 480px); gap: var(--espacio-5); align-items: stretch; }
+  .bajada { max-width: 60ch; font-size: var(--texto-m); color: var(--tinta-2); text-wrap: pretty; }
+  .formulario { display: grid; gap: var(--espacio-4); }
+  .explicacion { display: none; }
+  .pie { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-2) var(--espacio-5); padding-top: var(--espacio-4); border-top: 1px solid var(--linea-suave); }
+
+  .fila2 { display: grid; gap: var(--espacio-4); }
+  .aviso { display: block; padding: var(--espacio-3) var(--espacio-4); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--elevada); font-size: var(--texto-s); }
+  .nota { font-size: var(--texto-s); color: var(--tinta-2); max-width: var(--medida-lectura); }
+  .nota strong { color: var(--tinta); }
+  .recibido { display: grid; gap: var(--espacio-4); justify-items: start; }
+
+  @media (min-width: 900px) {
+    .columnas { grid-template-columns: minmax(0, 480px) minmax(0, 560px); justify-content: start; column-gap: var(--espacio-5); }
+    .explicacion { display: grid; }
+  }
+
+  /* El perfil: arriba la respuesta (barrio y verificación) en un bloque teñido; debajo, dos bloques de la misma altura. */
+  .respuesta { display: grid; gap: var(--espacio-4); align-items: center; padding: var(--espacio-5) var(--espacio-6); }
+  .respuestaTexto { display: grid; gap: var(--espacio-1); min-width: 0; }
+  .verificacion { display: inline-flex; align-items: center; gap: var(--espacio-2); font-size: clamp(1.5rem, 3vw, var(--texto-xl)); font-weight: 600; line-height: 1.15; }
+  .detalle { font-size: var(--texto-s); color: var(--tinta-2); max-width: var(--medida-lectura); }
+  .accionVerificar { display: grid; gap: var(--espacio-2); justify-items: start; }
+
+  .dos { display: grid; gap: var(--espacio-5); align-items: stretch; }
+  .datos { display: grid; gap: 0; margin: 0; }
+  .datos > div { display: grid; gap: 2px; padding: var(--espacio-3) 0; }
+  .datos > div + div { border-top: 1px solid var(--linea-suave); }
+  .datos dt { font-size: var(--texto-xs); color: var(--tinta-2); }
+  .datos dd { margin: 0; font-size: var(--texto-s); overflow-wrap: anywhere; }
+  .advertencia { display: grid; gap: var(--espacio-3); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); font-size: var(--texto-s); }
+  .botones { display: flex; flex-wrap: wrap; align-items: center; gap: var(--espacio-3) var(--espacio-5); }
+
+  @media (min-width: 900px) {
+    .respuesta { grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--espacio-6); }
+    .accionVerificar { justify-items: end; max-width: 26rem; text-align: end; }
+    .dos { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--espacio-5); }
+  }
+
+  @media (max-width: 599px) {
+    .respuesta { padding: var(--espacio-4); }
+    .formulario > button { justify-self: stretch; }
+  }
+}

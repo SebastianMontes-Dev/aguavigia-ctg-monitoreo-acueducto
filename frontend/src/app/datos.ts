@@ -310,3 +310,16 @@ export function useSustento(id: string, abierto: boolean) {
     staleTime: 60_000,
   })
 }
+
+/** Un GET puntual y no `useListado()`: el listado abriría el canal en vivo en una página que no muestra el mapa. */
+export function useBarrios() {
+  return useQuery({
+    queryKey: ['barrios-avisos'],
+    queryFn: async () => {
+      const { data, error, response } = await api.GET('/api/sectores').catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response?.ok || !data) throw normalizarError(response ?? null, error)
+      return data.sectores as Sector[]
+    },
+    staleTime: 60_000,
+  })
+}

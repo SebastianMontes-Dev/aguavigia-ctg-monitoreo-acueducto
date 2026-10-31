@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
 import { useModoSistema } from './datos'
+import { useHaySesionVecino } from './vecino'
 import { usePaletaGrafito } from './paleta'
 import { SelectorTema } from './SelectorTema'
 import estilos from './Marco.module.css'
@@ -22,9 +23,9 @@ const DESTINOS_CELULAR = [
 
 const HISTORIAL = ['/historial', '/bitacora', '/cumplimiento', '/estadisticas']
 
-// ADR-105: estas páginas toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
+// ADR-105 y ADR-107 (D1): estas páginas, y las cuentas públicas y el vecino (FE6), toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
 // ahí) y nunca en <html>, de donde el mapa lee sus colores.
-const CON_GRAFITO = ['/cumplimiento', '/bitacora', '/estadisticas', '/avisos']
+const CON_GRAFITO = ['/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/cuenta', '/vecino']
 
 export function usaGrafito(ruta: string): boolean {
   return CON_GRAFITO.some((prefijo) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))
@@ -51,6 +52,12 @@ function EnlacesNavegacion({ clase }: { clase: string | undefined }) {
   ))
 }
 
+/** «Mi cuenta» lleva al perfil si hay sesión de vecino y al ingreso si no; es la cuenta pública, no el panel. */
+function EnlaceCuenta({ clase }: { clase: string | undefined }) {
+  const haySesion = useHaySesionVecino()
+  return <Link to={haySesion ? '/vecino/perfil' : '/vecino/ingreso'} className={clase}>Mi cuenta</Link>
+}
+
 export function Marco() {
   const { pathname } = useLocation()
   // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
@@ -69,6 +76,7 @@ export function Marco() {
         </nav>
         <div className={estilos.temaEscritorio}>
           <SelectorTema />
+          <EnlaceCuenta clase={estilos.accesoPanel} />
           <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso al panel</Link>
         </div>
         <DialogTrigger>
@@ -79,6 +87,7 @@ export function Marco() {
                 <EnlacesNavegacion clase={estilos.menuDestino} />
               </nav>
               <SelectorTema />
+              <EnlaceCuenta clase={estilos.accesoPanel} />
               <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso al panel</Link>
             </Dialog>
           </Popover>

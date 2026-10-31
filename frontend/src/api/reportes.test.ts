@@ -1,4 +1,6 @@
 import { olvidarDispositivo } from './dispositivo'
+import { sesion } from './sesion'
+import { sesionVecino } from './sesion-vecino'
 import { confirmarReporte, enviarFoto, enviarReporte, interpretarConfirmacion, interpretarEnvio, interpretarFoto } from './reportes'
 
 const TIPO = 'https://aguavigia.example/errores/'
@@ -19,7 +21,7 @@ function servidorQueResponde(...respuestas: Response[]) {
   const pedido = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => pendientes.shift() ?? json(500, {}))
   const llamadas = () => pedido.mock.calls.map(([entrada]) => {
     const peticion = entrada as Request
-    return { ruta: new URL(peticion.url).pathname, dispositivo: peticion.headers.get('X-Dispositivo'), peticion }
+    return { ruta: new URL(peticion.url).pathname, dispositivo: peticion.headers.get('X-Dispositivo'), autorizacion: peticion.headers.get('Authorization'), peticion }
   })
   return { pedido, llamadas }
 }
@@ -107,6 +109,59 @@ describe('enviarReporte', () => {
   it('debeDecirCuantoEsperarSiElServidorNoEmiteMasDispositivos', async () => {
     servidorQueResponde(json(429, { type: `${TIPO}limite-de-peticiones-excedido`, status: 429 }, { 'Retry-After': '120' }))
     expect(await enviarReporte('manga', 'SIN_AGUA')).toEqual({ tipo: 'esperar', segundos: 120 })
+  })
+})
+
+describe('enviarReporte con sesión de vecino', () => {
+  beforeEach(() => olvidarDispositivo())
+  afterEach(() => {
+    olvidarDispositivo()
+    vi.restoreAllMocks()
+  })
+
+  it('debeMandarElTokenDelVecinoJuntoConElDispositivoYPedirElDispositivoUnaVez', async () => {
+    sesionVecino.guardar('t-vecino')
+    const { llamadas } = servidorQueResponde(json(201, { token: 'tok-1' }), json(201, { id: 'r1' }), json(201, { id: 'r2' }))
+    await enviarReporte('manga', 'SIN_AGUA')
+    await enviarReporte('manga', 'PRESION_BAJA')
+    expect(llamadas().map(({ ruta, dispositivo, autorizacion }) => [ruta, dispositivo, autorizacion])).toEqual([
+      ['/api/dispositivos', null, null],
+      ['/api/reportes', 'tok-1', 'Bearer t-vecino'],
+      ['/api/reportes', 'tok-1', 'Bearer t-vecino'],
+    ])
+  })
+
+  it('debeConfirmarConLaCuentaDelVecino', async () => {
+    sesionVecino.guardar('t-vecino')
+    const { llamadas } = servidorQueResponde(json(201, { token: 'tok-1' }), json(200, { id: 'r9', confirmaciones: 1 }))
+    expect(await confirmarReporte('r9')).toMatchObject({ tipo: 'confirmado' })
+    expect(llamadas()[1]).toMatchObject({ ruta: '/api/reportes/r9/confirmar', dispositivo: 'tok-1', autorizacion: 'Bearer t-vecino' })
+  })
+
+  it('noDebeMandarNuncaElTokenDelPanelEnUnReporte', async () => {
+    sesion.guardar('del-panel')
+    const { llamadas } = servidorQueResponde(json(201, { token: 'tok-1' }), json(201, { id: 'r1' }))
+    await enviarReporte('manga', 'SIN_AGUA')
+    expect(llamadas().map(({ autorizacion }) => autorizacion)).toEqual([null, null])
+  })
+
+  it('debeReintentarUnaVezSoloConElDispositivoSiElTokenDelVecinoMurio', async () => {
+    sesionVecino.guardar('vencido')
+    const { llamadas } = servidorQueResponde(json(201, { token: 'tok-1' }), respuesta(401), json(201, { id: 'r1' }))
+    expect(await enviarReporte('manga', 'SIN_AGUA')).toMatchObject({ tipo: 'recibido' })
+    expect(sesionVecino.token()).toBeNull()
+    expect(llamadas().map(({ ruta, dispositivo, autorizacion }) => [ruta, dispositivo, autorizacion])).toEqual([
+      ['/api/dispositivos', null, null],
+      ['/api/reportes', 'tok-1', 'Bearer vencido'],
+      ['/api/reportes', 'tok-1', null],
+    ])
+  })
+
+  it('noDebeCerrarLaSesionDelVecinoPorUnDispositivoInvalido', async () => {
+    sesionVecino.guardar('vigente')
+    servidorQueResponde(json(201, { token: 'a' }), json(401, DISPOSITIVO_INVALIDO), json(201, { token: 'b' }), json(201, { id: 'r1' }))
+    expect(await enviarReporte('manga', 'SIN_AGUA')).toMatchObject({ tipo: 'recibido' })
+    expect(sesionVecino.token()).toBe('vigente')
   })
 })
 
