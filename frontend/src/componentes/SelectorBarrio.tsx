@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { ComboBox, Input, Label, ListBox, ListBoxItem, Popover } from 'react-aria-components'
 import { buscarSectores, nombreLegible, type Sector } from '../dominio/sectores'
+import { Icono } from './Icono'
 import estilos from './SelectorBarrio.module.css'
 
 interface Props {
@@ -8,16 +9,18 @@ interface Props {
   valor?: string
   alCambiar: (id?: string) => void
   etiqueta?: string
+  /** `pastilla` (ADR-104): en la barra junto al titular, con la etiqueta solo para el lector de pantalla. */
+  forma?: 'linea' | 'pastilla'
 }
 
-export function SelectorBarrio({ sectores, valor, alCambiar, etiqueta = 'Barrio' }: Props) {
+export function SelectorBarrio({ sectores, valor, alCambiar, etiqueta = 'Barrio', forma = 'linea' }: Props) {
   const [termino, setTermino] = useState('')
   const seleccionado = sectores.find((sector) => sector.id === valor)
   const opciones = useMemo(() => termino ? buscarSectores(sectores, termino, 211) : sectores,
     [sectores, termino])
 
   return (
-    <div className={estilos.conjunto}>
+    <div className={estilos.conjunto} data-forma={forma}>
       <ComboBox
         className={estilos.selector}
         selectedKey={valor ?? null}
@@ -31,8 +34,15 @@ export function SelectorBarrio({ sectores, valor, alCambiar, etiqueta = 'Barrio'
         menuTrigger="input"
         allowsEmptyCollection
       >
-        <Label className={estilos.etiqueta}>{etiqueta}</Label>
-        <Input className={estilos.entrada} placeholder="Todos los barrios" autoComplete="off" spellCheck={false} />
+        <Label className={forma === 'pastilla' ? estilos.oculto : estilos.etiqueta}>{etiqueta}</Label>
+        {forma === 'pastilla' ? (
+          <div className={estilos.pastilla}>
+            <Icono nombre="buscar" tamano={18} />
+            <Input className={estilos.entradaPastilla} placeholder="Todos los barrios" autoComplete="off" spellCheck={false} />
+          </div>
+        ) : (
+          <Input className={estilos.entrada} placeholder="Todos los barrios" autoComplete="off" spellCheck={false} />
+        )}
         <Popover className={estilos.menu} offset={4}>
           <ListBox<Sector> className={estilos.lista} renderEmptyState={() => <p className={estilos.vacio}>No encontramos barrios con ese nombre</p>}>
             {(sector) => <ListBoxItem id={sector.id} textValue={nombreLegible(sector.nombre)} className={estilos.opcion}>

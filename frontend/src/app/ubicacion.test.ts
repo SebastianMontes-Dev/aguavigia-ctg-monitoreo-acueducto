@@ -16,9 +16,9 @@ function responderError(code: number): Geolocation {
 }
 
 describe('pedirUbicacion', () => {
-  it('debeEntregarLaCoordenadaConNombre', async () => {
-    expect(await pedirUbicacion(responderPosicion(10.4, -75.5, 30)))
-      .toEqual({ tipo: 'ubicada', coordenada: { latitud: 10.4, longitud: -75.5 } })
+  it('debeEntregarLaCoordenadaConNombreYSuPrecisionRedondeada', async () => {
+    expect(await pedirUbicacion(responderPosicion(10.4, -75.5, 30.4)))
+      .toEqual({ tipo: 'ubicada', coordenada: { latitud: 10.4, longitud: -75.5 }, precisionMetros: 30 })
   })
 
   it('debeRechazarUnaUbicacionDemasiadoImprecisaParaElegirBarrio', async () => {
@@ -40,8 +40,8 @@ describe('ubicacionPara', () => {
   afterEach(olvidarUbicacion)
 
   it('debeAcompanarSoloElReporteDelBarrioDondeSeLocalizo', () => {
-    recordarUbicacion('manga', { latitud: 10.41, longitud: -75.53 })
-    expect(ubicacionPara('manga')).toEqual({ latitud: 10.41, longitud: -75.53 })
+    recordarUbicacion('manga', { coordenada: { latitud: 10.41, longitud: -75.53 }, precisionMetros: 25 })
+    expect(ubicacionPara('manga')).toEqual({ coordenada: { latitud: 10.41, longitud: -75.53 }, precisionMetros: 25 })
     expect(ubicacionPara('armenia')).toBeNull()
   })
 

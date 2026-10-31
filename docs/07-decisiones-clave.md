@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5) es el siguiente número libre que se usó.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) el **ADR-106** (§10) y el **ADR-107** (§11) son los últimos usados; el siguiente libre es el 108.
 
 ## 1. Decisiones que se conservan
 
@@ -525,3 +525,176 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
   (`ParidadMongoPostgresIT`) que compara cortes variados —parciales, anulados, expirados, antiguos, de fin de mes y con fracciones de segundo— en las dos bases.
 - **Se revierte** quitando el servicio, el paquete `persistence/sql` y las rutas `/api/analitica/**`; Mongo no se entera.
 - **Pendiente (fases 2 y 3, [09](09-postgresql-fase-1.md) §10):** el vigilante completo de integridad, la bitácora inmutable con respaldo restaurable y las vistas de datos abiertos.
+
+## 6. Lectura del cumplimiento en la ficha del barrio (2026-10-25)
+
+### ADR-101 — Cada corte cerrado se cuenta con fechas y horas, y al público el veedor se le llama «revisor de AguaVigía»
+
+- **Contexto.** La prueba de los cinco segundos (ADR-079) sobre la ficha de un barrio la hizo Yordy con la mirada de quien no conoce la app. El mapa se entendió a la primera; el bloque «Cortes cerrados»
+  no: «Prometieron 42 horas · Fueron 45 horas y 15 minutos» obliga a restar, la leyenda de tres muestras es un código y «registrado por un veedor» no significa nada fuera del proyecto.
+- **Decisión.** Cada corte cerrado muestra primero dos horas grandes lado a lado, cada una con su día y su fecha real, como en «Inicio anunciado / Fin prometido»:
+  PROMETIERON 3:00 p. m. · Sáb 25 jul y VOLVIÓ 6:15 p. m. · Dom 26 jul (una regla de 1 px las separa; un texto plano se leía mal). Debajo, más pequeña, la diferencia en palabras («Tardó 3 horas y 15 minutos más de lo prometido») y, en gris, cuándo empezó el corte.
+  El día relativo («hoy», «ayer», «mañana») nunca va solo: lleva la fecha («Mañana · lun 26 oct»), porque «mañana» es ambiguo según cuándo se lea. La frase de introducción del bloque se quita: repetía el título. Se quitan la barra y su leyenda (ADR-079 §4.1: una sola forma por dato). Una diferencia menor de 15 minutos se dice «a la hora
+  prometida». Un cierre provisional dice «Por confirmar». La causa no se muestra: es el texto del boletín tal cual salió de la fuente y se lee mal. El rol `VEEDOR` se nombra al público «revisor de AguaVigía»; «veedor» queda en el panel.
+- **Alcance.** Solo la ficha (`CortesCerrados`). `/cumplimiento` y `DESIGN.md` M6 siguen con «prometido frente a real» porque ahí la comparación es el titular; el cambio de nombre del rol sí vale en todo el texto público.
+- **Gana.** Una frase que se entiende sin contexto y que usa solo campos del contrato (`inicio`, `finPrometido`, `cierres[]`). **Pierde.** El vistazo de la barra a varios cortes a la vez; se reconsidera si la ficha
+  pasa a mostrar muchos cortes juntos.
+- **Se revierte** restaurando `CortesCerrados` y `compararCorte` del commit anterior.
+
+### ADR-102 — La ficha de un barrio tiene una sola línea de frescura y un botón a la fuente del último aviso
+
+- **Contexto.** La misma prueba de los cinco segundos (ADR-101) encontró redundancia en la ficha: «Estado registrado hace menos de un minuto · verificado hace menos de un minuto» repetía una fecha y, debajo,
+  «En vivo · Listado generado a las 8:34» daba la hora del listado de toda la ciudad, que en la ficha de un barrio no le sirve a nadie y que la portada ya dice.
+- **Decisión.** La ficha dice «Actualizado hace X» (`actualizadoEn`; la fecha exacta, en el `title`) y, si el canal está conectado, el punto «En vivo» en la misma línea. «Verificado hace…» sale solo por la advertencia de
+  24 horas que ya existía; «Listado generado…» sale solo cuando la lectura es guardada o falló. Se añade una fila de fuente con reglas, sin tarjeta («ÚLTIMO AVISO DE ACUACAR · Hoy · dom 25 oct, 10:00 a. m.» y «Ver avisos →») que lleva a la bitácora del barrio filtrada a boletines y notas (`/bitacora?sector=…&tipo=CORTE_DETECTADO_POR_INGESTA`), con la fecha del último aviso
+  (`GET /api/bitacora?sectorId&tipo=CORTE_DETECTADO_POR_INGESTA&tamano=1`). De ahí la persona elige un aviso y abre su fuente original, en otra pestaña y solo si la URL es `http(s)`; la ficha no abre fuentes externas.
+- **Límite que se dice.** El contrato no enlaza la fuente de un corte concreto: `CorteRespuesta` no trae URL y esos eventos llegan con `corteId` nulo. La ficha dice «Último aviso sobre este barrio» y no afirma que fuera el
+  que anunció un corte en particular (ética de datos 4). Para enlazarlo por corte, el backend tendría que ofrecer `urlOriginal` en `CorteRespuesta`; queda anotado para Sebastian en el PR #121.
+«Recibir avisos» pasa a la esquina del rótulo del barrio, como acción secundaria que no compite con «Reportar».
+- **Gana.** Una línea en vez de tres y una fuente que la persona puede comprobar. **Pierde.** La hora del listado ya no está a la vista cuando todo funciona; sigue en «Cartagena ahora» y aparece si algo falla.
+- **Se revierte** restaurando `Registro` en `FichaSector` y quitando `useUltimoAviso`.
+
+## 7. Composición de la ficha del barrio (2026-10-25)
+
+### ADR-103 — La ficha del barrio se compone en bloques compactos
+
+- **Contexto.** Yordy trajo una referencia (la ficha de Manga) y pidió rediseñar la ficha con ella. La ficha apilaba texto separado por reglas de 1 px y todo pesaba lo mismo: el estado no se distinguía
+  del resto de un vistazo. La referencia choca con `identidad.md` §6 y `DESIGN.md` §9 (tarjetas, barrita de color al costado, iconos); el dueño decidió copiarla y registrar la excepción, acotada a esta pantalla.
+  Una primera versión añadió «Sobre el barrio» (fuente del estado en una tarjeta) y una nota sobre cómo se combinan las fuentes; quedó demasiado alta (1045 px a 1024 × 768) y Yordy pidió una segunda iteración:
+  menos bloques, menos aire y nada que explique el funcionamiento interno de AguaVigía.
+- **Decisión.** En `/sectores/:id`, en este orden y con 24 px entre bloques (32 px en «Cartagena ahora»):
+  1. El nombre en Newsreader y debajo el rótulo «BARRIO · N HABITANTES», con «Recibir avisos» en su esquina.
+  2. El **estado en un recuadro teñido de su color** (`color-mix` al 12 % sobre `--elevada`, borde al 35 %) con el glifo en un círculo de 44 px, la palabra y, en la línea de abajo, la frescura de ADR-102 con el punto «En vivo».
+     Sin dato verificado, **sin tinte** (ADR-014). Lo que matiza el estado va dentro y solo si existe: «Puedes reportar…», «Ya pasó la hora prometida y nadie ha confirmado que volvió el agua» (`restablecimientoPorConfirmar`),
+     «Hora de restablecimiento no informada», la disputa («N vecinos reportan algo distinto. Pendiente de revisión.»: no cambia el estado) y la advertencia de 24 horas.
+     La **procedencia** va en pequeño junto a la palabra del estado y solo distingue lo oficial de lo comunitario: «Aviso oficial de Acuacar», «Según una nota de prensa» o «Reportado por N vecinos» (`respaldo`).
+     Un estado del revisor o de un sensor no se rotula.
+  3. **«Último aviso»**, con «Ver todos →» a la bitácora del barrio (ADR-102): una tarjeta por corte abierto con barrita a la izquierda (azul de corte programado si aún no empieza, `--tinta-2` si ya empezó) y, aparte, el último
+     boletín o nota en **una fila** (icono, tipo y fecha), porque el contrato no dice qué aviso anunció cada corte. Sin nada, «No hay avisos registrados para este barrio».
+  4. El **botón de reporte a todo el ancho**, con megáfono y flecha.
+  5. Tras una regla, el historial de cortes cerrados (ADR-101) con las horas a 20 px y filas más juntas; cálculos y textos sin cambios.
+  Los iconos (calendario, megáfono, documento) son funcionales, siempre junto a una palabra y en el formato de los glifos.
+- **Lo que no se muestra.** La referencia traía localidad y un conteo de reportes recientes: la API no tiene localidad y los reportes no son públicos (guía §5.1, RF038). Sin dato útil, no hay sección «Sobre el barrio»:
+  habitantes ya está en el rótulo, y procedencia y disputa están en el estado. La explicación de cómo se combinan las fuentes no va en la ficha.
+- **Alcance.** Solo la ficha del barrio. El resto de pantallas sigue con reglas de 1 px y sin iconos; `identidad.md` §4 y §6 y `DESIGN.md` §9 nombran la excepción.
+- **Gana.** El estado se lee primero y se distingue por su recuadro, sin depender solo del color (glifo y palabra siguen). La ficha de Manga baja de 1045 a 705 px a 1024 × 768 y, a 1440 × 900, cabe entera con su historial.
+  **Pierde.** La ficha deja de ser la composición de reglas finas del resto del sitio.
+- **Se revierte** restaurando `FichaSector`, `Panel.module.css`, `CorteAbierto.module.css`, `CortesCerrados.module.css` y el botón de `Reporte` del commit anterior y quitando `componentes/Icono.tsx` y sus SVG.
+
+## 8. Composición de Cumplimiento, Bitácora, Estadísticas y Avisos (2026-10-25)
+
+### ADR-104 — Las páginas de historia y Avisos se componen en bloques, como la ficha
+
+- **Contexto.** Con la ficha en bloques (ADR-103), Cumplimiento, Bitácora, Estadísticas y Avisos seguían separadas por reglas de 1 px y todo pesaba lo mismo:
+  en escritorio quedaba media pantalla vacía, cada evento de la bitácora repetía su contenido cuatro veces («Confirmado por ciudadanos · Sin servicio», la descripción,
+  «Reportes de vecinos · 5 de 3 vecinos», «Sustentado por 5 reportes»), Estadísticas dibujaba cinco barras iguales y Cumplimiento obligaba a comparar dos duraciones
+  casi idénticas (25 h 26 min contra 25 h 19 min). Yordy pidió rediseñarlas como la ficha y aprobó el prototipo
+  [«Rediseño historia y avisos»](https://claude.ai/artifact/MinzHM4Au991x4HGExMD8b) (Artifact privado), tras pedir una segunda versión de Cumplimiento porque la primera no se entendía.
+- **Decisión.** Las cuatro páginas usan el lenguaje de ADR-103: bloques de `--elevada` con borde de `--linea` y radio de 12 px, sin sombra; la respuesta principal en un
+  recuadro teñido de `--cardenillo` (no de un estado del servicio, porque aquí no hay uno); iconos funcionales siempre junto a una palabra. El titular sigue siendo la respuesta
+  (ADR-079) y la página sigue a dos columnas en escritorio.
+  1. **Cumplimiento.** Titular en palabras del vecino («El agua vuelve un poco antes de lo que anuncia Acuacar»). La respuesta es una sola cifra, la diferencia por corte
+     («7 min antes» o «33 min tarde»), y una **línea de tiempo**: la hora anunciada es la marca del centro y un punto de `--cardenillo` marca cuándo volvió el agua
+     (izquierda = antes, derecha = tarde, escala de una hora a cada lado, recortada en los extremos). «Mes a mes» usa la misma línea por mes, con «N min tarde»,
+     «N min antes» o «A la hora» y la cantidad de cortes. Las duraciones por corte y el índice con su significado bajan a una línea al pie del recuadro; la solidez
+     (F4) va debajo. El barrio se elige en una pastilla junto al titular.
+  2. **Bitácora.** Los tipos, como pestañas con su cantidad, y «Barrio» y «Fechas» van en **una barra** horizontal (`identidad.md` §4.1, punto 5). Cada evento es una
+     tarjeta de dos líneas: el glifo del estado en un círculo teñido, «Barrio · lo que pasó» en palabras del vecino («Volvió el agua», «Se quedó sin agua», según `tipo`
+     y `estado`) y la hora; debajo, la procedencia («Lo confirmaron 8 vecinos (hacían falta 3)», «Boletín de Acuacar») y, si existen, la fuente y el sustento. La
+     descripción del backend solo se muestra cuando no la dicen ya el tipo y la procedencia (boletines, notas, correcciones). A la derecha, en escritorio, el último
+     boletín de Acuacar y la invitación a recibir avisos.
+  3. **Estadísticas.** La duración media en palabras («25 horas y media», DESIGN.md §5). Tres bloques con cifra: cortes registrados, el día con más y el día con menos.
+     Los días, en barras con el máximo resaltado. Los barrios con más cortes, como lista enlazada a su ficha; si empatan todos, se dice («Cinco barrios empatan con 6
+     cortes») en vez de dibujar barras iguales (`identidad.md` §4.1, punto 3).
+  4. **Avisos.** El formulario en un bloque con dos pasos numerados (barrios y correo); los barrios elegidos como pastillas con el punto y la palabra de su estado y un
+     botón para quitarlos. «Así funciona», en tres tarjetas con icono. Las pantallas de enlace (`/avisos/confirmar`, `/avisos/baja` y «¿Ya volvió el agua?») toman el mismo
+     bloque para su tarea.
+- **Lo que no se muestra.** Nada que la API no devuelva: la línea de tiempo sale de `desviacionSegundos / cantidadCortes` (o del agregado con la serie, como ya se hacía),
+  no de una hora inventada; el empate se deduce de `sectoresMasAfectados`.
+- **Alcance.** Estas cuatro páginas y las pantallas de enlace de avisos. El mapa sigue igual; `identidad.md` §4 y §6 y `DESIGN.md` §9 nombran la excepción.
+- **Gana.** Cada página dice su respuesta con una cifra y una forma que se leen solas, y en escritorio llena el primer pliegue. **Pierde.** El sitio deja de ser, salvo el
+  mapa, la composición de reglas finas de ADR-070.
+- **Se revierte** restaurando `Cumplimiento`, `Bitacora`, `Estadisticas`, `Avisos` y `EnlaceAvisos` y sus estilos del commit anterior a este ADR.
+
+## 9. Grafito y composición compacta de las páginas de historia y Avisos (2026-10-25)
+
+### ADR-105 — Cumplimiento, Bitácora, Estadísticas y Avisos usan el grafito en oscuro, más ancho y sin conclusiones con muestras pequeñas
+
+- **Contexto.** Con la composición en bloques (ADR-104), Yordy pidió una mejora visual de las cuatro páginas: una paleta oscura de grafito con verde agua,
+  más ancho en pantallas grandes, filas compactas en la bitácora y que ninguna página saque conclusiones que los datos no sostienen. Con los datos de la
+  simulación, Cumplimiento titulaba «El agua vuelve antes de la hora anunciada» con **un** corte cerrado y Estadísticas nombraba «el día con más cortes» con
+  un solo corte. El mapa quedaba fuera: lee sus colores de `:root` mientras corre (`estilo-base.ts`, `capas-sectores.ts`).
+- **Decisión.**
+  1. **Grafito** (`DESIGN.md` §3.1, `identidad.md` §2). En el tema oscuro, estas páginas redeclaran los neutros y el cardenillo sobre
+     `[data-paleta="grafito"]` en `<body>`; el marco pone el atributo solo en sus rutas. Nunca en `:root`: el mapa, la ficha y el tema claro no cambian, y
+     los cuatro estados y el latón tampoco (ADR-042). Un token nuevo, `--tarjeta`, es el fondo de un bloque; fuera del grafito vale `--elevada`, así que
+     nada cambia allí, y dentro deja `--elevada` (`#242c2f`) para lo que flota.
+  2. **Bordes que se ven.** `--linea` solo separa (1,3–1,7:1). El borde de un campo o de una opción que se elige es `--tinta-3` (≥ 3:1, WCAG 1.4.11), también
+     en claro.
+  3. **Muestra suficiente: 5 cortes** (`MUESTRA_SUFICIENTE`, `dominio/muestra.ts`). Por debajo, las cifras se muestran con su cantidad, pero sin
+     veredicto en el titular, sin tendencia mes a mes y sin «el día con más cortes»; una frase dice cuántos hay y cuántos hacen falta.
+  4. **Composición.** Ancho de 1320 px y un solo rótulo, titular y espaciado (`Pagina.module.css`). **Cumplimiento:** la cifra grande se queda; las
+     duraciones pasan a cifras secundarias y, si la diferencia rebasa la escala de una hora, una línea lo dice. **Bitácora:** un bloque por día con una
+     fila por evento (glifo, lo que pasó, la fuente en su columna en escritorio y la hora), filtros fijos al bajar y sin repetir el barrio filtrado.
+     **Estadísticas:** las cifras en una fila de un solo bloque; más de dos días empatados se cuentan («6 días») y un día sin dato lleva guion y base
+     punteada, distinto del cero. **Avisos:** cada campo dice su error junto a él (el formato del correo lo juzga el navegador), los barrios elegidos van
+     resaltados en cardenillo suave con «Sin datos verificados» en trama, y «Así funciona» es un bloque con un paso por fila.
+- **Alcance.** Estas cuatro páginas y los enlaces de avisos del correo (`/avisos/confirmar`, `/avisos/baja`). El mapa, la ficha, el Historial del celular
+  y el tema claro conservan su paleta.
+- **Gana.** Las cuatro páginas comparten paleta, ancho, titular y bloque; el dato pequeño se dice como pequeño. **Pierde.** En oscuro, la cabecera cambia
+  levemente de tono al pasar del mapa a estas páginas.
+- **Se revierte** quitando los dos bloques `[data-paleta='grafito']` de `tokens.css` y el efecto de `Marco.tsx`; lo demás sigue funcionando con la paleta oscura.
+
+## 10. Selector de gráficas e informe impreso de Estadísticas (2026-10-30)
+
+### ADR-106 — Estadísticas reúne cuatro gráficas en un bloque con selector y se imprime como una hoja A4 propia
+
+- **Contexto.** Yordy pidió una tarjeta de cifras uniforme, la gráfica y la tabla a ras, más información útil y un PDF presentable. Una gráfica nueva en su
+  propio bloque alargaba la página (de 900 a 1.190 px en escritorio y a 1.550 px en el celular). El PDF salía de imprimir la pantalla: primera hoja casi vacía,
+  texto del tema oscuro sobre papel blanco y ninguna barra, porque los navegadores no imprimen los fondos por defecto.
+- **Decisión.**
+  1. **Un bloque, cuatro gráficas:** Por día, Duración, Cierres y Novedades, con un selector de texto y el subrayado de latón de la navegación, en el pie del
+     bloque. Abre en «Por día». «Cómo se mide» y «Ver los datos» siguen a la gráfica elegida.
+  2. **Duración** es `duracionRealSegundos ÷ cantidadCortes` de `/api/cumplimiento/serie`, una cifra que no está en otra vista. Cuenta cierres (corte por barrio),
+     así que su promedio puede diferir del titular, que cuenta por corte: «Cómo se mide» lo dice con las dos cifras. Un mes con menos de 5 cierres no se resalta
+     ni se nombra, y un mes sin cierres se dibuja sin dato, nunca como cero ni pegando a sus vecinos.
+  3. **Novedades** reutiliza `useConteosBitacora`: cuenta eventos, no cortes, y lo aclara.
+  4. **Barrios:** los empates van por orden alfabético en el cliente, y «Cómo se mide» dice que la cifra son apariciones en avisos aprobados, como pide
+     `EstadisticasMongoAdapter`.
+  5. **Bloques a ras:** cabecera, regla, cuerpo y pie; la nota de la duración pasa bajo el titular y la tarjeta queda solo con cifras.
+  6. **Informe impreso:** una hoja A4 con membrete, las cuatro gráficas, los barrios y todas las aclaraciones. `imprimirEnClaro` pone el tema claro mientras se
+     imprime y lo devuelve sin tocar la preferencia guardada; `print-color-adjust` conserva las barras; `@page informe` y los selectores con `:has` limitan el
+     cambio a esta vista, y sigue vigente para quien imprime con `Cmd+P`.
+  7. **Descarga directa:** «Descargar en PDF» baja `aguavigia-estadisticas-AAAA-MM-DD.pdf` sin pasar por el diálogo de impresión, porque `window.print()` siempre lo
+     abre y el backend no genera archivos. Se compone en el navegador con `@react-pdf/renderer`, que se carga solo al pulsar el botón, con los mismos datos y textos
+     de la pantalla y los colores del tema claro leídos de `tokens.css`. El texto es seleccionable y la hoja es A4. Newsreader va en dos `.ttf` estáticos (300 y 500)
+     sacados del `woff2` de la página, porque la librería no incrusta fuentes variables; Helvetica es una fuente estándar del PDF y no se incrusta.
+- **Alcance.** Solo `/estadisticas`. No cambia el contrato ni los estilos compartidos.
+- **Gana.** Más información en el mismo alto y un PDF que se lee solo. **Pierde.** Solo se ve una gráfica a la vez en pantalla, las seis peticiones de las
+  gráficas salen al abrir la página porque el papel las necesita todas, aunque nadie toque el selector, y la hoja vive dos veces, en `@media print` y en
+  `InformeEstadisticas.tsx`: un cambio de composición se hace en ambas. Es una dependencia más, aunque no pesa en la carga inicial.
+- **Se revierte** con el commit que la introduce: `Estadisticas.tsx`, su hoja de estilos, `InformeEstadisticas.tsx`, las funciones nuevas de `dominio/estadisticas.ts`,
+  `fechaYHora`, `imprimirEnClaro`, la dependencia y las dos fuentes estáticas.
+
+## 11. Diseño del ingreso, las cuentas y el panel (2026-10-30)
+
+### ADR-107 — El ingreso, las cuentas y el panel heredan el rediseño: grafito, bloques con tablas dentro y 1320 px
+
+- **Contexto.** FE2 a FE6 (`docs/frontend/`) construyen el panel del veedor, las cuentas y el perfil del vecino, y no tenían diseño: la guía §4.2 lo
+  describía con la composición anterior al rediseño (ADR-103 a 106) y ADR-105 limitó el grafito a cuatro páginas. Yordy decidió cuatro de los cinco puntos el 2026-10-30 (D1, D2, D3 y D5 de
+  [`rediseno-vigente.md`](frontend/rediseno-vigente.md) §5); la paleta la contestó con «ya no se cambiará el color, se mantendrá el de la PR de rediseño». El D4, los iconos, no se preguntó.
+- **Decisión.**
+  1. **Paleta (D1).** Sin colores nuevos. El ingreso, el segundo factor, las cuentas públicas, el perfil del vecino y el panel usan el grafito en oscuro (ADR-105) y la paleta clara de
+     siempre. Sus rutas se suman a `CON_GRAFITO` de `Marco.tsx`; el mapa y la ficha no cambian. Los cuatro colores de estado siguen siendo del servicio de agua: no pintan estados de cuenta ni decisiones de
+     moderación (guía §4.2).
+  2. **Composición (D2).** Bloques de `--tarjeta` (ADR-104). Las listas largas, como cuentas y auditoría, son una **tabla con columnas dentro de un bloque**, paginada por cabeceras.
+     La cola de reportes usa la fila compacta de la Bitácora y, en escritorio, la cola de 384 px junto al detalle (guía §4.2).
+  3. **Ancho (D3).** 1320 px, el de las páginas de lectura (`.vista`). La guía decía 1200 px para el panel.
+  4. **Iconos (D4).** No se discutió: sigue la regla de ADR-103 y ADR-104, solo funcionales y siempre junto a una palabra. Aprobar y descartar llevan texto («Aprobar», «Descartar») y
+     confirmación; los atajos no sustituyen los botones.
+  5. **Historial del celular (D5).** `/historial` pasa a ser una página mínima con las tres vistas de historia (Cumplimiento, Bitácora, Estadísticas), en grafito y con bloques. `Pendiente.tsx`
+     se elimina en FE7 y `NoEncontrada` pasa a su propio archivo.
+- **Alcance.** FE2 a FE7. No cambia el contrato ni el mapa.
+- **Gana.** Un solo sitio, con una paleta, un ancho y un bloque; las fases siguientes no vuelven a decidir el diseño. **Pierde.** El panel no se distingue del sitio público por su paleta:
+  el marco y el título de cada sección tienen que decir dónde está la persona.
+- **Se revierte** quitando las rutas nuevas de `CON_GRAFITO` y rehaciendo las pantallas con la composición que se escoja; ninguna pantalla existe aún.

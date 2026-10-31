@@ -1,5 +1,7 @@
 # FE2 · Ingreso al panel
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** que un veedor o un ADMIN entre al panel con su clave y su segundo factor y vea un marco que solo le ofrece lo
 que sus permisos permiten. También gestiona la seguridad de su cuenta.
 
@@ -8,7 +10,7 @@ Rama: `feature/fe2-ingreso-al-panel`. Depende de FE0. Esfuerzo: 1–2 sesiones, 
 
 ## Punto de partida: la rama `feat/f5-ingreso-panel`
 
-Tiene 2 commits, va 81 commits detrás de `main` y está hecha contra el esquema viejo. Trae:
+Tiene 2 commits, va 117 commits detrás de `main` (2026-10-25) y está hecha contra el esquema viejo. Trae:
 - **Pantallas:** `Ingreso`, `SegundoFactor`, `MarcoPanel`, `PendientePanel`
 - **Módulos:** `api/panel.ts`, `app/panel.ts`, `Redirigir.tsx`, `dominio/permisos.ts`, `dominio/mensajes-panel.ts`
 - **Componente:** `CodigoQr`
@@ -18,7 +20,7 @@ Tiene 2 commits, va 81 commits detrás de `main` y está hecha contra el esquema
 Pasos:
 1. `git checkout -b feature/fe2-ingreso-al-panel develop`, y luego `git cherry-pick 95962ad 5dda089`, los dos commits de la rama. Solo `router.tsx` choca.
 2. Ajustar los tipos al `esquema.ts` de FE0. Nada se escribe a mano.
-3. Cuando el PR se fusione, archivar la rama vieja como `archivo/yordy-<fecha>/f5-ingreso-panel` y borrarla.
+3. Cuando el PR se fusione, **Yordy** archiva la rama vieja como la etiqueta `archivo/yordy-<fecha>/f5-ingreso-panel` y la borra. Ninguna sesión de Claude Code lo hace.
 
 ## Pantallas
 
@@ -48,10 +50,12 @@ Las filas ya están en [`guia-frontend.md` §5.3/§5.4](../diseno/guia-frontend.
 
   Para repetirlo con una base limpia: `scripts/restablecer-admin.mjs`.
 
+  El backend de estas pruebas arranca con `RATE_LIMIT_FACTOR_CUENTAS=10`, en local y en el job «backend real» del CI: `/api/veedor/sesion` admite 10 intentos cada 5 minutos por IP y `RATE_LIMIT_FACTOR` no lo mueve ([puerta, paso 3](README.md#la-puerta-lo-que-se-comprueba-al-cerrar-cada-fase)).
+
 ## Terminado cuando
 
 - Pasa la puerta completa.
-- Se archivó y borró `feat/f5-ingreso-panel`.
+- Yordy archivó y borró `feat/f5-ingreso-panel` (a mano, después de fusionar).
 
 ## Prompt para Claude Code
 

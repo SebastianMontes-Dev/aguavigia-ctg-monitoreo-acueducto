@@ -1,5 +1,7 @@
 # FE6 · Cuentas públicas y vecino
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** las dos formas de tener cuenta desde la parte pública:
 - **solicitar acceso al panel**, con recuperación de clave
 - **ser vecino registrado**: registrarse con su barrio, entrar, verificar el barrio con la ubicación del momento y gestionar su perfil
@@ -44,7 +46,7 @@ también va en `sessionStorage`.
 ## Pruebas
 
 - e2e simulado: solicitar, olvidé mi clave (mensaje idéntico), registro de vecino, ingreso, perfil, cambio de barrio con aviso, verificación (éxito, fuera del barrio, imprecisa, tercer intento), reportar con sesión.
-- e2e real: registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → reportar → el reporte llega con `CUENTA_VERIFICADA` tras verificar el barrio con una geolocalización simulada por Playwright dentro del polígono.
+- e2e real, con `RATE_LIMIT_FACTOR_CUENTAS=10` (`/api/cuentas/**` admite 10 peticiones cada 10 minutos por IP; sin él la segunda pasada da `429`): registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → reportar → el reporte llega con `CUENTA_VERIFICADA` tras verificar el barrio con una geolocalización simulada por Playwright dentro del polígono.
 
 ## Terminado cuando
 

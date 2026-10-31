@@ -3,6 +3,41 @@ import { formatearNumero, formatearPorcentaje } from './formato'
 
 export type Indice = components['schemas']['IndiceCumplimientoRespuesta']
 export type PuntoSerie = components['schemas']['PuntoSerieRespuesta']
+export type Calidad = components['schemas']['CalidadDelCumplimientoRespuesta']
+
+function contar(cantidad: number, singular: string, plural: string): string {
+  return `${formatearNumero(cantidad)} ${cantidad === 1 ? singular : plural}`
+}
+
+/**
+ * F4: el índice es tan sólido como lo que lo sostiene. Junto al número se declara, solo si es más que cero, cuántos
+ * cierres podrían corregirse todavía y qué cortes quedaron fuera; no se esconde ni se cuenta a favor o en contra.
+ */
+export function solidezIndice(indice: Pick<Indice, 'porcentajeProvisional' | 'cortesSinCierreConfirmado' | 'cortesAnulados'>): string[] {
+  const frases: string[] = []
+  const provisional = indice.porcentajeProvisional ?? 0
+  if (provisional > 0) frases.push(`El ${formatearPorcentaje(provisional)} de los cierres solo lo reportaron vecinos y aún puede corregirse.`)
+  const sinCierre = indice.cortesSinCierreConfirmado ?? 0
+  const anulados = indice.cortesAnulados ?? 0
+  const fuera = [
+    sinCierre > 0 ? `${contar(sinCierre, 'corte vencido', 'cortes vencidos')} sin cierre confirmado` : '',
+    anulados > 0 ? (sinCierre > 0 ? contar(anulados, 'anulado', 'anulados') : contar(anulados, 'corte anulado', 'cortes anulados')) : '',
+  ].filter(Boolean)
+  if (fuera.length) frases.push(`${fuera.length === 1 && (sinCierre || anulados) === 1 ? 'Queda' : 'Quedan'} fuera ${fuera.join(' y ')}.`)
+  return frases
+}
+
+/** Cuando el índice da 400 no hay un solo cierre que medir; la calidad dice con cifras qué hay en su lugar. */
+export function faltanteEnPalabras(calidad: Calidad | undefined): string | null {
+  if (!calidad) return null
+  const sinCierre = calidad.cortesSinCierreConfirmado ?? 0
+  const anulados = calidad.cortesAnulados ?? 0
+  const frases = [
+    sinCierre > 0 ? `Hay ${contar(sinCierre, 'corte vencido', 'cortes vencidos')} sin cierre confirmado: nadie confirmó cuándo volvió el agua.` : '',
+    anulados > 0 ? `${contar(anulados, 'corte se anuló', 'cortes se anularon')} por error.` : '',
+  ].filter(Boolean)
+  return frases.length ? frases.join(' ') : null
+}
 
 export function indiceCompleto(indice: Indice | undefined): indice is Indice & {
   duracionPrometidaSegundos: number
@@ -61,10 +96,11 @@ export function veredicto(diferenciaPorCorte: number): Veredicto {
   return 'a-tiempo'
 }
 
+// ADR-104: en palabras del vecino, que espera el agua a una hora; no en duraciones de cortes.
 const FRASE_VEREDICTO: Record<Veredicto, string> = {
-  antes: 'los cortes terminan antes de lo anunciado',
-  'a-tiempo': 'los cortes duran lo anunciado',
-  despues: 'los cortes duran más de lo anunciado',
+  antes: 'el agua vuelve antes de la hora anunciada',
+  'a-tiempo': 'el agua vuelve a la hora anunciada',
+  despues: 'el agua vuelve más tarde de la hora anunciada',
 }
 
 /** El titular de la página es la respuesta (`identidad.md` §4.1). */
@@ -73,9 +109,28 @@ export function titularVeredicto(diferenciaPorCorte: number, barrio?: string): s
   return barrio ? `En ${barrio}, ${frase}` : frase.charAt(0).toUpperCase() + frase.slice(1)
 }
 
+/** «33 min tarde», «54 min antes» o «A la hora»: cuándo volvió el agua frente a la hora anunciada (ADR-104). */
 export function diferenciaEnPalabras(segundos: number): string {
-  if (Math.round(Math.abs(segundos) / 60) === 0) return 'Lo anunciado'
-  return `${duracionCorta(segundos)} ${segundos > 0 ? 'más' : 'menos'}`
+  if (Math.round(Math.abs(segundos) / 60) === 0) return 'A la hora'
+  return `${duracionCorta(segundos)} ${segundos > 0 ? 'tarde' : 'antes'}`
+}
+
+/** La frase bajo la cifra grande: «El agua vuelve 7 minutos antes de la hora anunciada, en promedio.» */
+export function respuestaEnPalabras(segundos: number): string {
+  const minutos = Math.round(Math.abs(segundos) / 60)
+  if (minutos === 0) return 'En promedio, el agua vuelve a la hora anunciada.'
+  const cuanto = minutos < 60
+    ? `${formatearNumero(minutos)} ${minutos === 1 ? 'minuto' : 'minutos'}`
+    : duracionAcumulada(Math.abs(segundos))
+  return `El agua vuelve ${cuanto} ${segundos > 0 ? 'más tarde de' : 'antes de'} la hora anunciada, en promedio.`
+}
+
+/** Escala de la línea de tiempo: una hora a cada lado de la hora anunciada. Lo que se pase queda en el extremo. */
+export const ESCALA_LINEA_SEGUNDOS = 3600
+
+/** Posición del punto en la línea, de 0 (una hora antes) a 100 (una hora tarde); 50 es la hora anunciada. */
+export function posicionEnLinea(segundos: number, escala = ESCALA_LINEA_SEGUNDOS): number {
+  return 50 + Math.max(-1, Math.min(1, segundos / escala)) * 50
 }
 
 /** El índice es `min(100, prometido / real)`: se explica en la misma línea, nunca como puntaje suelto. */

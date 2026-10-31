@@ -1,4 +1,4 @@
-import { diaRelativo, duracionEnPalabras, formatearHora, haceCuanto, momento, partirHora } from './tiempo'
+import { diaConFecha, diaRelativo, duracionEnPalabras, fechaCorta, formatearHora, haceCuanto, momento, partirHora } from './tiempo'
 
 // 2026-09-26 10:00 en Cartagena = 15:00 UTC.
 const AHORA = new Date('2026-09-26T15:00:00Z')
@@ -45,3 +45,37 @@ describe('tiempo', () => {
     expect(duracionEnPalabras(72 * hora)).toBe('3 días')
   })
 })
+
+describe('fecha con día', () => {
+  it('debeDecirLaFechaRealSinPuntosYSinDependerDeCuandoSeLea', () => {
+    expect(fechaCorta('2026-09-26T16:00:00Z', AHORA)).toBe('sáb 26 sep')
+    expect(fechaCorta('2026-07-24T16:00:00Z', AHORA)).toBe('vie 24 jul')
+  })
+
+  it('debePonerElAnioSoloCuandoNoEsElActual', () => {
+    expect(fechaCorta('2025-07-24T16:00:00Z', AHORA)).toBe('jue 24 jul 2025')
+  })
+
+  it('debeAcompanarHoyAyerYMananaConLaFechaReal', () => {
+    expect(diaConFecha('2026-09-26T16:00:00Z', AHORA)).toBe('Hoy · sáb 26 sep')
+    expect(diaConFecha('2026-09-26T03:00:00Z', AHORA)).toBe('Ayer · vie 25 sep')
+    expect(diaConFecha('2026-09-27T16:00:00Z', AHORA)).toBe('Mañana · dom 27 sep')
+  })
+
+  it('noDebeDecirMananaDeAlgoQueYaOcurrio', () => {
+    // El reloj de quien publica va un día adelantado: un cierre «de mañana» no existe, solo la fecha.
+    expect(diaConFecha('2026-09-27T16:00:00Z', AHORA, { pasado: true })).toBe('dom 27 sep')
+    expect(diaConFecha('2026-09-26T16:00:00Z', AHORA, { pasado: true })).toBe('Hoy · sáb 26 sep')
+    expect(diaConFecha('2026-09-26T03:00:00Z', AHORA, { pasado: true })).toBe('Ayer · vie 25 sep')
+  })
+
+  it('noDebePonerDiaRelativoSiLaFechaEsLejana', () => {
+    expect(diaConFecha('2026-07-24T16:00:00Z', AHORA)).toBe('vie 24 jul')
+  })
+
+  it('debeUsarElCalendarioDeCartagenaParaElDia', () => {
+    // 02:00 UTC del 27 es todavía el 26 a las 9 p. m. en Cartagena.
+    expect(fechaCorta('2026-09-27T02:00:00Z', AHORA)).toBe('sáb 26 sep')
+  })
+})
+

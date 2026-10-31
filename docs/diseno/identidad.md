@@ -1,6 +1,6 @@
 # Identidad visual del frontend — rumbo formal
 
-**Fecha:** 2026-09-25, Cartagena · **Decisiones:** [ADR-070](../design-decisions.md) y ADR-071 · **Prototipo de referencia:**
+**Fecha:** 2026-09-25, Cartagena · **Decisiones:** ADR-070 y ADR-071 (registro histórico: `git show pre-limpieza-docs:docs/design-decisions.md`) · **Prototipo de referencia:**
 [rumbo formal](https://claude.ai/artifact/KzhpRbnun3cVuEe6SSKQ6D) (Artifact privado del dueño).
 
 **Estado:** adoptada por el dueño el 2026-09-25 con su plan «identidad propia y respuestas claras» (`ADR-071`): la
@@ -48,6 +48,26 @@ Los cuatro estados del servicio **no cambian**: son los de `DESIGN.md` §2 (`ADR
 en claro 4,56 (con servicio), 5,79 (sin servicio), 4,70 (presión baja) y 5,93 (corte programado). Aun así, el texto
 de un estado va en `--tinta` junto a su glifo de color; el color solo no es mensaje.
 
+**Grafito (`ADR-105`).** En el tema oscuro, Cumplimiento, Bitácora, Estadísticas y Avisos (con sus enlaces del correo), y por `ADR-107` el ingreso, las cuentas y el panel, usan los
+valores de `DESIGN.md` §3.1. Es la misma familia algo más clara, con una superficie más para separar el bloque de lo que flota. El
+tema claro, el mapa, la ficha y los estados no cambian. Contraste medido:
+
+| Token | Grafito | Sobre papel | Sobre tarjeta | Sobre elevada |
+|---|---|---|---|---|
+| `--papel` | `#111719` | — | — | — |
+| `--tarjeta` / `--superficie` | `#1a1f22` | — | — | — |
+| `--elevada` | `#242c2f` | — | — | — |
+| `--tinta` | `#f1f4f2` | 16,34 | 15,01 | 12,84 |
+| `--tinta-2` | `#b1bbbd` | 9,23 | 8,48 | 7,26 |
+| `--tinta-3` | `#7e888c` | 4,99 | 4,58 | 3,92 |
+| `--linea` | `#354044` | 1,70 · decorativo | 1,56 | 1,33 |
+| `--cardenillo` | `#8cc8b8` | 9,54 | 8,76 | 7,50 |
+| `--sobre-cardenillo` | `#111719` | 9,54 sobre cardenillo | | |
+
+Los estados, sobre el papel grafito: 7,88 (con servicio), 5,52 (sin servicio), 8,16 (presión baja) y 7,10 (corte programado); el
+latón, 7,81. La línea solo separa: el borde de un campo o de una opción que se elige es `--tinta-3` (≥ 3:1, WCAG 1.4.11). «Sin
+datos verificados» se dibuja como en el mapa, con la trama en `--tinta-3`: un gris sin tono que no se confunde con ningún estado.
+
 **Reglas de uso**
 - Un solo color de acción: `--cardenillo`. El latón no es un segundo botón: marca foco, selección y el enlace activo.
 - Nada de fondos de color detrás de secciones enteras, degradados ni sombras de colores.
@@ -89,7 +109,7 @@ Historial (Bitácora, Cumplimiento y Estadísticas) y Avisos. El panel del veedo
 - **Mapa:** panel contextual compacto de 400–460 px a la izquierda (buscador, respuesta, historial) y mapa a la derecha, sin tarjetas
   flotando encima salvo leyenda, zoom y crédito. Sin barrio elegido, el panel muestra Cartagena ahora: barra de la
   ciudad por estado, conteos y barrios con novedades.
-- **Páginas de lectura:** ancho máximo 1180 px; rótulo, titular-respuesta y barra de filtros arriba (§4.1); debajo,
+- **Páginas de lectura:** ancho máximo 1180 px (1320 px en Cumplimiento, Bitácora, Estadísticas y Avisos, `ADR-105`); rótulo, titular-respuesta y barra de filtros arriba (§4.1); debajo,
   dos columnas 1 : 1,2 dentro del primer pliegue: la respuesta y sus cifras a la izquierda, la evidencia a la derecha.
 - **Márgenes:** `max(20px, 3vw)` a los lados; 64 px entre bloques de página, 32 px dentro del panel.
 
@@ -99,8 +119,10 @@ Historial (Bitácora, Cumplimiento y Estadísticas) y Avisos. El panel del veedo
 hoja inferior. El mapa, el buscador y la lista accesible abren la misma ficha.
 
 **Elementos**
-- Separación por **reglas de 1 px**, no por cajas. Una regla de tinta abre los bloques de cifras.
-- Radios: 999 px para botones y selectores de tema; 10–12 px solo en lo que flota o en el recuadro del índice;
+- Separación por **reglas de 1 px**, no por cajas. Una regla de tinta abre los bloques de cifras. Excepción: la ficha del barrio
+  se compone en bloques (`ADR-103`): estado en recuadro teñido, tarjetas de corte y una fila para el último aviso; y Cumplimiento, Bitácora,
+  Estadísticas y Avisos, con la respuesta en un recuadro teñido de cardenillo, cifras y eventos en bloques (`ADR-104`).
+- Radios: 999 px para botones y selectores de tema; 10–12 px solo en lo que flota, en el recuadro del índice y en los bloques de la ficha del barrio (`ADR-103`) y de las páginas de historia y Avisos (`ADR-104`);
   0 en tablas, listas y campos (el campo es una línea inferior).
 - Botón principal: pastilla cardenillo de 50 px de alto con flecha. Secundario: la misma pastilla en hueco. Enlace:
   texto subrayado con regla fina que pasa a latón.
@@ -156,7 +178,9 @@ excepción; el punto «en vivo» queda fijo. Ninguna animación bloquea la inter
   La fuente del sistema se usa para leer, no como identidad: la identidad la dan la marca, la paleta y las reglas.
 - **Colores:** turquesa o azul genérico como acción, índigo, degradados, gris puro, crema con terracota, neón.
 - **Formas de plantilla:** tarjetas con sombra y el mismo radio para todo, pastillas de colores para cada dato,
-  barrita de color al costado de una tarjeta, iconos decorativos, emojis, ilustraciones.
+  barrita de color al costado de una tarjeta, iconos decorativos, emojis, ilustraciones. Salvo la ficha del barrio (`ADR-103`), que
+  usa tarjetas sin sombra, la barrita en la tarjeta de un corte e iconos funcionales siempre junto a una palabra, y las páginas de historia y Avisos
+  (`ADR-104`), con bloques sin sombra e iconos funcionales.
 - **Movimiento gratuito:** rebotes, parallax, desenfoques de fondo, bucles salvo el punto «en vivo», entradas que
   dejen contenido invisible si falla el script.
 - **Datos inventados:** lo que el prototipo muestra de ejemplo no se convierte en campo de la API (guía §5).
@@ -173,7 +197,7 @@ excepción; el punto «en vivo» queda fijo. Ninguna animación bloquea la inter
 En un solo cambio: `DESIGN.md` §3–§4 pasan a esta paleta y a esta tipografía, `tokens.css` y `tokens.test.ts` adoptan
 los tokens de §2, `contraste.test.ts` fija las cifras de §2, Newsreader se versiona en `frontend/public/fuentes/` con
 su licencia y el muestrario se rehace con esta identidad. Luego se rehacen los prototipos de F1
-(`plan-frontend.md` §10) y F2 arranca sobre esta base después de revisarlos en un teléfono real.
+(`plan-frontend.md` §10, hoy retirado; el plan vigente es [`docs/frontend/`](../frontend/README.md)) y F2 arranca sobre esta base después de revisarlos en un teléfono real.
 
 ## 9. Verificación de cada pantalla
 

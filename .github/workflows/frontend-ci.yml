@@ -28,7 +28,8 @@ on:
 jobs:
   build:
     name: Lint, tipos, contrato, pruebas y build
-    runs-on: ubuntu-latest
+    # Playwright 1.56 no soporta ubuntu-latest (26.04): sin esto «Instalar Chromium» falla antes de correr nada.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -79,7 +80,7 @@ jobs:
   # las pruebas E2E siembran su propio conjunto controlado en el paso siguiente.
   integracion:
     name: Núcleo ciudadano contra backend real
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7

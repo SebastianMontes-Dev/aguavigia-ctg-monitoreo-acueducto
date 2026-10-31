@@ -1,79 +1,174 @@
+/* ADR-106: página con nombre para que el tamaño y los márgenes del informe solo rijan aquí, aunque esta hoja siga cargada en otra vista. */
+@page informe {
+  size: A4 portrait;
+  margin: 12mm 14mm;
+}
+
 @layer componentes {
-  /* identidad.md §4.1: la duración es el titular; cifras y barrios a la izquierda, días a la derecha. */
-  .pagina { gap: var(--espacio-6); padding-top: var(--espacio-6); }
+  /* identidad.md §4.1, ADR-104, ADR-105 y ADR-106: la duración es el titular; debajo, las cifras y dos bloques a ras. */
+  .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .membrete, .reglasInforme { display: none; }
+  .nota { max-width: var(--medida-lectura); font-size: var(--texto-s); color: var(--tinta-2); }
 
-  .cabecera { display: grid; gap: var(--espacio-3); }
-  .rotulo { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); font-variant-numeric: tabular-nums; }
-  .titular { max-width: 22ch; font-size: clamp(2rem, 3.6vw, 3rem); line-height: 1.08; text-wrap: balance; }
+  /* La tarjeta lleva solo cifras: mismo relleno y alto con tres o con una, sin notas que le rompan el borde. */
+  .resumen { gap: 0; padding: var(--espacio-4) var(--espacio-5); }
+  .datos { grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 0; }
+  .resumen[data-pocos] .datos { grid-template-columns: minmax(0, 1fr); }
+  .resumen .datos > div { align-content: center; min-height: 4.25rem; padding: 0 var(--espacio-5); }
+  .resumen .datos > div:first-child { padding-left: 0; }
+  .datos dd { font-size: clamp(1.375rem, 2.2vw, 1.75rem); line-height: 1.15; }
+  .datos dt { font-size: var(--texto-s); }
 
-  .columnas { display: grid; gap: var(--espacio-6); align-items: start; }
-  .respuesta, .evidencia { display: grid; gap: var(--espacio-4); align-content: start; min-width: 0; }
+  /* Dos bloques con la misma estructura: cabecera, regla, cuerpo y pie. El cuerpo reparte el alto y los pies quedan en la misma línea. */
+  .columnas { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--espacio-4); }
+  .panel { grid-template-rows: auto minmax(0, 1fr) auto; align-content: stretch; padding-bottom: var(--espacio-1); }
+  .graficas { grid-template-rows: minmax(0, 1fr) auto; }
+  .panelGrafica { display: none; grid-template-rows: auto minmax(0, 1fr); gap: var(--espacio-3); min-width: 0; }
+  .panelGrafica[data-activa] { display: grid; }
+  .cuerpo { display: grid; min-height: 221px; padding-top: var(--espacio-3); border-top: 1px solid var(--linea-suave); }
+  .cuerpoLista { align-content: start; padding-top: 0; }
+  .pieBloque { border-top: 1px solid var(--linea-suave); }
 
-  .cifras { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0; border-top: 1px solid var(--tinta); }
-  .cifras > div { display: grid; gap: var(--espacio-1); align-content: start; padding: var(--espacio-3) var(--espacio-3) var(--espacio-3) 0; border-right: 1px solid var(--linea); }
-  .cifras > div + div { padding-left: var(--espacio-3); }
-  .cifras > div:last-child { border-right: 0; }
-  .cifras dt { font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tinta-2); }
-  .cifras dd { margin: 0; font-size: clamp(1.125rem, 1.7vw, 1.5rem); font-weight: 600; line-height: 1.15; font-variant-numeric: tabular-nums; }
-  .nota { max-width: var(--medida-lectura); color: var(--tinta-2); }
-  .enlace { color: var(--tinta); text-decoration-color: var(--laton); text-underline-offset: 3px; white-space: nowrap; }
+  /* Texto con el subrayado de latón de la navegación: se elige sin competir con la gráfica. */
+  .selector { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--espacio-5); min-width: 0; min-height: 48px; margin: 0; padding: 0; border: 0; border-top: 1px solid var(--linea-suave); }
+  .selector button { min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta-2); font-size: var(--texto-s); font-weight: 500; text-decoration: underline 2px transparent; text-underline-offset: 6px; cursor: pointer; }
+  .selector button:hover { color: var(--tinta); }
+  .selector button[aria-pressed='true'] { color: var(--tinta); text-decoration-color: var(--laton); }
+  .selector button:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
 
-  .bloque { display: grid; gap: var(--espacio-2); padding-top: var(--espacio-3); }
-  .bloque h2, .cabeceraBloque h2 { font-size: var(--texto-l); font-weight: 600; }
-  .cabeceraBloque { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--espacio-2); padding-bottom: var(--espacio-2); border-bottom: 1px solid var(--tinta); }
-  .cabeceraBloque p { font-size: var(--texto-s); color: var(--tinta-2); font-variant-numeric: tabular-nums; }
-
-  .barrios { display: grid; padding: 0; list-style: none; border-top: 1px solid var(--tinta); }
-  .barrios li { display: grid; grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) auto; align-items: center; gap: var(--espacio-3); min-height: 40px; border-bottom: 1px solid var(--linea-suave); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
-  .barrios li > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ejeBarrio { height: 8px; }
-  .ejeBarrio span { display: block; height: 100%; background: var(--cardenillo); transform-origin: left center; }
-
-  /* Columnas verticales de lunes a domingo: la cifra encima, el día debajo. */
-  .columnasDias { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: var(--espacio-2); padding: 0; list-style: none; }
-  .columnasDias li { display: grid; grid-template-rows: auto 180px auto; justify-items: center; gap: var(--espacio-1); font-variant-numeric: tabular-nums; }
-  .columnasDias strong { font-size: var(--texto-s); font-weight: 600; }
-  .columnasDias abbr { font-size: var(--texto-s); color: var(--tinta-2); text-decoration: none; }
+  /* Columnas de izquierda a derecha: la cifra encima y, debajo, qué es; con muestra suficiente, la mayor en cardenillo pleno. */
+  .grafica { display: grid; grid-template-columns: repeat(var(--columnas), minmax(0, 1fr)); gap: var(--espacio-3); padding: 0; list-style: none; }
+  .grafica li { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; justify-items: center; gap: var(--espacio-1); min-height: 0; font-variant-numeric: tabular-nums; }
+  .grafica strong { font-size: var(--texto-s); font-weight: 600; }
+  .pieColumna { display: grid; justify-items: center; font-size: var(--texto-s); line-height: 1.3; color: var(--tinta-2); }
+  .pieColumna abbr { text-decoration: none; }
+  .pieColumna small { font-size: var(--texto-xs); }
   .destacado abbr { color: var(--tinta); font-weight: 600; }
-  .columna { position: relative; width: 100%; max-width: 44px; border-bottom: 1px solid var(--tinta-3); }
-  .columna span { position: absolute; left: 0; right: 0; bottom: 0; background: var(--cardenillo); transform-origin: center bottom; opacity: 0.55; }
-  .destacado .columna span { opacity: 1; }
+  .columna { position: relative; width: 100%; min-height: 48px; border-bottom: 1px solid var(--tinta); }
+  .columna span { position: absolute; left: 0; right: 0; bottom: 0; border-radius: 6px 6px 0 0; background: color-mix(in srgb, var(--cardenillo) 62%, var(--tarjeta)); transform-origin: center bottom; }
+  .destacado .columna span { background: var(--cardenillo); }
+  /* Un dato ausente no es un cero: su base va punteada y su cifra es un guion. */
+  [data-sin-dato] .columna { border-bottom-style: dashed; border-bottom-color: var(--tinta-3); }
+  [data-sin-dato] strong { color: var(--tinta-2); }
 
-  .accion { justify-self: start; min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta); font-weight: 600; text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; cursor: pointer; }
-  .datos { border-top: 1px solid var(--linea); }
-  .datos summary { min-height: var(--objetivo-tactil); display: flex; align-items: center; cursor: pointer; font-size: var(--texto-s); font-weight: 600; }
-  .tablaContenedor { display: grid; gap: var(--espacio-4); max-width: 100%; overflow-x: auto; }
+  .barras { display: grid; align-content: space-between; gap: var(--espacio-2); padding: 0; list-style: none; }
+  .barras li { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 2px var(--espacio-3); font-size: var(--texto-s); font-variant-numeric: tabular-nums; }
+  .barras strong { font-weight: 600; }
+  .pista { grid-column: 1 / -1; height: 12px; }
+  .pista span { display: block; height: 100%; min-width: 2px; border-radius: 0 6px 6px 0; background: color-mix(in srgb, var(--cardenillo) 62%, var(--tarjeta)); transform-origin: left center; }
+  .destacado .pista span { background: var(--cardenillo); }
+
+  .barrios { display: grid; padding: 0; list-style: none; }
+  .barrios li + li { border-top: 1px solid var(--linea-suave); }
+  .barrio { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: var(--espacio-3); min-height: 44px; color: var(--tinta); font-size: var(--texto-s); text-decoration: none; font-variant-numeric: tabular-nums; }
+  .barrio:hover .nombreBarrio { text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; }
+  .barrio:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .barrio strong { font-weight: 600; }
+  .nombreBarrio { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* Cómo se mide y los datos, en su propia franja: abrirlos no descuadra los bloques de arriba. */
+  .ayudas { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: var(--espacio-4); }
+  .reglas { display: grid; padding: 0 0 var(--espacio-2); list-style: none; font-size: var(--texto-s); color: var(--tinta-2); }
+  .reglas li { padding-block: var(--espacio-2); border-top: 1px solid var(--linea-suave); }
+
+  .verDatos .tablaContenedor { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-4); max-width: 100%; overflow-x: auto; }
   .tablaContenedor table { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
   .tablaContenedor caption { text-align: left; font-weight: 600; padding: var(--espacio-2) 0; }
   .tablaContenedor th, .tablaContenedor td { padding: var(--espacio-2); border-top: 1px solid var(--linea); text-align: left; font-variant-numeric: tabular-nums; }
   .tablaContenedor th:first-child { padding-left: 0; }
+  .descargas { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--espacio-5); margin: 0; }
   .csv { display: inline-block; margin: var(--espacio-3) 0; font-size: var(--texto-s); font-weight: 600; color: var(--tinta); text-decoration-color: var(--laton); }
 
-  .vacio { border-top: 1px solid var(--tinta); padding: var(--espacio-5) 0; }
+  .accion { justify-self: start; min-height: var(--objetivo-tactil); padding: 0; border: 0; background: none; color: var(--tinta); font-weight: 600; text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; cursor: pointer; }
+  .descargas .accion { font-size: var(--texto-s); }
+  .descargas .accion:disabled { color: var(--tinta-2); cursor: default; }
+  .descargas [role='alert'] { flex-basis: 100%; padding-bottom: var(--espacio-3); font-size: var(--texto-s); color: var(--estado-sin-servicio); }
+  .vacio { color: var(--tinta-2); }
   .esqueleto { display: grid; gap: var(--espacio-3); color: var(--tinta-2); }
-  .esqueleto span { display: block; height: 50px; border-bottom: 1px solid var(--linea); }
+  .esqueleto span { display: block; height: 64px; border: 1px solid var(--linea); border-radius: var(--radio-flotante); }
 
   @media (prefers-reduced-motion: no-preference) {
     .columna span { animation: subir 0.9s var(--suave) both; }
-    .ejeBarrio span { animation: crecer 0.9s var(--suave) both; }
+    .pista span { animation: crecer 0.9s var(--suave) both; }
   }
   @keyframes subir { from { transform: scaleY(0); } }
   @keyframes crecer { from { transform: scaleX(0); } }
 
   @media (min-width: 1100px) {
-    .columnas { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: var(--espacio-7); }
+    .columnas, .ayudas { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--espacio-5); }
   }
 
   @media (max-width: 599px) {
-    .pagina { gap: var(--espacio-4); padding-top: var(--espacio-4); padding-bottom: var(--espacio-5); }
-    .titular { font-size: 1.75rem; }
-    .columnas { gap: var(--espacio-5); }
-    /* En el celular el gráfico de días va antes que los barrios: es lo que más informa. */
-    .respuesta { display: contents; }
-    .barriosBloque { order: 1; }
-    .cifras dd { font-size: var(--texto-m); }
-    .columnasDias li { grid-template-rows: auto 120px auto; }
-    .barrios li { grid-template-columns: minmax(0, 1fr) auto; }
-    .ejeBarrio { display: none; }
+    /* Tres cifras no caben a lo ancho: una fila por cifra, qué es a la izquierda y la cifra a la derecha. */
+    .resumen { padding-block: var(--espacio-2); }
+    .datos, .resumen[data-pocos] .datos { grid-template-columns: minmax(0, 1fr); }
+    .resumen .datos > div, .resumen .datos > div + div { display: flex; justify-content: space-between; align-items: baseline; gap: var(--espacio-3); min-height: 0; padding: var(--espacio-2) 0; border-left: 0; }
+    .resumen .datos > div + div { border-top: 1px solid var(--linea-suave); }
+    .datos dt { order: 0; }
+    .datos dd { font-size: var(--texto-l); text-align: right; }
+    .panel { padding-bottom: var(--espacio-2); }
+    .cuerpo { min-height: 140px; }
+    .cuerpoLista { min-height: 0; }
+    .grafica { gap: var(--espacio-2); }
+    .selector { flex-wrap: nowrap; justify-content: space-between; gap: var(--espacio-2); }
+    .barras { gap: 2px; }
+    .barras li { gap: 0 var(--espacio-3); }
+    .pista { height: 8px; }
+  }
+
+  /*
+   * ADR-106: una hoja A4 con las cuatro gráficas, para leerse sin la página. `imprimirEnClaro` pone el tema claro y este bloque quita lo
+   * que no sirve en papel; `print-color-adjust` conserva las barras aunque el navegador tenga apagados los gráficos de fondo.
+   * Los selectores con `:has` apuntan al marco de la app solo mientras esta vista está montada.
+   */
+  @media print {
+    :global(body):has(.informe) { background: none; }
+    :global(body):has(.informe) div:has(> main) { display: block; min-height: 0; }
+    :global(body):has(.informe) div:has(> main) > :not(main, output) { display: none; }
+
+    div.informe { page: informe; display: grid; gap: 3.5mm; max-width: none; padding: 0; font-size: 9.5pt; line-height: 1.35; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    .informe h1 { max-width: none; font-size: 22pt; }
+    .informe header { display: grid; gap: 1mm; }
+    .nota { max-width: none; font-size: 9pt; }
+
+    .membrete { display: flex; align-items: baseline; gap: 2mm; max-width: none; padding-bottom: 2mm; border-bottom: 1px solid var(--tinta); font-size: 8.5pt; color: var(--tinta-2); }
+    .marcaInforme { font-family: var(--fuente-marca); font-size: 14pt; font-weight: 500; letter-spacing: -0.02em; color: var(--tinta); }
+
+    .resumen { padding: 2.5mm 4mm; border-color: var(--linea); }
+    .resumen .datos > div { min-height: 0; padding: 0 4mm; }
+    .resumen .datos > div:first-child { padding-left: 0; }
+    .datos dd { font-size: 16pt; }
+    .datos dt { font-size: 8.5pt; }
+
+    .columnas { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3.5mm; }
+    .graficas { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; gap: 3.5mm; padding: 0; border: 0; background: none; }
+    .panelGrafica, .panelGrafica[data-activa] { display: grid; gap: 1.5mm; padding: 3mm 4mm; border: 1px solid var(--linea); border-radius: var(--radio-flotante); break-inside: avoid; }
+    .panel { padding: 3mm 4mm; gap: 1.5mm; break-inside: avoid; }
+    .graficas.panel { padding: 0; }
+    .informe :global(h2) { font-size: 11pt; }
+    .panelGrafica header p, .panel header p { font-size: 8.5pt; }
+    .cuerpo { height: 40mm; min-height: 0; padding-top: 2mm; }
+    .cuerpoLista { height: auto; align-content: stretch; padding-top: 0; }
+    .barrios { grid-auto-rows: 1fr; }
+    .barrios li { display: grid; align-items: center; }
+    .grafica { gap: 2mm; }
+    .grafica strong { font-size: 8.5pt; }
+    .pieColumna { font-size: 8pt; }
+    .pieColumna small { font-size: 7pt; }
+    .columna { min-height: 0; }
+    .columna span { border-radius: 3px 3px 0 0; }
+    .columna span, .pista span { animation: none; }
+    .barras li { font-size: 8.5pt; gap: 0 2mm; }
+    .pista { height: 2.5mm; }
+
+    .barrio { min-height: 0; padding-block: 1.1mm; font-size: 9pt; }
+    .barrio span[aria-hidden='true'] { display: none; }
+    .barrio { grid-template-columns: minmax(0, 1fr) auto; }
+
+    .reglasInforme { display: grid; align-content: start; gap: 1.5mm; padding: 3mm 4mm; break-inside: avoid; }
+    .reglas { padding: 0; font-size: 8pt; }
+    .reglas li { padding-block: 0.7mm; }
+
+    .selector, .pieBloque, .ayudas, .accion { display: none; }
   }
 }

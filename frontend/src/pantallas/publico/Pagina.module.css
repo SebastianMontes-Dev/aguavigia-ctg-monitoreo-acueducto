@@ -13,6 +13,37 @@
     font-weight: 300;
   }
 
+  /* ADR-105: Cumplimiento, Bitácora, Estadísticas y Avisos comparten ancho, ritmo, rótulo y titular. */
+  .vista {
+    max-width: 1320px;
+    gap: var(--espacio-6);
+    padding-top: var(--espacio-6);
+  }
+
+  .cabeceraVista {
+    display: grid;
+    gap: var(--espacio-2);
+  }
+
+  .titularVista {
+    max-width: 26ch;
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+    line-height: 1.08;
+    text-wrap: balance;
+  }
+
+  @media (max-width: 599px) {
+    .vista {
+      gap: var(--espacio-4);
+      padding-top: var(--espacio-4);
+      padding-bottom: var(--espacio-5);
+    }
+
+    .titularVista {
+      font-size: 1.75rem;
+    }
+  }
+
   .entrada {
     font-size: var(--texto-l);
     color: var(--tinta-2);

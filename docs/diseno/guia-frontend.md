@@ -1,6 +1,10 @@
 # Guía de diseño del frontend — AguaVigía CTG
 
-**Fecha:** 2026-09-25, Cartagena · **Decisión:** [ADR-069](../design-decisions.md).
+**Fecha:** 2026-09-25, Cartagena · **Decisión:** ADR-069 (registro histórico: `git show pre-limpieza-docs:docs/design-decisions.md`).
+
+> **Documentos retirados.** Los enlaces de esta guía a `plan-frontend.md`, `brief.md`, `product-requirements.md` y
+> `telegram.md` apuntaban a documentos que la limpieza del 2026-09-29 sacó de `docs/`. Siguen en el historial con
+> `git show pre-limpieza-docs:docs/<ruta>`. El plan vigente del frontend es [`docs/frontend/`](../frontend/README.md).
 
 > **Parte visual reemplazada (`ADR-070`, 2026-09-25):** color, tipografía, componentes y composición (§2–§4) los define
 > ahora la [identidad formal](identidad.md). De esta guía siguen vigentes los datos, las rutas, los estados y los
@@ -8,10 +12,10 @@
 >
 > **Plan del dueño (2026-09-25, `ADR-071`–`ADR-073`):** navegación y tipografía en `identidad.md` §3–§4; la bitácora
 > ya se filtra por barrio, tipo y fecha contra la API, y cada sector trae `verificadoEn` para la advertencia de
-> «Sin verificación reciente» a las 24 horas ([plan §5.2](../ingenieria/plan-frontend.md)). Donde esta guía diga lo
+> «Sin verificación reciente» a las 24 horas (plan §5.2, retirado: `docs/ingenieria/plan-frontend.md` en `pre-limpieza-docs`). Donde esta guía diga lo
 > contrario, ganan esos documentos.
 
-**Aprobado:** el dueño encargó implementar este plan documental para todo el frontend. **Pendiente de aplicación:** las composiciones descritas aquí. **Aplicado:** el acento claro de §2.1 (paso 1 de §7) y la adaptación de los prototipos (paso 2, a la espera de la revisión visual del dueño), ambos el 2026-09-25. **Implementado antes de esta guía:** F0 y los avances de F1 registrados en el [plan de construcción](../ingenieria/plan-frontend.md). Esta entrega no aprueba el prototipo existente, no cierra F1 y no inicia F2.
+**Aprobado:** el dueño encargó implementar este plan documental para todo el frontend. **Pendiente de aplicación:** las composiciones descritas aquí. **Aplicado:** el acento claro de §2.1 (paso 1 de §7) y la adaptación de los prototipos (paso 2, a la espera de la revisión visual del dueño), ambos el 2026-09-25. **Implementado antes de esta guía:** F0 y los avances de F1 registrados en el plan de construcción de entonces (retirado; hoy rige [`docs/frontend/`](../frontend/README.md)). Esta entrega no aprueba el prototipo existente, no cierra F1 y no inicia F2.
 
 ## Índice
 
@@ -33,7 +37,7 @@
 | `main` remoto `9862a1c`; F1 `d366ad9` | F0 fusionado; Sprint 7 y ADR-068 disponibles en la rama de F1, todavía no fusionada a `main` al revisar |
 | Copia local inicial `a4da6e5` | Estaba 26 commits detrás de `main`; sus menciones a un frontend inexistente estaban desactualizadas |
 | Captura del dueño y [prototipo privado F1](https://claude.ai/artifact/G88U8LYbsqwWsZN47B9JAA) | La captura es el muestrario F0. Se inspeccionaron mapa, reporte, cumplimiento y bitácora del prototipo; sus datos y controles de simulación no son funcionalidad de producción |
-| [DESIGN.md](../../DESIGN.md), [brief](../brief.md), [requisitos](../product-requirements.md) | Identidad, destinatarios, lenguaje y mínimos del producto |
+| [DESIGN.md](../../DESIGN.md), brief y requisitos (retirados; `docs/brief.md` y `docs/product-requirements.md` en `pre-limpieza-docs`) | Identidad, destinatarios, lenguaje y mínimos del producto |
 | [Contrato](../../backend/openapi.yaml) y [guías de API](../api/README.md) | Datos y acciones realmente disponibles. Esta revisión fue documental; no constituye una prueba del backend en ejecución |
 
 **Dirección:** interfaz ciudadana sobria, con el turquesa como señal de acción y el estado del agua como información dominante. El mapa permite ubicar; la ficha responde. La persona debe identificar barrio, estado y horario disponible sin desplazarse una vez elegido el sector.
@@ -154,12 +158,12 @@ Esquemas de disposición, no datos reales. La barra del sitio que aloja los Arti
 │ MAPA        [+] [−]  │       │ MAPA                 [+] [−]   │
 │ leyenda / atribución │       │ leyenda / atribución           │
 ├──────────────────────┤       ├────────────────────────────────┤
-│ Barrio               │       │ Barrio                         │
-│ ◇ Estado del agua    │       │ ◇ Estado del agua              │
-│ Horario / sin horario│       │ Horario / sin horario          │
-│ Estado registrado…   │       │ Estado registrado…             │
-│ [Reportar]           │       │ [Reportar]  Historial  Avisos   │
-│ Historial  Avisos    │       │ Ampliar · Lista de sectores     │
+│ Barrio       Avisos  │       │ Barrio                  Avisos │
+│ [◇ Estado · hace X]  │       │ [◇ Estado · Actualizado hace X]│
+│ Último aviso  Todos →│       │ Último aviso        Ver todos →│
+│ [Corte] · boletín    │       │ [Corte: inicio · fin] · boletín│
+│ [Reportar ───────→]  │       │ [Reportar ──────────────────→] │
+│ Historial            │       │ Historial · Lista de sectores  │
 └──────────────────────┘       └────────────────────────────────┘
 
 1280 px
@@ -167,29 +171,29 @@ Esquemas de disposición, no datos reales. La barra del sitio que aloja los Arti
 │ AguaVigía   Mapa  Cumplimiento  Bitácora  Estadísticas  Avisos │
 ├───────────────────┬──────────────────────────────────────────┤
 │ Panel 384 px      │ Buscador y mapa                           │
-│ Barrio            │                                          │
-│ ◇ Estado          │ Sectores, calles y nombres                │
-│ Horario           │                                          │
-│ Antigüedad        │                                          │
-│ [Reportar]        │                               [+] [−]    │
-│ Historial / Avisos│ Leyenda                    Atribución     │
+│ Barrio · Avisos   │                                          │
+│ [◇ Estado]        │ Sectores, calles y nombres                │
+│ Último aviso →    │                                          │
+│ [Reportar ──→]    │                                          │
+│ Historial         │                               [+] [−]    │
+│                   │ Leyenda                    Atribución     │
 └───────────────────┴──────────────────────────────────────────┘
 ```
 
 - **360 y 768 px:** hoja inferior de ancho completo; buscador en el espacio de mapa. Al seleccionar sector, mostrar el resumen sin scroll interno y ajustar la cámara al área no tapada. Respetar `safe-area-inset-bottom`.
 - **Desde 1024 px:** panel de 384 px a la izquierda bajo cabecera, separado del mapa; contenido desplazable dentro del panel. El mapa no queda oculto debajo.
 - **Sin barrio:** resumen «Elige tu barrio para consultar el agua», con «Buscar barrio» y «Usar mi ubicación». No abrir el permiso de ubicación automáticamente. Si el permiso falla, volver a búsqueda sin bloquear nada.
-- **Barrio elegido:** nombre → estado → horario disponible → fecha de registro → reportar. Historial y avisos son secundarios. La lista de sectores abre una vista equivalente accesible sin depender de WebGL.
+- **Barrio elegido (`ADR-103`):** nombre y rótulo con «Recibir avisos» → recuadro de estado con su frescura, su procedencia y lo que lo matiza → «Último aviso» (cortes abiertos con su horario y el último boletín en una fila, con «Ver todos →») → reportar, a todo el ancho → historial. El historial es secundario. La lista de sectores abre una vista equivalente accesible sin depender de WebGL.
 - **Poca altura o zoom 200%:** permitir desplazamiento vertical y expansión de la hoja; no recortar contenido para sostener una altura fija. El criterio sin scroll se verifica a tamaño normal, no a costa de accesibilidad al ampliar.
 
 ### 4.2 Páginas de lectura, formularios y panel
 
 | Familia | 360 px | 768 px | 1280 px |
 |---|---|---|---|
-| Cumplimiento / estadísticas | Una columna: rótulo → titular-respuesta → cifras → evidencia | Una columna con figuras más anchas | Máximo 1180 px; respuesta y evidencia a dos columnas en el primer pliegue (`identidad.md` §4.1) |
-| Bitácora | Barra de filtros compacta; eventos agrupados por día, una o dos líneas cada uno | Igual, con la hora en su propia columna | Máximo 1180 px; filtros y resumen a la izquierda, cronología a la derecha |
+| Cumplimiento / estadísticas | Una columna: rótulo → titular-respuesta → cifras → evidencia | Una columna con figuras más anchas | Máximo 1320 px (`ADR-105`); respuesta y evidencia a dos columnas en el primer pliegue (`identidad.md` §4.1) |
+| Bitácora | Barra de filtros compacta; eventos agrupados por día, una o dos líneas cada uno | Igual, con la hora en su propia columna | Máximo 1320 px (`ADR-105`); filtros y resumen a la izquierda, cronología a la derecha |
 | Avisos / cuentas / ingreso | Formulario de una columna con margen 16 px | Formulario de 480 px | Avisos: formulario a la izquierda y qué pasa después a la derecha. Cuentas e ingreso: 480 px, sin ilustración que compita con la tarea |
-| Panel | Selector de sección y filas apiladas; detalle en pantalla completa | Filas apiladas y detalle debajo de selección | Área máxima 1200 px; cola de 384 px + detalle flexible cuando proceda; tablas para cuentas/auditoría |
+| Panel | Selector de sección y filas apiladas; detalle en pantalla completa | Filas apiladas y detalle debajo de selección | Área máxima 1320 px (`ADR-107`); bloques de `--tarjeta` en grafito; cola de 384 px + detalle flexible cuando proceda; cuentas y auditoría como tabla dentro de un bloque |
 
 **Altura en el celular (`ADR-077`).** A 390 × 844, la respuesta principal se ve sin scroll, por encima de la barra inferior, y la página inicial no pasa de dos pantallas (1 688 px; objetivo, una y media) con datos realistas. Una sola representación de cada dato por tamaño: la tabla alternativa de un gráfico va plegada o lo reemplaza, no se apila. Lo que crece se muestra por lotes («Ver todos», «Cargar más»). Cada pantalla lleva una E2E que lo comprueba.
 
@@ -199,34 +203,36 @@ El panel tiene navegación propia con secciones permitidas y enlace «Volver al 
 
 ## 5. Matriz de pantallas y datos
 
-Las rutas de interfaz siguen el [plan §7](../ingenieria/plan-frontend.md#7-pantallas-y-rutas-del-frontend). Los enlaces de esta matriz apuntan a contratos de comportamiento, no los duplican. Todos los registros de ejemplo se rotulan «Datos de ejemplo» solo en prototipos.
+Las rutas de interfaz son las de esta matriz más las que añade cada fase de [`docs/frontend/`](../frontend/README.md) antes de construirlas. Los enlaces de esta matriz apuntan a contratos de comportamiento, no los duplican. Todos los registros de ejemplo se rotulan «Datos de ejemplo» solo en prototipos.
 
 ### 5.1 Consulta y participación ciudadana
 
 | Ruta / vista | Jerarquía, texto y datos permitidos | Estados y aceptación específica |
 |---|---|---|
-| `/` mapa | §4.1; [sectores, geometría y SSE](../api/sectores-y-tiempo-real.md). Buscador y lista comparten selección | Primera visita, carga separada de mapa y estado, error parcial, sin WebGL, sin red. La ficha no espera tiles; ninguna selección inicial inventada |
-| `/sectores/:id` ficha | Nombre, estado y registro del sector; histórico de cortes y cumplimiento bajo demanda. «Hora de restablecimiento no informada» cuando falta | `null`, sector inexistente, historial vacío, varios cortes, futuro y vencido. `actualizadoEn` no se convierte en inicio del corte |
+| `/` mapa | §4.1; [sectores, geometría y SSE](../api/sectores-y-tiempo-real.md). Buscador y lista comparten selección. Un barrio con `enDisputa` o `restablecimientoPorConfirmar` lleva **borde punteado** de tinta sobre su color, sin color nuevo; la leyenda añade «Borde punteado: en disputa o por confirmar» solo si hay alguno (FE1) | Primera visita, carga separada de mapa y estado, error parcial, sin WebGL, sin red. La ficha no espera tiles; ninguna selección inicial inventada. La marca no cambia el relleno: la disputa no cambia el estado |
+| `/sectores/:id` ficha | Compuesta en bloques (`ADR-103`). Nombre; estado en recuadro teñido con **una línea de frescura** («Actualizado hace X · En vivo», `ADR-102`), «Hora de restablecimiento no informada» cuando falta (si no hay tarjeta de corte abierto pero sí `ventanaPrometida.fin`, en su lugar «Regreso prometido para hoy a las X» («mañana a las…», «el sáb 24 oct a las…»), con «(hora ya pasada)» si venció) y «Ya pasó la hora prometida…» con `restablecimientoPorConfirmar`; en el recuadro, la procedencia solo cuando distingue lo oficial de lo comunitario (`origen`, `respaldo`; el revisor no se rotula) y la disputa (`enDisputa`/`reportesEnContra`); «Último aviso»: una tarjeta por corte abierto (programado o en curso según `inicio`) y el último boletín o nota en una fila con su fecha, y «Ver todos →» a la bitácora del barrio filtrada a boletines (ahí se abre la fuente). Sin sección «Sobre el barrio»: la API no tiene localidad ni reportes públicos; histórico de cortes y cumplimiento bajo demanda. «Recibir avisos» va en la esquina del rótulo del barrio | `null`, sector inexistente, historial vacío, varios cortes, futuro y vencido. `actualizadoEn` no se convierte en inicio del corte |
 | Reporte, hoja sobre mapa | «¿Qué pasa con el agua en tu casa?» y «Reportas en [barrio]». Botones «No tengo agua», «Llega poca agua», «Ya volvió el agua»; [reportes](../api/reportes.md) | Con sector conocido: abrir y elegir tipo = dos toques; el segundo envía. Cambiar barrio antes de enviar es una ruta alternativa, sin promesa de dos toques. Sin login ni campos extra |
 | Reporte recibido / foto | «Reporte recibido. Tu reporte cuenta junto con los de tus vecinos». «Añadir foto» después del 201 | Foto fallida no deshace el reporte; mantiene su id. No cambia el estado del mapa de forma optimista. Envío incierto no se presenta como recibido |
 | `/confirmar/:id` | «Confirmar reporte» y botón «Confirmar este reporte»; id recibido en el enlace, [contrato de confirmación](../api/reportes.md) | No ejecutar al abrir. Sin GET público de contenido, no inventar barrio, tipo ni foto. `404`: «Este reporte no está disponible». No crear un listado público de reportes |
-| `/avisos` | «Recibe avisos de tus barrios», correo + selector buscable de sectores + «Enviar enlace de confirmación»; [suscripciones](../api/suscripciones.md) | Selección por teclado, campos inválidos, envío, 201 con mensaje neutro, límite, error. No confundir enviar correo con estar suscrito |
+| `/avisos` | «Recibe avisos de tus barrios», correo + selector buscable de sectores + «Enviar enlace de confirmación»; [suscripciones](../api/suscripciones.md). En bloques (`ADR-104`): el formulario en un bloque con dos pasos numerados, los barrios elegidos como pastillas con el punto y la palabra de su estado y su botón de quitar; «Así funciona» en tres tarjetas con icono | Selección por teclado, campos inválidos, envío, 201 con mensaje neutro, límite, error. No confundir enviar correo con estar suscrito |
 | `/avisos/confirmar` | «Confirma tus avisos» + botón «Confirmar avisos»; [enlaces](../api/correos-y-enlaces.md) | Token leído y retirado de URL; POST solo al pulsar; éxito, inválido, vencido y error. Sin petición automática con efecto |
 | `/avisos/baja` | «Dejar de recibir avisos» + botón del mismo nombre; [enlaces](../api/correos-y-enlaces.md) | Mismas protecciones; éxito «Ya no recibirás estos avisos». Abrir el enlace no cancela por sí solo |
+| `/sectores/:id/restablecimiento?token=` (FE1) | «¿Ya volvió el agua a [barrio]?» con el estado actual del barrio en una línea y un botón «Sí, ya volvió el agua»; [enlace de un toque](../api/correos-y-enlaces.md#ya-volvió-el-agua-con-un-toque). Debajo, en una línea: tu respuesta cuenta como la de un vecino más | `POST` solo al pulsar, nunca al cargar. Token leído y retirado de la URL, `referrer no-referrer`. `201` → «Gracias. Tu respuesta cuenta junto con la de tus vecinos» y enlace a la ficha; `403 enlace-invalido` → «Este enlace ya no sirve» y enlace a la ficha; `429` → espera con `Retry-After`; sin red, incierto (no se dice recibido); sin token, «Falta el enlace completo». Barrio inexistente en el listado: se nombra «tu barrio» y no se inventa |
+| Banner de simulación, todas las pantallas (FE1) | `GET /api/sistema/modo` una vez al abrir. Con `SIMULACION`, franja fija bajo la cabecera: «Datos de una simulación; no son reales». Con `REAL`, nada. `cuentasSinteticas` no se muestra al público ([F4](../api/cambios-para-frontend.md)) | Error o sin red: no se muestra nada ni se reintenta en bucle; la consulta no retrasa la primera respuesta. Texto, no solo color; sin colores de estado |
 
 **Horarios en ficha:** mostrar cada corte abierto del historial con su propio inicio, fin prometido y origen. No resumir varios cortes en una única hora de vuelta. Si solo hay un corte pertinente y con horario, «Inicio anunciado… / Fin prometido…» mantiene explícita la atribución; con estado proveniente de consenso no inferir que ese corte lo causó. Una promesa vencida sigue diciendo «Fin prometido… (hora ya pasada)»; no declarar restablecimiento sin el dato correspondiente. El estado mostrado siempre es el devuelto por sectores.
 
-Telegram solo aparece como enlace si existe un nombre de bot configurado y utilizable, conforme a la [guía de Telegram](../ingenieria/telegram.md). No mostrar WhatsApp ni botones activos para un canal sin configurar.
+Telegram solo aparece como enlace si existe un nombre de bot configurado y utilizable, conforme a [`datos-de-referencia.md`](../api/datos-de-referencia.md) (el bot está apagado mientras no haya `TELEGRAM_BOT_TOKEN`, y el contrato no expone su nombre: hoy no se muestra). No mostrar WhatsApp ni botones activos para un canal sin configurar.
 
 ### 5.2 Historia pública
 
 | Ruta | Jerarquía, texto y datos permitidos | Estados y aceptación específica |
 |---|---|---|
-| `/cumplimiento` | El titular es el veredicto (`ADR-079`): «Los cortes terminan antes de lo anunciado», «duran lo anunciado» o «duran más», con ±5 min por corte como umbral. Global o sector: prometido y real **por corte** → diferencia → índice con su significado. Mes a mes al lado en escritorio; [cumplimiento](../api/bitacora-estadisticas-cumplimiento.md) | Solo cortes cerrados; 400 de ausencia de cortes = vacío explicado, no 0% ni 100%. Corte abierto = «Todavía no se puede medir». Error real conserva acción reintentar |
-| Comparación en ficha | Histórico del sector y comparación de cada corte cerrado disponible | Eje desde cero, prometido con contorno y real con relleno; etiquetas en tinta. Exceso con trama, diferencia negativa «Terminó X antes». No usar rojo/verde para juzgar cumplimiento |
-| Serie mensual | Mes, diferencia por corte y `cantidadCortes` («39 cortes»); la tabla completa y el CSV detrás de «Ver datos» | Meses en orden; huecos no se rellenan con cero. Sin filtro de fechas (`ADR-079`) |
-| `/estadisticas` | Sectores más afectados, cortes de lunes a domingo y duración media; [estadísticas](../api/bitacora-estadisticas-cumplimiento.md) | Barras horizontales en el color de acción con texto y tabla alternativa. Ausencias no inventadas; exportación existente. Sin medidores ni tarjetas decorativas de KPI |
-| `/bitacora` | Barra compacta: tipos como pestañas con su cantidad, barrio y «Fechas» plegadas. Eventos agrupados por día: hora → barrio y estado → procedencia y descripción → fuente / sustento solo si existen; [bitácora](../api/bitacora-estadisticas-cumplimiento.md) | Filtros contra la API sobre todo el historial (`ADR-073`), fechas elegidas en hora de Cartagena; sin coincidencias, «No hay eventos con esos filtros». Nulos tolerados, imagen fallida no rompe el evento, paginación. Sin estado declarado no se pinta glifo ni se repite «Informativo» (`ADR-079`) |
+| `/cumplimiento` | El titular es el veredicto (`ADR-079`) en palabras del vecino: «El agua vuelve antes de la hora anunciada», «a la hora anunciada» o «más tarde de la hora anunciada», con ±5 min por corte como umbral. En bloques (`ADR-104`): la diferencia por corte en grande («7 min antes», «33 min tarde») sobre una **línea de tiempo** con la hora anunciada al centro y un punto donde volvió el agua (una hora a cada lado, recortada en los extremos); al pie, prometido y real **por corte** y el índice con su significado. Mes a mes al lado en escritorio, con la misma línea por mes; [cumplimiento](../api/bitacora-estadisticas-cumplimiento.md) | Solo cortes cerrados; 400 de ausencia de cortes = vacío explicado **con cifras** de `GET /api/cumplimiento/calidad` («12 cortes vencidos sin cierre confirmado»), no 0% ni 100% ni pantalla vacía. Junto al índice, una línea de solidez (FE1): «N % de los cierres solo los sostienen vecinos y aún pueden corregirse» si `porcentajeProvisional` > 0, y cuántos cortes vencidos sin cierre confirmado y anulados quedaron fuera, solo si son más de 0. Corte abierto = «Todavía no se puede medir». Error real conserva acción reintentar |
+| Comparación en ficha | Histórico del sector y cada corte cerrado disponible, contado con **fechas y horas** y no con duraciones que haya que restar (`ADR-101`). Por corte: dos horas grandes lado a lado con su día y fecha real, PROMETIERON y VOLVIÓ (mismo tratamiento que «Inicio anunciado / Fin prometido»); debajo, más pequeño, el veredicto en palabras («Tardó 3 horas y 15 minutos más de lo prometido», «Volvió 30 minutos antes…», «a la hora prometida» con ±15 min) y «Empezó el… a las…»; nada más, ni frase de introducción: la causa viene del boletín tal cual salió de la fuente y no se muestra (un enlace a la fuente espera a que el contrato lo ofrezca por corte) | Sin barra ni leyenda: cada marca (contorno = prometido, relleno = volvió) va con su palabra. Cierre provisional: «Por confirmar». Un corte de varios barrios ofrece, detrás de «Todo el corte (N barrios)», su índice (`GET /api/cumplimiento/cortes/{id}`, pedido al abrir): prometido y real del corte entero, índice con su significado y la línea de solidez; `409` = «Todavía no se puede medir: falta el cierre de algún barrio»; `404` o error, una línea con reintentar. Un corte de un solo barrio no lo ofrece: repetiría la fila (`identidad.md` §4.1). Al público, el rol `VEEDOR` se nombra «revisor de AguaVigía»; la palabra «veedor» no sale en la interfaz pública. Sin rojo/verde para juzgar cumplimiento |
+| Serie mensual | Mes, diferencia por corte en palabras («33 min tarde», «54 min antes», «A la hora») sobre la línea de tiempo y `cantidadCortes` («39 cortes»); la tabla completa y el CSV detrás de «Ver datos» | Meses en orden; huecos no se rellenan con cero. Sin filtro de fechas (`ADR-079`) |
+| `/estadisticas` | Sectores más afectados, cortes de lunes a domingo y duración media («25 horas y media»); [estadísticas](../api/bitacora-estadisticas-cumplimiento.md). En bloques (`ADR-104`): tres cifras (cortes registrados, día con más y con menos) y, a ras (`ADR-106`), un bloque con cuatro gráficas y selector (por día, duración y cierres por mes, novedades por tipo) junto a los barrios como lista enlazada a su ficha. El PDF se descarga directo, sin diálogo, y al imprimir sale la misma hoja A4 con las cuatro gráficas | Barras en el color de acción con texto y tabla alternativa. Si todos los barrios empatan, se dice con una frase («Cinco barrios empatan con 6 cortes») y no se dibujan barras iguales. Ausencias no inventadas; exportación existente. Sin medidores ni tarjetas decorativas de KPI |
+| `/bitacora` | Barra compacta en una línea: tipos como pestañas con su cantidad, «Barrio» y «Fechas» plegadas. Eventos agrupados por día, cada uno una tarjeta de dos líneas (`ADR-104`): glifo del estado → barrio y lo que pasó en palabras del vecino («Volvió el agua», «Se quedó sin agua») → hora; debajo, procedencia («Lo confirmaron 8 vecinos (hacían falta 3)») y fuente / sustento solo si existen. La descripción solo si no la repiten el tipo y la procedencia. En escritorio, a la derecha, el último boletín de Acuacar y «Recibir avisos»; [bitácora](../api/bitacora-estadisticas-cumplimiento.md) | Filtros contra la API sobre todo el historial (`ADR-073`), fechas elegidas en hora de Cartagena; sin coincidencias, «No hay eventos con esos filtros». Nulos tolerados, imagen fallida no rompe el evento, paginación. Sin estado declarado no se pinta glifo ni se repite «Informativo» (`ADR-079`) |
 | Sustento de evento | «Sustentado por N reportes» y «Ver referencias de sustento», desplegable paginado de identificadores | La API solo devuelve ids. Explicar «Referencias de trazabilidad; el contenido de los reportes no es público». No abrir fotos, comentarios o detalles inexistentes |
 
 **Límites del prototipo:** el agregado de cumplimiento no trae periodo ni cantidad de cortes; la cabecera los toma de la serie sin filtros, que agrupa los mismos cortes cerrados (`ADR-079`). No inventarlos cuando la serie falla. No construir el ranking global «Cortes que más se pasaron» mediante consultas a los 211 sectores; la comparación por corte vive en la ficha del sector. La bitácora filtra por barrio, tipo y fecha en todo el historial (`ADR-073`), no por origen: la procedencia se muestra como etiqueta, sin un filtro de origen que la API no ofrece.
@@ -271,8 +277,8 @@ Cada operación respeta [rutas y permisos del panel](../api/panel-veedor.md), co
 
 | Dato | Presentación | Lo que no demuestra |
 |---|---|---|
-| `actualizadoEn` del sector | «Estado registrado hace X»; fecha exacta accesible | No es comienzo físico de la interrupción ni último latido del colector |
-| `generadoEn` del listado | «Listado generado a las…»; visible en detalle y lectura guardada | No actualiza por sí solo el estado de cada barrio |
+| `actualizadoEn` del sector | «Actualizado hace X»; fecha exacta accesible en el `title`. En la ficha es **la única línea de frescura** (`ADR-102`); `verificadoEn` no se repite ahí: pasadas 24 horas sin verificar lo dice la advertencia del encabezado | No es comienzo físico de la interrupción ni último latido del colector |
+| `generadoEn` del listado | «Listado generado a las…» en «Cartagena ahora»; en la ficha de un barrio **solo** cuando la lectura es guardada («Sin conexión. Mostramos el último listado guardado, generado…») | No actualiza por sí solo el estado de cada barrio |
 | Último GET exitoso del cliente | «Última consulta a las…» | No verifica nuevamente la situación del agua |
 | Conectividad observada | «Actualizando», «No pudimos actualizar» o «Sin conexión» cuando se detecta | Un SSE reconectándose normalmente no demuestra caída; tampoco la edad de un estado |
 

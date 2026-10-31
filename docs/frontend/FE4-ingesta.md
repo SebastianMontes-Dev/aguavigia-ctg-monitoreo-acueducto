@@ -1,5 +1,7 @@
 # FE4 · Ingesta
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** que el veedor revise lo que detectó la ingesta automática (boletines de Acuacar y prensa): aprobar, descartar
 o anular cada propuesta, ver los documentos que no se pudieron procesar y saber si cada colector está sano.
 

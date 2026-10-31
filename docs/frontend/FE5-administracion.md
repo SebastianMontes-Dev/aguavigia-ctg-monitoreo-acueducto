@@ -1,5 +1,7 @@
 # FE5 · Administración
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** lo que solo hace un ADMIN. Gestionar cuentas (invitar, aprobar, rechazar, suspender, reactivar, ajustar
 permisos), leer la auditoría y ver las métricas del sistema.
 
@@ -30,7 +32,7 @@ Contrato: [`panel-veedor.md` §Gestión de cuentas](../api/panel-veedor.md#gesti
   - auditoría vacía y con datos
   - métricas
   - copia analítica: `OK`, `CON_DIFERENCIAS` con detalle, `FALLIDA` y `503`
-- e2e real: el ADMIN invita a un OBSERVADOR y la invitación llega a Mailhog. El enlace abre la página HTML del backend, ver FE6. El observador fija su clave, entra y **no ve acciones** de veedor; esto cierra la comprobación pendiente de FE3. El ADMIN le concede `MODERAR_REPORTES` y el observador ve la acción tras volver a entrar.
+- e2e real, con `RATE_LIMIT_FACTOR_CUENTAS=10` (invitar, fijar la clave y entrar pasan por los topes de cuentas): el ADMIN invita a un OBSERVADOR y la invitación llega a Mailhog. El enlace abre la página HTML del backend, ver FE6. El observador fija su clave, entra y **no ve acciones** de veedor; esto cierra la comprobación pendiente de FE3. El ADMIN le concede `MODERAR_REPORTES` y el observador ve la acción tras volver a entrar.
 
 ## Terminado cuando
 

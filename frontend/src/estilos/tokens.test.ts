@@ -27,6 +27,23 @@ const BASE: Record<string, string> = {
   Latón: '--laton',
 }
 
+// DESIGN.md §3.1 (ADR-105): los neutros y el cardenillo; los estados y el latón no se redeclaran en el grafito.
+const GRAFITO: Record<string, string> = Object.fromEntries(
+  [...Object.entries(BASE).filter(([nombre]) => nombre !== 'Latón'), ['Tarjeta', '--tarjeta']],
+)
+
+function valoresDeGrafito(): Map<string, string> {
+  const apertura = textoDiseno.indexOf('```', textoDiseno.indexOf('### 3.1 Grafito'))
+  const seccion = textoDiseno.slice(apertura, textoDiseno.indexOf('```', apertura + 3))
+  const valores = new Map<string, string>()
+  for (const [nombre, variable] of Object.entries(GRAFITO)) {
+    const fila = new RegExp(`^${nombre}\\s+(#[0-9a-f]{6})\\s*$`, 'm').exec(seccion)
+    if (!fila?.[1]) throw new Error(`DESIGN.md §3.1 no trae la fila de «${nombre}»`)
+    valores.set(variable, fila[1])
+  }
+  return valores
+}
+
 function valoresDeDiseno(): Map<string, { claro: string; oscuro: string }> {
   const valores = new Map<string, { claro: string; oscuro: string }>()
   for (const [nombre, variable] of Object.entries(ESTADOS)) {
@@ -54,6 +71,7 @@ function valorEn(texto: string, variable: string): string | undefined {
 
 describe('tokens.css', () => {
   const diseno = valoresDeDiseno()
+  const grafito = valoresDeGrafito()
   const claro = bloque(":root[data-theme='light'] {")
   const oscuroSistema = bloque(":root:not([data-theme='light']) {")
   const oscuroInterruptor = bloque(":root[data-theme='dark'] {")
@@ -71,8 +89,21 @@ describe('tokens.css', () => {
     }
   })
 
+  it('debeCopiarElGrafitoDeDisenoEnLosDosBloquesOscuros', () => {
+    const grafitoSistema = bloque(":root:not([data-theme='light']) [data-paleta='grafito'] {")
+    const grafitoInterruptor = bloque(":root[data-theme='dark'] [data-paleta='grafito'] {")
+    for (const [variable, esperado] of grafito) {
+      expect(valorEn(grafitoSistema, variable), `${variable} (sistema)`).toBe(esperado)
+      expect(valorEn(grafitoInterruptor, variable), `${variable} (interruptor)`).toBe(esperado)
+    }
+    for (const variable of [...Object.values(ESTADOS), '--laton']) {
+      expect(valorEn(grafitoSistema, variable), `${variable} no se redeclara`).toBeUndefined()
+      expect(valorEn(grafitoInterruptor, variable), `${variable} no se redeclara`).toBeUndefined()
+    }
+  })
+
   it('noDebeDeclararColoresFueraDeLosTokens', () => {
     const declarados = new Set([...tokens.matchAll(/(--[a-z0-9-]+):\s*#/g)].map((m) => m[1]))
-    expect([...declarados].sort()).toEqual([...diseno.keys()].sort())
+    expect([...declarados].sort()).toEqual([...new Set([...diseno.keys(), ...grafito.keys()])].sort())
   })
 })

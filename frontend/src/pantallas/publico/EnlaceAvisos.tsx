@@ -61,10 +61,10 @@ function ContenidoEnlace({ accion, token }: { accion: Accion; token: string | un
   }
 
   return (
-    <div className={`${pagina.pagina} ${estilos.pagina}`}>
-      <header className={estilos.cabecera}>
+    <div className={`${pagina.pagina} ${pagina.vista}`}>
+      <header className={pagina.cabeceraVista}>
         <p className={estilos.rotulo}>Avisos por correo</p>
-        <h1 className={`${pagina.titular} ${estilos.titular}`}>{texto.titular}</h1>
+        <h1 className={`${pagina.titular} ${pagina.titularVista}`}>{texto.titular}</h1>
       </header>
       <div className={estilos.columnas}>
         <section className={estilos.tarea} aria-label={texto.titular}>

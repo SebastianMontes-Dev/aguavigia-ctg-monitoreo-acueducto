@@ -40,7 +40,7 @@
       grid-template-columns: 440px minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);
       grid-template-areas: 'buscador mapa' 'panel mapa';
-      height: calc(100dvh - var(--alto-cabecera));
+      height: calc(100dvh - var(--alto-cabecera) - var(--alto-aviso, 0px));
     }
 
     .buscador {

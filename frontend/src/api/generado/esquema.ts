@@ -196,6 +196,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/vecino/verificacion-barrio": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verificar el barrio con la ubicacion del momento
+         * @description Compara la coordenada con el poligono del barrio que declaraste. Si cae dentro, el
+         *     barrio queda verificado con su fecha; la coordenada se descarta y no se guarda.
+         *     Maximo 3 intentos por dia (429 con `Retry-After`). Si ya estaba verificado, no hace
+         *     nada y devuelve el perfil. Es una senal blanda: sube el costo de votar desde un
+         *     barrio ajeno, no prueba identidad.
+         */
+        post: operations["verificarBarrio"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vecino/sesion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Iniciar sesion como vecino
+         * @description Devuelve un token JWT valido por 8 horas que sirve en `/api/vecino/**` (y, del panel, solo en `GET /api/veedor/yo` y `POST /api/veedor/sesion/cierre`). Una
+         *     cuenta del panel no entra por aqui, ni una de vecino por `/api/veedor/sesion`:
+         *     en los dos casos la respuesta es la misma 401 que ante una clave incorrecta.
+         */
+        post: operations["iniciarSesion_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vecino/sesion/cierre": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cerrar sesion
+         * @description Revoca en el servidor todas las sesiones vivas de la cuenta, no solo la de este navegador.
+         */
+        post: operations["cerrar_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/suscripciones": {
         parameters: {
             query?: never;
@@ -274,6 +340,29 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/sectores/{sectorId}/restablecimiento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirmar con un toque que volvió el agua
+         * @description El `token` es el del enlace del correo de aviso. Sin sesion ni `X-Dispositivo`: lo que identifica a
+         *     quien toca es el token, que firma el servidor, vence y es de un barrio y una suscripcion. Registra un
+         *     reporte `SERVICIO_RESTABLECIDO` en ese barrio, con el mismo cupo y el mismo quorum de cualquier otro
+         *     reporte: un toque no cambia el estado por si solo.
+         */
+        post: operations["confirmarRestablecimiento"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/reportes": {
         parameters: {
             query?: never;
@@ -285,11 +374,15 @@ export interface paths {
         put?: never;
         /**
          * Registrar un reporte ciudadano
-         * @description Sin registro ni cuenta (RF005). Limita automáticamente los reportes por
-         *     dispositivo en la ventana vigente (RF006) — ver 429. Hace falta el `sectorId`, la
-         *     `coordenada` o ambos (RF007): con solo la coordenada el servidor infiere el sector
-         *     que la contiene y responde 400 si cae fuera de todo barrio de Cartagena. La
-         *     coordenada se envía solo si el usuario autorizó compartir su ubicación.
+         * @description Sin registro ni cuenta (RF005), pero con identidad: la cabecera `X-Dispositivo` (token de
+         *     `POST /api/dispositivos`) o la sesion de un vecino. Sin ninguna de las dos responde 401
+         *     `dispositivo-invalido`. Limita automaticamente los reportes por identidad en la ventana vigente
+         *     (RF006, 3 para un dispositivo y 5 para un vecino) — ver 429. Hace falta el `sectorId`, la
+         *     `coordenada` o ambos (RF007): con solo la coordenada el servidor infiere el sector que la
+         *     contiene y responde 400 si cae fuera de todo barrio de Cartagena. La coordenada se envia solo si
+         *     el usuario autorizo compartir su ubicacion; con su `precisionMetros` el servidor verifica el
+         *     reporte (campo `verificacion` de la respuesta) y guarda solo una aproximacion de ella. La respuesta trae
+         *     `subidaToken`, el permiso de un solo uso para subir la foto de este reporte.
          */
         post: operations["registrar_1"];
         delete?: never;
@@ -309,7 +402,10 @@ export interface paths {
         put?: never;
         /**
          * Agregar evidencia a un reporte
-         * @description Permite subir una foto y asociarla a un reporte existente (M10).
+         * @description Sube la foto de un reporte (M10). Exige la cabecera `X-Subida` con el `subidaToken` que recibio
+         *     quien creo el reporte: sirve una sola vez y vence a los pocos minutos. Solo JPEG y PNG (se
+         *     comprueba la firma del archivo, no solo el tipo declarado). La foto queda en revision: el publico
+         *     la ve cuando el veedor aprueba el reporte, y nunca cuenta como voto.
          */
         post: operations["agregarEvidencia"];
         delete?: never;
@@ -329,7 +425,8 @@ export interface paths {
         put?: never;
         /**
          * Confirmar un reporte
-         * @description Permite a otro vecino confirmar un reporte ciudadano (M11).
+         * @description Permite a otro vecino confirmar un reporte ciudadano (M11). Sin cuerpo: la identidad de quien
+         *     confirma viaja en `X-Dispositivo` o en la sesion de un vecino, igual que al reportar.
          */
         post: operations["confirmar_2"];
         delete?: never;
@@ -354,6 +451,29 @@ export interface paths {
          *     nada. Sin cuerpo de respuesta en el caso exitoso.
          */
         post: operations["reportarPresion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/dispositivos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pedir una identidad de dispositivo
+         * @description Crea un dispositivo nuevo y devuelve su token firmado. Pidelo la primera vez, guardalo y
+         *     enviarlo en `X-Dispositivo` en cada reporte y confirmacion. Cada llamada crea una
+         *     identidad distinta: no la pidas en cada reporte. Si un reporte responde 401
+         *     `dispositivo-invalido`, pide otro. Maximo 10 por hora por IP.
+         */
+        post: operations["pedir"];
         delete?: never;
         options?: never;
         head?: never;
@@ -402,6 +522,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cuentas/vecino": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Registrarse como vecino
+         * @description Crea la cuenta sin clave y envia al correo el enlace para elegirla. Al elegirla la
+         *     cuenta queda ACTIVA, sin aprobacion de un administrador. La clave no viaja aqui: asi
+         *     nadie puede registrar el correo de otra persona con una clave suya.
+         *     Exige el barrio y aceptar el aviso de privacidad; la casilla de avisos es aparte.
+         *     Responde 202 aunque el correo ya tenga cuenta, para no revelar que direcciones
+         *     estan registradas.
+         */
+        post: operations["registrarse"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/cuentas/restablecimiento": {
         parameters: {
             query?: never;
@@ -438,7 +583,7 @@ export interface paths {
          *     ADMIN apruebe. Responde 202 aunque el correo ya tenga cuenta, para no revelar
          *     que direcciones estan registradas.
          */
-        post: operations["registrarse"];
+        post: operations["registrarse_1"];
         delete?: never;
         options?: never;
         head?: never;
@@ -650,6 +795,27 @@ export interface paths {
         patch: operations["aprobar"];
         trace?: never;
     };
+    "/api/veedor/reportes/{id}/foto/descartar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Descartar solo la foto de un reporte
+         * @description El reporte sigue como esta (su voto no cambia); la foto deja de servirse al publico y el panel la
+         *     sigue viendo como evidencia.
+         */
+        patch: operations["descartarFoto"];
+        trace?: never;
+    };
     "/api/veedor/reportes/{id}/descartar": {
         parameters: {
             query?: never;
@@ -725,6 +891,68 @@ export interface paths {
         patch: operations["aprobar_2"];
         trace?: never;
     };
+    "/api/veedor/ingesta/propuestas/{id}/anulacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Anular una propuesta ya aprobada
+         * @description Deshace una aprobación por error: la propuesta queda ANULADA con su motivo, deja de afirmar nada
+         *     del presente, la bitácora anexa una corrección que cita el boletín y el barrio se recalcula.
+         *     Queda constancia en la auditoría.
+         */
+        patch: operations["anularPropuesta"];
+        trace?: never;
+    };
+    "/api/veedor/cortes/{id}/sectores/{sectorId}/confirmacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Confirmar —o corregir la hora de— un cierre provisional
+         * @description Un cierre que solo sostenían los vecinos o los sensores pasa a definitivo con la hora que fije el veedor.
+         */
+        patch: operations["confirmarCierre"];
+        trace?: never;
+    };
+    "/api/veedor/cortes/{id}/sectores/{sectorId}/cierre": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Cerrar un solo barrio del corte
+         * @description Los barrios de un corte se restablecen a horas distintas. El corte pasa a RESTABLECIDO cuando todos sus barrios tienen cierre.
+         */
+        patch: operations["cerrarSector"];
+        trace?: never;
+    };
     "/api/veedor/cortes/{id}/cierre": {
         parameters: {
             query?: never;
@@ -739,7 +967,48 @@ export interface paths {
         options?: never;
         head?: never;
         /** Cerrar un corte con la hora real de restablecimiento (RF017) */
-        patch: operations["cerrar_1"];
+        patch: operations["cerrar_2"];
+        trace?: never;
+    };
+    "/api/veedor/cortes/{id}/anulacion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Anular un corte publicado por error
+         * @description Queda como historia con su motivo, fuera del Índice y de las estadísticas; los barrios se recalculan y la bitácora anexa la corrección (no se edita lo ya publicado).
+         */
+        patch: operations["anularCorte"];
+        trace?: never;
+    };
+    "/api/vecino/perfil": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Actualizar el perfil
+         * @description Cambia nombre, barrio y la casilla de avisos; solo se aplica lo que viene. Cambiar
+         *     de barrio anula la verificacion de barrio anterior.
+         */
+        patch: operations["actualizarPerfil"];
         trace?: never;
     };
     "/api/veedor/yo": {
@@ -785,6 +1054,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/veedor/sistema/metricas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contadores de calibración del sistema
+         * @description Cambios de estado, disputas, quórums rechazados por composición, reportes por nivel de verificación, fallos de colectores y
+         *     el tiempo entre el primer reporte y el cambio de estado. Son de este proceso desde `desde`: un reinicio los pone a cero. Sirven
+         *     para calibrar los umbrales y los plazos, que son valores iniciales sin datos reales que los respalden.
+         */
+        get: operations["consultarMetricasDelSistema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/veedor/reportes/pendientes": {
         parameters: {
             query?: never;
@@ -795,7 +1086,8 @@ export interface paths {
         /**
          * Listar los reportes pendientes de moderación, más antiguos primero
          * @description Paginado, con el total y el enlace a la siguiente página en las cabeceras
-         *     `X-Total-Count` y `Link`. Por defecto 50; el máximo por página es 200.
+         *     `X-Total-Count` y `Link`. Por defecto 50; el máximo por página es 200. Cada reporte trae `senalRed`:
+         *     verdadero si viene de una red que ya envió una ráfaga de reportes a ese barrio (D9).
          */
         get: operations["listarPendientes"];
         put?: never;
@@ -869,6 +1161,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/veedor/fotos/{nombre}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver la foto de cualquier reporte (panel)
+         * @description Para moderar: el panel ve la foto en cualquier estado, aprobada o no.
+         */
+        get: operations["fotoDelPanel"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/veedor/disputas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Listar los barrios en disputa, los más contradichos primero
+         * @description Cada barrio trae `reportesEnContra`: cuántos vecinos sostienen que el estado oficial no es el real.
+         */
+        get: operations["listarDisputas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/veedor/cortes/{id}": {
         parameters: {
             query?: never;
@@ -878,6 +1210,26 @@ export interface paths {
         };
         /** Consultar un corte por su identificador */
         get: operations["consultar"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/veedor/cortes/vencidos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cola de cortes vencidos
+         * @description Los cortes cuya promesa ya pasó sin cierre y los que tienen un cierre provisional que nadie ha confirmado, del más antiguo al más reciente.
+         */
+        get: operations["listarCortesVencidos"];
         put?: never;
         post?: never;
         delete?: never;
@@ -906,6 +1258,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/veedor/analitica/copia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Últimas copias de MongoDB a la base analítica
+         * @description Cuándo corrió cada copia, cuánto copió y si los conteos de las dos bases cuadraron. Es donde se ve el estado de la copia: `/actuator/health` no la incluye a propósito.
+         */
+        get: operations["ultimasCopiasAnaliticas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/vecino/yo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Perfil del vecino con la sesion
+         * @description Devuelve el estado vigente en la base de datos, no lo que dice el token.
+         */
+        get: operations["yo_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v2/requests.json": {
         parameters: {
             query?: never;
@@ -920,6 +1312,28 @@ export interface paths {
          *     el falso positivo que ADR-014 evita.
          */
         get: operations["getRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/sistema/modo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Modo del sistema
+         * @description `modo` es REAL o SIMULACION: la interfaz muestra un banner permanente en la simulacion, que nunca se
+         *     presenta como real. `cuentasSinteticas` es cuantas cuentas de vecino las creo el sistema para probar el
+         *     volumen: se dicen tal cual, no son adopcion. Se recuerda un minuto.
+         */
+        get: operations["modo"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1028,6 +1442,28 @@ export interface paths {
          *     respuesta se puede cachear un día.
          */
         get: operations["geometria"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/fotos/{nombre}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ver la foto de un reporte aprobado
+         * @description Sin sesion. Responde 404 si la foto no existe, si su reporte aun no esta aprobado o si el veedor la
+         *     descarto: son el mismo 404 a proposito, para que nadie pueda sondear que fotos hay. La interfaz
+         *     debe mirar `fotoEstado` del reporte y no pedir la imagen mientras este EN_REVISION.
+         */
+        get: operations["foto"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1167,6 +1603,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/cumplimiento/calidad": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Calidad del dato del índice: cuánto se midió y cuánto no
+         * @description Cuantos cierres sostienen el indice, cuantos son provisionales, y cuantos cortes ya vencidos no tienen
+         *     cierre en algun barrio. Responde aunque no haya un solo cierre —cuando `/api/cumplimiento` responde
+         *     400—: es lo que permite mostrar «sin datos suficientes» con cifras. `sectorId` es opcional.
+         */
+        get: operations["calidad"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/bitacora": {
         parameters: {
             query?: never;
@@ -1220,6 +1678,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analitica/cumplimiento": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Índice de Cumplimiento desde la copia SQL
+         * @description El índice global de la ciudad, o el de un barrio con `sectorId`. Misma fórmula que `GET /api/cumplimiento`, calculada por una vista de PostgreSQL sobre la copia, que va hasta 5 minutos por detrás de MongoDB.
+         */
+        get: operations["cumplimientoAnalitico"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analitica/cumplimiento/mensual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Serie mensual del Índice desde la copia SQL
+         * @description El índice agrupado por mes en hora de Cartagena, de más antiguo a más reciente.
+         */
+        get: operations["cumplimientoAnaliticoMensual"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1252,6 +1750,11 @@ export interface components {
             creadoEn?: string;
             /** Format: date-time */
             actualizadoEn?: string;
+            /**
+             * @description Cuenta de vecino creada por el sistema para probar el volumen (ADR-094): no es una persona registrada y no puede
+             *     iniciar sesion. El listado las incluye; esta marca permite ocultarlas.
+             */
+            sintetica?: boolean;
         };
         /** @description Credencial de acceso al panel del veedor */
         CredencialVeedor: {
@@ -1321,6 +1824,11 @@ export interface components {
             finPrometido: string;
             /** @example Mantenimiento planta El Bosque */
             causa: string;
+            /**
+             * Format: date-time
+             * @description Opcional. El corte del veedor es el override: desde esta hora deja de afirmar nada, aunque nadie lo haya cerrado.
+             */
+            caducaEn?: string | null;
         };
         ProblemDetail: {
             /** Format: uri */
@@ -1335,6 +1843,16 @@ export interface components {
                 [key: string]: Record<string, never>;
             } | null;
         };
+        /** @description Cómo y cuándo se restableció un barrio dentro del corte */
+        CierreRespuesta: {
+            sectorId?: string;
+            /** Format: date-time */
+            hora?: string;
+            /** @description Quién lo sostiene: VEEDOR, ACUACAR, VECINOS, SENSOR o PRENSA */
+            fuente?: string;
+            /** @description Un cierre que solo sostienen los vecinos o los sensores: un veedor o un boletín puede confirmarlo o corregirlo */
+            provisional?: boolean;
+        };
         /** @description Corte oficial (RF016-RF017) */
         CorteRespuesta: {
             id?: string;
@@ -1343,14 +1861,91 @@ export interface components {
             inicio?: string;
             /** Format: date-time */
             finPrometido?: string;
-            /**
-             * Format: date-time
-             * @description Nulo mientras el corte sigue abierto
-             */
-            finReal?: string;
             causa?: string;
             origen?: string;
+            /** @description ANUNCIADO, CONFIRMADO, RESTABLECIDO, EXPIRADO o ANULADO. RESTABLECIDO solo cuando todos sus barrios tienen cierre; EXPIRADO nadie lo confirmó a tiempo y no cuenta en el Índice. */
             estado?: string;
+            /** @description Un cierre por cada barrio ya restablecido; los pendientes no aparecen. Vacío mientras ningún barrio se haya restablecido. */
+            cierres?: components["schemas"]["CierreRespuesta"][];
+            /** @description Solo en un corte ANULADO: por qué se anuló */
+            motivoAnulacion?: string | null;
+            /**
+             * Format: date-time
+             * @description Solo en el corte del veedor, que es el override: desde esta hora deja de afirmar nada. Nulo si dura hasta que alguien lo cierre o expire.
+             */
+            caducaEn?: string | null;
+        };
+        /** @description Coordenada GPS del reporte, solo cuando el usuario la autoriza (RF007) */
+        CoordenadaDTO: {
+            /** Format: double */
+            latitud: number;
+            /** Format: double */
+            longitud: number;
+        };
+        /**
+         * @description La ubicacion del momento. El servidor la compara con el barrio que declaraste y la descarta: no se
+         *     guarda ni se audita; solo queda que el barrio quedo verificado.
+         */
+        SolicitudVerificacionBarrio: {
+            coordenada: components["schemas"]["CoordenadaDTO"];
+            /**
+             * Format: double
+             * @description Precision de la lectura en metros (`coords.accuracy` del navegador). Una precision peor que 200 m
+             *     (ubicacion aproximada por red) no verifica y responde 422 `ubicacion-imprecisa`.
+             * @example 25.5
+             */
+            precisionMetros: number;
+        };
+        /** @description Lo que acepto, con la version del texto y la fecha */
+        ConsentimientoRespuesta: {
+            /** @description PRIVACIDAD o AVISOS */
+            tipo?: string;
+            version?: string;
+            /** Format: date-time */
+            fecha?: string;
+        };
+        /** @description Perfil del vecino con sesion */
+        PerfilVecinoRespuesta: {
+            id?: string;
+            correo?: string;
+            nombre?: string;
+            /** @description ACTIVA mientras pueda iniciar sesion */
+            estado?: string;
+            /** @description Slug del barrio que declaro */
+            barrioId?: string;
+            /** @description true si probo con su ubicacion que vive en `barrioId` */
+            barrioVerificado?: boolean;
+            /** Format: date-time */
+            barrioVerificadoEn?: string | null;
+            /** @description true si acepto recibir avisos de cortes de su barrio */
+            recibeAvisos?: boolean;
+            /** @description Lo que acepto, con la version del texto y la fecha */
+            consentimientos?: components["schemas"]["ConsentimientoRespuesta"][];
+            /** Format: date-time */
+            creadoEn?: string;
+            /** Format: date-time */
+            actualizadoEn?: string;
+        };
+        /** @description Credencial de un vecino registrado */
+        CredencialVecino: {
+            /**
+             * Format: email
+             * @description Correo de la cuenta
+             * @example vecina@ejemplo.org
+             */
+            correo: string;
+            /** @description Clave de la cuenta */
+            clave: string;
+        };
+        /** @description Sesion de un vecino. Sirve en `/api/vecino/**`; del panel solo abre `GET /api/veedor/yo` y `POST /api/veedor/sesion/cierre`, que muestran o cierran lo propio. */
+        SesionVecino: {
+            /** @description Token JWT. Se envia como 'Authorization: Bearer <token>' */
+            token?: string;
+            usuarioId?: string;
+            nombre?: string;
+            correo?: string;
+            /** @description Siempre `GESTIONAR_PERFIL_PROPIO` */
+            permisos?: string[];
         };
         /** @description Solicitud para suscribirse a los avisos de uno o más sectores */
         SolicitudSuscripcion: {
@@ -1360,7 +1955,7 @@ export interface components {
              * @example vecino@correo.com
              */
             correo: string;
-            /** @description Identificadores de los sectores a seguir */
+            /** @description Identificadores de los sectores a seguir (211 barrios tiene la ciudad: más no caben) */
             sectorIds: string[];
         };
         /** @description Suscripción creada, pendiente de confirmación por correo (RF013) */
@@ -1373,14 +1968,41 @@ export interface components {
             /** Format: date-time */
             creadaEn?: string;
         };
-        /** @description Coordenada GPS del reporte, solo cuando el usuario la autoriza (RF007) */
-        CoordenadaDTO: {
-            /** Format: double */
-            latitud: number;
-            /** Format: double */
-            longitud: number;
+        /** @description Reporte ciudadano registrado */
+        ReporteRespuesta: {
+            id?: string;
+            sectorId?: string;
+            tipo?: string;
+            /** Format: date-time */
+            timestamp?: string;
+            /**
+             * @description Ruta de la foto: `/api/fotos/{nombre}`. Existir no significa que se pueda ver: el servidor la sirve al
+             *     publico solo si `fotoEstado` es PUBLICA; antes responde 404.
+             */
+            fotoUrl?: string;
+            /**
+             * @description SIN_FOTO, EN_REVISION (el reporte espera moderacion), PUBLICA o DESCARTADA. Con EN_REVISION la interfaz
+             *     muestra «en revision» en vez de pedir la imagen.
+             */
+            fotoEstado?: string;
+            /** Format: int32 */
+            confirmaciones?: number;
+            /**
+             * @description Cuanto respalda el servidor que quien reporta esta en el barrio: CUENTA_VERIFICADA, UBICACION_VERIFICADA
+             *     o NINGUNA. Lo decide el servidor; el cliente solo lo muestra.
+             */
+            verificacion?: string;
+            /**
+             * @description Solo al crear el reporte: el token con el que su autor sube la foto en `POST /api/reportes/{id}/foto`
+             *     (cabecera `X-Subida`). De un solo uso y vence a los pocos minutos; no se vuelve a entregar.
+             */
+            subidaToken?: string;
         };
-        /** @description Reporte ciudadano sin registro (RF005-RF008) */
+        /**
+         * @description Reporte ciudadano (RF005-RF008). La identidad de quien reporta no va en el cuerpo: viaja en la
+         *     cabecera `X-Dispositivo` (token de `POST /api/dispositivos`) o en la sesion de un vecino
+         *     (`Authorization: Bearer`). Un campo `huella` en el cuerpo, como el de versiones anteriores, se ignora.
+         */
         SolicitudReporte: {
             /**
              * @description Identificador del sector reportado. Opcional si viaja la coordenada: entonces el
@@ -1393,33 +2015,14 @@ export interface components {
              * @example SIN_AGUA
              */
             tipo: string;
-            /**
-             * @description Huella anónima del dispositivo (ADR-007) — no es una cuenta ni un identificador
-             *     personal. El cliente la genera una vez (p. ej. un UUID persistido en el dispositivo,
-             *     hasheado) y la reutiliza en cada reporte; es lo único que permite RF006 (límite de
-             *     reportes por dispositivo) sin pedir registro.
-             */
-            huella: string;
             coordenada?: components["schemas"]["CoordenadaDTO"];
-        };
-        /** @description Reporte ciudadano registrado */
-        ReporteRespuesta: {
-            id?: string;
-            sectorId?: string;
-            tipo?: string;
-            /** Format: date-time */
-            timestamp?: string;
-            fotoUrl?: string;
-            /** Format: int32 */
-            confirmaciones?: number;
-        };
-        /** @description Solicitud para confirmar un reporte ciudadano por otro vecino */
-        SolicitudConfirmar: {
             /**
-             * @description Huella hash del dispositivo del usuario que confirma (ADR-007)
-             * @example 3a7b9c...
+             * Format: double
+             * @description Precision de la coordenada en metros (`coords.accuracy` del navegador). Sin ella, o si es peor que
+             *     200 m, la ubicacion no verifica el reporte.
+             * @example 25.5
              */
-            huella: string;
+            precisionMetros?: number | null;
         };
         IotCoordenada: {
             /** Format: double */
@@ -1428,16 +2031,49 @@ export interface components {
             lon?: number;
         };
         IotPresionRequest: {
-            sensorId?: string;
-            sectorId?: string;
+            sensorId: string;
+            sectorId: string;
             /** Format: double */
             presionPsi?: number;
             coordenada?: components["schemas"]["IotCoordenada"];
+        };
+        /** @description Identidad de dispositivo emitida por el servidor */
+        TokenDeDispositivoRespuesta: {
+            /** @description Se envia en la cabecera `X-Dispositivo` de `POST /api/reportes` y de `/confirmar`. Guardalo: perderlo es perder la identidad. */
+            token?: string;
         };
         /** @description Pedir de nuevo el correo de verificación. Responde siempre 202, exista o no la cuenta. */
         SolicitudReenvioVerificacion: {
             /** Format: email */
             correo: string;
+        };
+        /**
+         * @description Las dos casillas son independientes: aceptar la privacidad es obligatorio para registrarse;
+         *     `avisos` autoriza recibir avisos de cortes de tu barrio y por defecto es falso.
+         */
+        Consentimiento: {
+            /** @description Acepta el aviso de privacidad vigente. Debe ser true. */
+            privacidad?: boolean;
+            /**
+             * @description Acepta recibir avisos de cortes de su barrio
+             * @default false
+             */
+            avisos: boolean;
+        };
+        /**
+         * @description Registro de un vecino. Confirmar el correo activa la cuenta: no hay aprobacion de un administrador
+         *     porque un vecino solo gestiona su propio perfil.
+         */
+        SolicitudRegistroVecino: {
+            /** Format: email */
+            correo: string;
+            nombre: string;
+            /**
+             * @description Slug del barrio donde vives (uno de `GET /api/sectores`). 400 si no existe.
+             * @example manga
+             */
+            barrioId: string;
+            consentimiento: components["schemas"]["Consentimiento"];
         };
         /** @description Pedir el enlace de restablecimiento. Responde siempre 202, exista o no la cuenta. */
         SolicitudRestablecer: {
@@ -1484,6 +2120,14 @@ export interface components {
             timestamp?: string;
             /** @description PENDIENTE, APROBADO o DESCARTADO */
             estadoModeracion?: string;
+            /** @description CUENTA_VERIFICADA, UBICACION_VERIFICADA o NINGUNA: cuánto respalda el servidor que quien reporta está en el barrio */
+            verificacion?: string;
+            /** @description SIN_FOTO, EN_REVISION, PUBLICA o DESCARTADA */
+            fotoEstado?: string;
+            /** @description Ruta de la foto para el panel (`/api/veedor/fotos/{nombre}`), que la ve en cualquier estado. Nulo si no hay foto */
+            fotoUrl?: string;
+            /** @description Solo en la cola de pendientes: el reporte viene de una red (resumen diario de la IP, que no se expone) que ya envio una rafaga de reportes a este barrio. No bloquea nada: es donde mirar primero. Nulo en el resto de respuestas */
+            senalRed?: boolean | null;
         };
         /**
          * @description Propuesta de cambio de estado detectada por la ingesta automatizada (M9), esperando la
@@ -1527,11 +2171,74 @@ export interface components {
              *     Cumplimiento (RF020-RF022).
              */
             finPrometido?: string | null;
+            /**
+             * @description Por qué esta propuesta espera al veedor en vez de haberse publicado sola (D5): confianza baja, una
+             *     ventana de más de 72 horas, más de 40 barrios, un nombre ambiguo, o que viene de prensa. Nulo si salió sola.
+             */
+            motivoDeRevision?: string | null;
+        };
+        /** @description Anulación de un corte o de una propuesta de la ingesta que se publicó por error */
+        SolicitudAnulacion: {
+            /**
+             * @description Por qué se anula. Queda en la bitácora pública y en la auditoría.
+             * @example El boletín hablaba de otro barrio
+             */
+            motivo: string;
         };
         /** @description Cierre de un corte con la hora real de restablecimiento (RF017) */
         SolicitudCierreCorte: {
             /** Format: date-time */
             horaReal: string;
+        };
+        /** @description Cambios al perfil. Solo se aplica lo que viene; un campo ausente no se toca. */
+        SolicitudPerfilVecino: {
+            nombre?: string;
+            /**
+             * @description Slug del barrio donde vives. Cambiarlo anula la verificacion de barrio anterior. 400 si no existe.
+             * @example crespo
+             */
+            barrioId?: string | null;
+            /** @description true acepta avisos de cortes de tu barrio; false retira ese consentimiento */
+            recibirAvisos?: boolean | null;
+        };
+        /** @description Contadores de calibración (D37) de este proceso desde `desde`. Un reinicio los pone a cero; con varias réplicas, cada una cuenta los suyos. */
+        MetricasDelSistemaRespuesta: {
+            /**
+             * Format: date-time
+             * @description Desde cuándo cuentan estos contadores
+             */
+            desde?: string;
+            /** @description Cambios de estado publicados, por «ESTADO/ORIGEN» (SIN_DATOS/SIN_ORIGEN es el regreso a «sin datos») */
+            cambiosDeEstado?: {
+                [key: string]: number;
+            };
+            /**
+             * Format: int64
+             * @description Barrios que entraron en disputa (los vecinos contradicen lo oficial)
+             */
+            disputasAbiertas?: number;
+            /** @description Quórums que llegaron al umbral pero no a la composición (verificación o redes distintas), por tipo de reporte y por episodio */
+            quorumsRechazadosPorComposicion?: {
+                [key: string]: number;
+            };
+            /** @description Reportes recibidos por nivel de verificación: NINGUNA, UBICACION_VERIFICADA o CUENTA_VERIFICADA */
+            reportesPorNivelDeVerificacion?: {
+                [key: string]: number;
+            };
+            /** @description Fallos de cada colector de ingesta, por nombre */
+            fallosDeColectores?: {
+                [key: string]: number;
+            };
+            tiempoHastaElCambioDeEstado?: components["schemas"]["TiempoHastaElCambio"];
+        };
+        /** @description Cambios medidos y cuánto tardaron, en segundos */
+        TiempoHastaElCambio: {
+            /** Format: int64 */
+            cambios?: number;
+            /** Format: int64 */
+            promedioSegundos?: number;
+            /** Format: int64 */
+            maximoSegundos?: number;
         };
         /** @description Estado de salud de un colector de la ingesta automatizada */
         SaludColectorRespuesta: {
@@ -1583,55 +2290,13 @@ export interface components {
              */
             reintentos?: number;
         };
-        /** @description Asiento de la bitacora de auditoria de cuentas: quien le hizo que a quien */
-        EventoAuditoriaRespuesta: {
-            id?: string;
-            accion?: string;
-            /** @description Nulo cuando actua el sistema o alguien sin sesion */
-            autorCorreo?: string;
-            sujetoCorreo?: string;
-            detalle?: string;
-            ip?: string;
-            /** Format: date-time */
-            ocurrioEn?: string;
-        };
-        /** @description service_request de Open311 GeoReport v2 */
-        Open311Response: {
-            service_request_id?: string;
-            /**
-             * @description open o closed
-             * @example open
-             */
-            status?: string;
-            /**
-             * @description Código del tipo de servicio
-             * @example AGUA-001
-             */
-            service_code?: string;
-            service_name?: string;
-            description?: string;
-            /** @description Nombre del barrio. La unidad geográfica es el sector, no un punto (ADR-026) */
-            address?: string;
-            /**
-             * Format: date-time
-             * @description Cuándo se registró el estado actual del sector
-             */
-            requested_datetime?: string | null;
-            /**
-             * Format: date-time
-             * @description Igual a requested_datetime: el estado del sector es su propia actualización
-             */
-            updated_datetime?: string | null;
-        };
-        /** @description Listado de sectores con la hora en que el servidor genero la respuesta */
-        RespuestaSectores: {
-            sectores?: components["schemas"]["SectorRespuesta"][];
-            /**
-             * Format: date-time
-             * @description Instante en que el servidor genero esta respuesta (UTC)
-             */
-            generadoEn?: string;
-        };
+        /** @description Cuántos vecinos respaldan un estado y cuántos hacían falta */
+        RespaldoVecinalRespuesta: {
+            /** Format: int32 */
+            vecinos?: number;
+            /** Format: int32 */
+            umbral?: number;
+        } | null;
         /** @description Sector de Cartagena con el estado conocido de su servicio de agua */
         SectorRespuesta: {
             /**
@@ -1671,6 +2336,123 @@ export interface components {
              *     evento SSE: el valor se renueva al volver a pedir la lista.
              */
             verificadoEn?: string | null;
+            /**
+             * @description Quién sostiene el estado: ACUACAR (boletín oficial), PRENSA (nota aprobada por el veedor),
+             *     VEEDOR (corte o cierre del veedor), VECINOS (quórum de reportes) o SENSOR. Nulo si el sector
+             *     no tiene estado.
+             * @enum {string|null}
+             */
+            origen?: "ACUACAR" | "VEEDOR" | "VECINOS" | "PRENSA" | "SENSOR" | null;
+            ventanaPrometida?: components["schemas"]["VentanaPrometidaRespuesta"];
+            /**
+             * @description La promesa ya venció y nadie confirmó que volvió el agua: el barrio sigue como estaba, pero
+             *     por confirmar. Un restablecimiento pide menos vecinos que reportar una avería.
+             */
+            restablecimientoPorConfirmar?: boolean;
+            /**
+             * @description Un quórum de vecinos contradice a la fuente oficial. El color no cambia: la contradicción
+             *     se muestra como una insignia y llega a la cola del veedor.
+             */
+            enDisputa?: boolean;
+            /**
+             * Format: int32
+             * @description Cuántos vecinos sostienen esa contradicción. 0 si no hay disputa.
+             */
+            reportesEnContra?: number;
+            respaldo?: components["schemas"]["RespaldoVecinalRespuesta"];
+        };
+        /** @description Desde cuándo y hasta cuándo prometió la fuente oficial la afectación */
+        VentanaPrometidaRespuesta: {
+            /** Format: date-time */
+            inicio?: string;
+            /** Format: date-time */
+            fin?: string;
+        } | null;
+        /** @description Asiento de la bitacora de auditoria de cuentas: quien le hizo que a quien */
+        EventoAuditoriaRespuesta: {
+            id?: string;
+            accion?: string;
+            /** @description Nulo cuando actua el sistema o alguien sin sesion */
+            autorCorreo?: string;
+            sujetoCorreo?: string;
+            detalle?: string;
+            ip?: string;
+            /** Format: date-time */
+            ocurrioEn?: string;
+        };
+        /** @description Cuántos barrios, cortes y pares corte-barrio hay en una de las dos bases */
+        ConteosAnaliticosRespuesta: {
+            /** Format: int32 */
+            sectores?: number;
+            /** Format: int32 */
+            cortes?: number;
+            /** Format: int32 */
+            pares?: number;
+        };
+        /** @description Una copia de MongoDB a la base analítica: cuándo corrió y si los conteos de las dos bases cuadraron */
+        CopiaAnaliticaRespuesta: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: date-time */
+            iniciadaEn?: string;
+            /**
+             * Format: date-time
+             * @description Nulo si la copia sigue en curso o el backend se detuvo a mitad de ella
+             */
+            terminadaEn?: string;
+            /** @description EN_CURSO, OK, CON_DIFERENCIAS o FALLIDA */
+            resultado?: string;
+            enMongo?: components["schemas"]["ConteosAnaliticosRespuesta"];
+            enSql?: components["schemas"]["ConteosAnaliticosRespuesta"];
+            /** @description Qué no cuadró o por qué falló. Nulo si todo salió bien */
+            detalle?: string;
+        };
+        /** @description service_request de Open311 GeoReport v2 */
+        Open311Response: {
+            service_request_id?: string;
+            /**
+             * @description open o closed
+             * @example open
+             */
+            status?: string;
+            /**
+             * @description Código del tipo de servicio
+             * @example AGUA-001
+             */
+            service_code?: string;
+            service_name?: string;
+            description?: string;
+            /** @description Nombre del barrio. La unidad geográfica es el sector, no un punto (ADR-026) */
+            address?: string;
+            /**
+             * Format: date-time
+             * @description Cuándo se registró el estado actual del sector
+             */
+            requested_datetime?: string | null;
+            /**
+             * Format: date-time
+             * @description Igual a requested_datetime: el estado del sector es su propia actualización
+             */
+            updated_datetime?: string | null;
+        };
+        /** @description Qué instancia es esta y cuánto de lo que contiene es sintético */
+        ModoDelSistemaRespuesta: {
+            /** @description REAL o SIMULACION */
+            modo?: string;
+            /**
+             * Format: int64
+             * @description Cuentas de vecino creadas por el sistema para probar el volumen; no son personas registradas
+             */
+            cuentasSinteticas?: number;
+        };
+        /** @description Listado de sectores con la hora en que el servidor genero la respuesta */
+        RespuestaSectores: {
+            sectores?: components["schemas"]["SectorRespuesta"][];
+            /**
+             * Format: date-time
+             * @description Instante en que el servidor genero esta respuesta (UTC)
+             */
+            generadoEn?: string;
         };
         /** @description Sector con su cantidad de cortes registrados */
         EstadisticaSectorRespuesta: {
@@ -1709,6 +2491,23 @@ export interface components {
              * @description Capado en 100 cuando el corte termina antes o a tiempo
              */
             porcentajeCumplimiento?: number;
+            /**
+             * Format: double
+             * @description De los cierres que sostienen este indice, que porcentaje (0 a 100) solo lo sostienen vecinos o sensores y un
+             *     veedor o un boletin aun puede corregir. Publicalo junto al porcentaje: el numero es solo tan solido como esto.
+             */
+            porcentajeProvisional?: number;
+            /**
+             * Format: int64
+             * @description Cortes cuya ventana prometida ya termino y en los que algun barrio no tiene cierre (incluidos los que expiraron
+             *     sin confirmacion). No cuentan a favor ni en contra de Acuacar: se declaran.
+             */
+            cortesSinCierreConfirmado?: number;
+            /**
+             * Format: int64
+             * @description Cortes publicados por error y retirados: no entran al indice
+             */
+            cortesAnulados?: number;
         };
         /** @description Un mes de la evolución del Índice de Cumplimiento (RF024) */
         PuntoSerieRespuesta: {
@@ -1738,6 +2537,37 @@ export interface components {
              */
             cantidadCortes?: number;
         };
+        /**
+         * @description Lo que sostiene el Indice de Cumplimiento: cuantos cierres se midieron y cuantos cortes no se pudieron medir. Existe aunque
+         *     no haya un solo cierre (el indice entonces responde 400): es lo que permite decir «sin datos suficientes» con cifras.
+         */
+        CalidadDelCumplimientoRespuesta: {
+            /**
+             * Format: int64
+             * @description Pares corte-barrio con cierre que entran al indice
+             */
+            cierresMedidos?: number;
+            /**
+             * Format: int64
+             * @description De ellos, los que solo sostienen vecinos o sensores
+             */
+            cierresProvisionales?: number;
+            /**
+             * Format: double
+             * @description cierresProvisionales sobre cierresMedidos, de 0 a 100
+             */
+            porcentajeProvisional?: number;
+            /**
+             * Format: int64
+             * @description Cortes ya vencidos con algun barrio sin cierre, incluidos los expirados
+             */
+            cortesSinCierreConfirmado?: number;
+            /**
+             * Format: int64
+             * @description Cortes retirados por error
+             */
+            cortesAnulados?: number;
+        };
         /** @description Evento de la bitácora pública, de solo anexado (RF026-RF028) */
         EventoBitacoraRespuesta: {
             id?: string;
@@ -1761,6 +2591,75 @@ export interface components {
              * @description RF011 — cuántos reportes ciudadanos sostuvieron el cambio, en los eventos de consenso; 0 en los demás. Los ids no viajan en el listado (pesaban cientos de KB por página): se piden con GET /api/bitacora/{id}/sustento.
              */
             cantidadReportesSustento?: number;
+            /** @description Quién sostiene el evento: ACUACAR o PRENSA (boletín o nota), VECINOS (quórum) o VEEDOR (panel). Nulo en los eventos anteriores a este dato. */
+            fuente?: string | null;
+            respaldo?: components["schemas"]["RespaldoRespuesta"];
+        };
+        /** @description Cuántos vecinos respaldan un cambio y cuántos hacían falta */
+        RespaldoRespuesta: {
+            /** Format: int32 */
+            vecinos?: number;
+            /** Format: int32 */
+            umbral?: number;
+        } | null;
+        /**
+         * @description Índice de Cumplimiento calculado por las vistas SQL de la copia analítica (PostgreSQL, ADR-100). Misma fórmula que
+         *     GET /api/cumplimiento (ADR-022): se suman duraciones, no se promedian porcentajes. Va hasta 5 minutos por detrás de MongoDB.
+         */
+        CumplimientoAnaliticoRespuesta: {
+            /** @description Nulo en el índice global de la ciudad */
+            sectorId?: string;
+            /** @description Nulo en el índice global de la ciudad */
+            nombre?: string;
+            /**
+             * Format: int64
+             * @description Pares corte-barrio ya restablecidos que sostienen el índice. Con 0, el 100 % no dice nada: no hay nada que medir
+             */
+            paresCerrados?: number;
+            /** Format: int64 */
+            duracionPrometidaSegundos?: number;
+            /** Format: int64 */
+            duracionRealSegundos?: number;
+            /**
+             * Format: int64
+             * @description duracionReal - duracionPrometida. Negativa si terminó antes de lo prometido
+             */
+            desviacionSegundos?: number;
+            /**
+             * Format: double
+             * @description Capado en 100 cuando los cortes terminan antes o a tiempo
+             */
+            porcentajeCumplimiento?: number;
+            /**
+             * Format: date-time
+             * @description Cuándo terminó la última copia que cuadró con MongoDB. Nulo si todavía no hubo ninguna
+             */
+            copiadoEn?: string;
+        };
+        /** @description El Índice de un mes, calculado por las vistas SQL de la copia analítica */
+        PuntoMensualAnaliticoRespuesta: {
+            /**
+             * @description Mes en hora de Cartagena, formato ISO 8601
+             * @example 2026-08
+             */
+            periodo?: string;
+            /** Format: int64 */
+            paresCerrados?: number;
+            /** Format: int64 */
+            duracionPrometidaSegundos?: number;
+            /** Format: int64 */
+            duracionRealSegundos?: number;
+            /** Format: double */
+            porcentajeCumplimiento?: number;
+        };
+        /** @description La serie mensual del Índice según la copia analítica, de más antiguo a más reciente */
+        SerieMensualAnaliticaRespuesta: {
+            /**
+             * Format: date-time
+             * @description Cuándo terminó la última copia que cuadró con MongoDB. Nulo si todavía no hubo ninguna
+             */
+            copiadoEn?: string;
+            puntos?: components["schemas"]["PuntoMensualAnaliticoRespuesta"][];
         };
     };
     responses: never;
@@ -2271,6 +3170,135 @@ export interface operations {
             };
         };
     };
+    verificarBarrio: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudVerificacionBarrio"];
+            };
+        };
+        responses: {
+            /** @description Perfil con el barrio verificado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
+                };
+            };
+            /** @description Coordenada fuera de rango o precision ausente o negativa */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
+                };
+            };
+            /** @description `ubicacion-fuera-del-barrio` (la ubicacion no cae en tu barrio declarado) o `ubicacion-imprecisa` (precision peor que 200 m; reintenta con GPS) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
+                };
+            };
+            /** @description Ya usaste los 3 intentos de hoy */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
+                };
+            };
+        };
+    };
+    iniciarSesion_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CredencialVecino"];
+            };
+        };
+        responses: {
+            /** @description Credencial correcta, token emitido */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SesionVecino"];
+                };
+            };
+            /** @description Credencial incorrecta */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SesionVecino"];
+                };
+            };
+            /** @description La cuenta esta suspendida (si aun no eligio su clave, responde 401 como con una clave incorrecta) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SesionVecino"];
+                };
+            };
+            /** @description Cuenta bloqueada por intentos fallidos */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SesionVecino"];
+                };
+            };
+            /** @description Demasiados intentos desde esta IP */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SesionVecino"];
+                };
+            };
+        };
+    };
+    cerrar_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     suscribirse: {
         parameters: {
             query?: never;
@@ -2416,10 +3444,63 @@ export interface operations {
             };
         };
     };
+    confirmarRestablecimiento: {
+        parameters: {
+            query: {
+                token: string;
+            };
+            header?: never;
+            path: {
+                sectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Voto registrado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReporteRespuesta"];
+                };
+            };
+            /** @description Falta el token */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El enlace no sirve (type `enlace-invalido`): vencio, es de otro barrio o ya no recibes los avisos */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Se agoto el cupo de reportes de esta suscripcion en el barrio */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     registrar_1: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Dispositivo"?: string;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2438,7 +3519,7 @@ export interface operations {
                     "application/json": components["schemas"]["ReporteRespuesta"];
                 };
             };
-            /** @description Sector inexistente, tipo inválido, huella fuera de 32-128 caracteres, coordenada fuera de Cartagena o sin sector ni coordenada */
+            /** @description Sector inexistente, tipo inválido, coordenada fuera de Cartagena o sin sector ni coordenada */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2447,7 +3528,16 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description El dispositivo superó el límite de reportes para este sector */
+            /** @description Falta `X-Dispositivo`, no lo firmó este servidor o el dispositivo ya no existe (type `dispositivo-invalido`): pide otro con POST /api/dispositivos */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La identidad superó el límite de reportes para este sector */
             429: {
                 headers: {
                     [name: string]: unknown;
@@ -2461,7 +3551,9 @@ export interface operations {
     agregarEvidencia: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Subida"?: string;
+            };
             path: {
                 id: string;
             };
@@ -2485,7 +3577,7 @@ export interface operations {
                     "application/json": components["schemas"]["ReporteRespuesta"];
                 };
             };
-            /** @description Error en la solicitud */
+            /** @description Falta el archivo o no es una imagen valida */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -2494,8 +3586,26 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
                 };
             };
-            /** @description Reporte no encontrado */
-            404: {
+            /** @description Falta el token de subida, ya se uso, vencio o es de otro reporte (type `subida-no-autorizada`); es la misma respuesta si el reporte no existe */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El reporte ya tiene foto */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Formato no permitido, como WebP (type `formato-no-permitido`) */
+            415: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2508,17 +3618,15 @@ export interface operations {
     confirmar_2: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-Dispositivo"?: string;
+            };
             path: {
                 id: string;
             };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SolicitudConfirmar"];
-            };
-        };
+        requestBody?: never;
         responses: {
             /** @description Reporte confirmado */
             200: {
@@ -2529,8 +3637,8 @@ export interface operations {
                     "application/json": components["schemas"]["ReporteRespuesta"];
                 };
             };
-            /** @description Error en la solicitud */
-            400: {
+            /** @description Falta o no es válida la identidad del dispositivo (type `dispositivo-invalido`) */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -2600,6 +3708,35 @@ export interface operations {
             };
         };
     };
+    pedir: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Token emitido */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenDeDispositivoRespuesta"];
+                };
+            };
+            /** @description Demasiados tokens pedidos desde esta IP */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenDeDispositivoRespuesta"];
+                };
+            };
+        };
+    };
     verificarCorreo: {
         parameters: {
             query: {
@@ -2656,6 +3793,35 @@ export interface operations {
             };
         };
     };
+    registrarse: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudRegistroVecino"];
+            };
+        };
+        responses: {
+            /** @description Solicitud recibida; revisa tu correo */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Correo mal formado, barrio ausente o inexistente, o privacidad no aceptada */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     pedirRestablecimiento: {
         parameters: {
             query?: never;
@@ -2678,7 +3844,7 @@ export interface operations {
             };
         };
     };
-    registrarse: {
+    registrarse_1: {
         parameters: {
             query?: never;
             header?: never;
@@ -3146,6 +4312,64 @@ export interface operations {
             };
         };
     };
+    descartarFoto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Foto descartada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReporteModeracionRespuesta"];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El reporte no existe */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El reporte no tiene foto */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     descartar: {
         parameters: {
             query?: never;
@@ -3360,7 +4584,204 @@ export interface operations {
             };
         };
     };
-    cerrar_1: {
+    anularPropuesta: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudAnulacion"];
+            };
+        };
+        responses: {
+            /** @description Propuesta anulada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PropuestaIngestaRespuesta"];
+                };
+            };
+            /** @description Falta el motivo */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La propuesta no existe */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La propuesta no estaba aprobada */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    confirmarCierre: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                sectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudCierreCorte"];
+            };
+        };
+        responses: {
+            /** @description Cierre confirmado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteRespuesta"];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El corte no existe */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El barrio no tiene cierre o ya estaba confirmado */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    cerrarSector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                sectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudCierreCorte"];
+            };
+        };
+        responses: {
+            /** @description Barrio cerrado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteRespuesta"];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El corte no existe */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El corte ya no está abierto o el barrio ya estaba cerrado */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    cerrar_2: {
         parameters: {
             query?: never;
             header?: never;
@@ -3418,6 +4839,110 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    anularCorte: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudAnulacion"];
+            };
+        };
+        responses: {
+            /** @description Corte anulado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteRespuesta"];
+                };
+            };
+            /** @description Falta el motivo */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El corte no existe */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description El corte ya estaba anulado */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    actualizarPerfil: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SolicitudPerfilVecino"];
+            };
+        };
+        responses: {
+            /** @description Perfil actualizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
+                };
+            };
+            /** @description Nombre invalido o barrio inexistente */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
                 };
             };
         };
@@ -3481,6 +5006,44 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UsuarioRespuesta"][];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    consultarMetricasDelSistema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MetricasDelSistemaRespuesta"];
                 };
             };
             /** @description Sin sesión, token inválido, caducado o revocado */
@@ -3661,6 +5224,93 @@ export interface operations {
             };
         };
     };
+    fotoDelPanel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nombre: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description La imagen (image/jpeg o image/png) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description Ningun reporte reclama esa foto */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
+                };
+            };
+        };
+    };
+    listarDisputas: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SectorRespuesta"][];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     consultar: {
         parameters: {
             query?: never;
@@ -3701,6 +5351,44 @@ export interface operations {
             };
             /** @description No existe un corte con ese id */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    listarCortesVencidos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CorteRespuesta"][];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3751,6 +5439,75 @@ export interface operations {
             };
         };
     };
+    ultimasCopiasAnaliticas: {
+        parameters: {
+            query?: {
+                limite?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Las copias, de la más reciente a la más antigua */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CopiaAnaliticaRespuesta"][];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La copia analítica está apagada o PostgreSQL no responde */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    yo_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PerfilVecinoRespuesta"];
+                };
+            };
+        };
+    };
     getRequests: {
         parameters: {
             query?: never;
@@ -3767,6 +5524,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Open311Response"][];
+                };
+            };
+        };
+    };
+    modo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ModoDelSistemaRespuesta"];
                 };
             };
         };
@@ -3892,6 +5669,37 @@ export interface operations {
                 };
                 content: {
                     "application/geo+json": unknown;
+                };
+            };
+        };
+    };
+    foto: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                nombre: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description La imagen (image/jpeg o image/png) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": unknown;
+                };
+            };
+            /** @description No hay una foto publica con ese nombre */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": string;
                 };
             };
         };
@@ -4084,6 +5892,28 @@ export interface operations {
             };
         };
     };
+    calidad: {
+        parameters: {
+            query?: {
+                sectorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Calidad calculada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalidadDelCumplimientoRespuesta"];
+                };
+            };
+        };
+    };
     listar_2: {
         parameters: {
             query?: {
@@ -4145,6 +5975,75 @@ export interface operations {
             };
             /** @description No existe el evento */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    cumplimientoAnalitico: {
+        parameters: {
+            query?: {
+                sectorId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Índice calculado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CumplimientoAnaliticoRespuesta"];
+                };
+            };
+            /** @description El barrio no existe en la copia */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    cumplimientoAnaliticoMensual: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Serie calculada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SerieMensualAnaliticaRespuesta"];
+                };
+            };
+            /** @description La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };

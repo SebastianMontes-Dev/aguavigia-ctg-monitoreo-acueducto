@@ -1,5 +1,7 @@
 # FE3 · Moderación y cortes
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** el trabajo diario del veedor. Moderar los reportes con su foto, registrar y cerrar cortes barrio por barrio,
 anular lo publicado por error, atender los cortes vencidos y ver las disputas.
 

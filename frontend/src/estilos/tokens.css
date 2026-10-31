@@ -75,7 +75,46 @@
     --sombra: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 40px -12px rgb(0 0 0 / 0.6);
   }
 
+  /*
+   * ADR-105: grafito, el oscuro de Cumplimiento, Bitácora, Estadísticas y Avisos. Va en <body>, no en :root, porque el mapa lee
+   * sus colores de :root mientras corre; los estados y el latón no se redeclaran. Copia de DESIGN.md §3.1.
+   */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) [data-paleta='grafito'] {
+      --papel: #111719;
+      --superficie: #1a1f22;
+      --elevada: #242c2f;
+      --tarjeta: #1a1f22;
+      --tinta: #f1f4f2;
+      --tinta-2: #b1bbbd;
+      --tinta-3: #7e888c;
+      --linea: #354044;
+      --linea-suave: #283135;
+      --cardenillo: #8cc8b8;
+      --sobre-cardenillo: #111719;
+      --cardenillo-suave: #1e2e2a;
+    }
+  }
+
+  :root[data-theme='dark'] [data-paleta='grafito'] {
+    --papel: #111719;
+    --superficie: #1a1f22;
+    --elevada: #242c2f;
+    --tarjeta: #1a1f22;
+    --tinta: #f1f4f2;
+    --tinta-2: #b1bbbd;
+    --tinta-3: #7e888c;
+    --linea: #354044;
+    --linea-suave: #283135;
+    --cardenillo: #8cc8b8;
+    --sobre-cardenillo: #111719;
+    --cardenillo-suave: #1e2e2a;
+  }
+
   :root {
+    /* El fondo de un bloque. Fuera del grafito es la superficie elevada; dentro, una más baja que deja «elevada» a lo que flota. */
+    --tarjeta: var(--elevada);
+
     /* ADR-071: la serif solo en marca, titulares y barrio; si no ha llegado, cae a la serif del sistema. */
     --fuente-marca: 'Newsreader', Georgia, 'Times New Roman', serif;
     --fuente-cuerpo: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;

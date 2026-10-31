@@ -30,7 +30,7 @@ Si solo tienes 5 minutos: lee §1, §2 y §5.1, y arranca FE0.
 | Rutas del contrato (paths) | **81** (87 operaciones) | Conteo de `paths:` en `backend/openapi.yaml` |
 | Rutas en tu `esquema.ts` generado | **58** | `frontend/src/api/generado/esquema.ts`, del 2026-09-29 |
 | Rutas que faltan en tu esquema | **23** (lista en §1.3) | Diferencia entre las dos anteriores |
-| Rutas que el frontend consume | **27** | [`README.md`](README.md#punto-de-partida-main-2026-10-06): el frontend no ha recibido commits desde el 2026-10-06 |
+| Rutas que el frontend consume | **27** | [`README.md`](README.md#punto-de-partida-main-2026-10-06): el último commit en `frontend/` es `f81f6f6`, del 2026-09-29 |
 | Pantallas que existen | Mapa, ficha, reporte, confirmar, cumplimiento, estadísticas, bitácora, avisos (3), muestrario | `frontend/src/pantallas/publico` |
 | Pantallas que no existen | Panel, cuentas, vecino, «¿ya volvió el agua?» | — |
 | Rama tuya pendiente | `feat/f5-ingreso-panel` (2 commits, ingreso al panel con TOTP). **No se borra ni se toca**; se integra en FE2 | `git ls-remote` |
@@ -42,7 +42,7 @@ En `main` (último en `f45d5b2`, 2026-10-15) fallan los dos jobs del Frontend CI
 | Job | Paso que falla | Causa |
 |---|---|---|
 | Lint, tipos, contrato, pruebas y build | **Contrato de la API sin deriva** (`npm run api:check`) | Tu `esquema.ts` es del 2026-09-29 y el contrato ya tiene 81 rutas. Se arregla con `npm run api:sync` (es el primer paso de FE0) |
-| Núcleo ciudadano contra backend real | **E2E reales de mapa, reportes y avisos con Mailhog** | **Sin verificar**: no he leído su log. La causa más probable es que reportar sin `X-Dispositivo` da `401 dispositivo-invalido` (FE0 lo corrige). Confírmalo en el log antes de dar por buena esta hipótesis |
+| Núcleo ciudadano contra backend real | **E2E reales de mapa, reportes y avisos con Mailhog** | **Confirmado el 2026-10-25** en el log del CI del 2026-10-15: 4 pruebas de `e2e/real/ciudadano.spec.ts` esperan `201` y reciben `401`. Es reportar sin `X-Dispositivo` (`401 dispositivo-invalido`); FE0 lo corrige. La siembra ya no falla: `027bca0` subió `RATE_LIMIT_FACTOR` en ese job |
 
 Las rutas de PostgreSQL (§4.12) añadieron 3 rutas más a la deriva, pero **no son la causa**: el CI ya estaba rojo por el esquema viejo. Lo que cambió en estos días es solo que regenerar el esquema ahora trae 3 rutas nuevas
 (la lista completa está abajo).
@@ -141,7 +141,7 @@ npm run dev
 
 ### 3.4 Qué comprobar antes de empezar
 
-1. `Invoke-RestMethod http://localhost:8081/api/sectores | Measure-Object` → 211 barrios.
+1. `(Invoke-RestMethod http://localhost:8081/api/sectores).sectores.Count` → 211 barrios. La respuesta es un objeto `{sectores, generadoEn}`, no una lista: `| Measure-Object` daría 1.
 2. `Invoke-RestMethod http://localhost:8081/api/sistema/modo` → `modo: REAL`.
 3. En el frontend, `npm run lint`, `npm run typecheck`, `npm test` pasan. **`npm run api:check` va a fallar**: es lo esperado hasta FE0.
 
@@ -302,7 +302,7 @@ Guía: [`FE0-contrato-al-dia.md`](FE0-contrato-al-dia.md). Rama `feature/fe0-con
 Orden de trabajo (un commit por causa):
 
 1. `git checkout -b feature/fe0-contrato-al-dia develop` y `npm run api:sync`. Aparecen errores de compilación: es lo esperado. El esquema ahora trae las 81 rutas (incluidas las 3 de PostgreSQL, que no usarás todavía).
-2. **CI:** `scripts/preparar-env-ci.mjs` debe escribir `RATE_LIMIT_FACTOR=100` en el `.env` del CI. `docker-compose.yml` ya lo pasa al backend. Avisa a Sebastian: es un script compartido.
+2. **CI:** ya resuelto. `027bca0` (2026-10-14) pasa `RATE_LIMIT_FACTOR=100` al backend en el job «backend real» de `frontend-ci.yml`; no hay que tocar `scripts/preparar-env-ci.mjs`.
 3. **Identidad del dispositivo:** crea `src/api/dispositivo.ts` (`POST /api/dispositivos` una vez, token en `localStorage` con `try/catch`, cabecera `X-Dispositivo`, ante `401 dispositivo-invalido` pide otro y reintenta **una** vez). Borra `huella.ts` y su test.
 4. **Reportar:** `precisionMetros` junto a la coordenada; `/confirmar` sin cuerpo; guarda `subidaToken` y mándalo en `X-Subida` al subir la foto; quita WebP (`TIPOS_FOTO`, texto de ayuda); maneja `415 formato-no-permitido`; muestra `fotoEstado`.
 5. **Proxy:** quita `/fotos` de `vite.config.ts`. Las fotos salen por `/api/fotos/{nombre}`; usa `fotoUrl` tal cual.
@@ -333,7 +333,7 @@ Guía: [`FE2-ingreso-al-panel.md`](FE2-ingreso-al-panel.md). Depende de FE0. Cas
 2. Adapta los tipos al esquema nuevo (nada a mano).
 3. Completa `/panel/seguridad` (cambiar clave, quitar TOTP salvo el ADMIN, «Cerrar todas mis sesiones» con aviso previo).
 4. Token en `sessionStorage`, nunca en la URL. Un `401` con `type` distinto de `credencial-invalida` o `segundo-factor-requerido` borra la sesión.
-5. Cuando se fusione, archiva la rama vieja como `archivo/yordy-<fecha>/f5-ingreso-panel` y bórrala.
+5. Cuando se fusione, archiva tú (a mano, no una sesión de Claude Code) la rama vieja como `archivo/yordy-<fecha>/f5-ingreso-panel` y bórrala.
 
 ### 5.5 FE3 · Moderación y cortes
 
@@ -407,6 +407,8 @@ Guía: [`FE7-integracion-y-entrega.md`](FE7-integracion-y-entrega.md). Depende d
 | Trampa | Qué pasa | Qué hacer |
 |---|---|---|
 | Pedir un token de dispositivo en cada reporte | A los ~10 `POST /api/dispositivos` por hora desde una IP, `429` | Pídelo **una vez** y guárdalo. En CI y local, `RATE_LIMIT_FACTOR=100` |
+| Creer que `RATE_LIMIT_FACTOR=100` afloja todo | No mueve ingreso, segundo factor, cuentas, suscripciones ni cambio de clave: `/api/cuentas/**` sigue en 10 cada 10 min y `/api/veedor/sesion` en 10 cada 5 min por IP. El e2e de cuentas da `429` a la segunda pasada | Desde FE2, `RATE_LIMIT_FACTOR_CUENTAS=10` en local y en el job «backend real» (comprobado el 2026-10-25 con `verificar-flujos.mjs`) |
+| Una sesión en la nube firma como `Claude <noreply@anthropic.com>` | `autoria.yml` rechaza el PR (BUG-104) | `git config user.name "Yordy Pardo"` y tu correo antes del primer commit; `scripts/verificar-autoria.sh origin/main..HEAD` antes del PR |
 | Reportar sin `X-Dispositivo` | `401 dispositivo-invalido` | Pide otro token y reintenta una sola vez; **no** cierres la sesión de un vecino por este error |
 | Votar al cargar la pantalla «¿ya volvió?» o al abrir `/confirmar/:id` | Los clientes de correo abren los enlaces y votarían solos | El `POST` solo al pulsar el botón |
 | `<img src>` para fotos del panel | No lleva `Authorization`: 401 | `fetch` con la cabecera y `URL.createObjectURL` |

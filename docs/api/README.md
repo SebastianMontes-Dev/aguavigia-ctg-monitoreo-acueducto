@@ -2,7 +2,7 @@
 
 > **Para quién es.** Para quien construye el frontend. El anterior se retiró (`ADR-048`; su código sigue
 > en la etiqueta git `pre-retiro-frontend`) y el nuevo se rehace en `frontend/` (React 19 + Vite, `ADR-067`,
-> fases en `docs/ingenieria/plan-frontend.md`). Aun así, **nada de lo que está aquí presupone una
+> fases en [`docs/frontend/`](../frontend/README.md)). Aun así, **nada de lo que está aquí presupone una
 > interfaz concreta**: describe qué hace el backend, qué rutas expone y qué reglas debe respetar cualquier
 > cliente.
 >
@@ -43,7 +43,7 @@ cuándo?»**
 
 ## Convenciones globales
 
-**Base y formato.** Todo cuelga de `/api/…` (y `/fotos/…` para imágenes). JSON en UTF-8, salvo las tres
+**Base y formato.** Todo cuelga de `/api/…`, también las imágenes (`/api/fotos/{nombre}`; la ruta vieja `/fotos/…` ya no existe). JSON en UTF-8, salvo las tres
 excepciones: el SSE (`text/event-stream`), los CSV y el GeoJSON (`application/geo+json`).
 
 **Fechas.** ISO-8601 en UTC (`2026-08-08T15:30:00Z`). El servidor las guarda y responde en UTC; **la
@@ -79,7 +79,7 @@ docker compose up -d --build --wait
 - Datos: `docker compose up` carga los 211 sectores (`sembrador`) y el backend crea en segundo plano **30 000 cuentas sintéticas** de vecino
   (`GET /api/sistema/modo` las cuenta). **No hay reportes, cortes ni estados inventados**: el mapa muestra los boletines reales de Acuacar y lo que
   reporten vecinos de verdad. `scripts/sembrar-demo.mjs` (a mano) afecta unos barrios enviando reportes a la API, cada uno con su dispositivo.
-  Detalle en [`docs/ingenieria/entorno-local.md`](../ingenieria/entorno-local.md).
+  Detalle en [`docs/01-levantar-a-mano.md`](../01-levantar-a-mano.md).
 
 ## Qué debe saber ya quien construya la interfaz
 
