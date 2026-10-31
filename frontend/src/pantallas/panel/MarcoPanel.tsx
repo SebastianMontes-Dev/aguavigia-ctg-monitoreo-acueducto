@@ -2,7 +2,8 @@ import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Redirigir } from '../../app/Redirigir'
 import { useState } from 'react'
 import { cerrarSesion } from '../../api/panel'
-import { useAlcance, useCuentaActual, useSesionPerdida } from '../../app/panel'
+import { motivoDeSalida, useAlcance, useCuentaActual, useSesionPerdida } from '../../app/panel'
+import { usePaletaGrafito } from '../../app/paleta'
 import { SelectorTema } from '../../app/SelectorTema'
 import { permisosDe, seccionActiva, seccionesPermitidas } from '../../dominio/permisos'
 import estilos from './MarcoPanel.module.css'
@@ -12,13 +13,17 @@ import estilos from './MarcoPanel.module.css'
  * lleva al ingreso; con la sesión restringida de un ADMIN sin TOTP, al alta del segundo factor.
  */
 export function MarcoPanel() {
+  usePaletaGrafito()
   const alcance = useAlcance()
   const perdida = useSesionPerdida(alcance)
   const [saliendo, setSaliendo] = useState(false)
   const cuenta = useCuentaActual(alcance === 'COMPLETO')
   const { pathname } = useLocation()
 
-  if (!alcance) return <Redirigir destino={{ to: '/panel/ingreso', search: saliendo ? { motivo: 'cerrada' } : perdida ? { motivo: 'vencida' } : {} }} />
+  if (!alcance) {
+    const motivo = motivoDeSalida(perdida, saliendo)
+    return <Redirigir destino={{ to: '/panel/ingreso', search: motivo ? { motivo } : {} }} />
+  }
   if (alcance === 'ALTA_SEGUNDO_FACTOR') return <Redirigir destino={{ to: '/panel/segundo-factor' }} />
 
   // Al borrar el token, la guarda de arriba lleva al ingreso con el motivo correcto.

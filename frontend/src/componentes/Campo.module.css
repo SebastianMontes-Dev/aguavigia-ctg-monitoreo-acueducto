@@ -1,0 +1,24 @@
+@layer componentes {
+  /* ADR-105 y ADR-107: el campo de Avisos (caja con borde a 3:1, error en tinta junto al campo) para el ingreso, las cuentas y el panel. */
+  .campo { display: grid; gap: var(--espacio-2); min-width: 0; }
+  .etiqueta { font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
+
+  .caja { display: flex; align-items: center; gap: var(--espacio-2); min-height: 48px; padding: 0 var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background: var(--elevada); color: var(--tinta-2); }
+  .caja[data-invalido] { border-color: var(--tinta); border-width: 2px; padding-inline: calc(var(--espacio-4) - 1px); }
+  .caja:focus-within { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .caja input { flex: 1; min-width: 0; min-height: 44px; border: 0; background: transparent; color: var(--tinta); font-size: var(--texto-m); outline: none; }
+  .caja input::placeholder { color: var(--tinta-2); }
+
+  /* Seis dígitos: cifras tabulares y aire entre ellas, para compararlas con las de la app. */
+  .codigo input { font-family: var(--fuente-utilidad); font-size: var(--texto-l); font-variant-numeric: tabular-nums; letter-spacing: 0.3em; }
+
+  .ver { flex: none; min-height: 40px; padding: 0 var(--espacio-2); border: 0; background: none; color: var(--tinta); font-size: var(--texto-s); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; cursor: pointer; }
+  .ver:hover { text-decoration-color: var(--laton); }
+  .ver:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+
+  .ayuda { font-size: var(--texto-xs); color: var(--tinta-2); }
+
+  /* El rojo es del estado «sin servicio» (DESIGN.md §2): el error va en tinta y con su marca. */
+  .error { display: flex; align-items: flex-start; gap: var(--espacio-2); font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
+  .error::before { content: '!' / ''; display: grid; place-items: center; flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: var(--radio-pastilla); background: var(--tinta); color: var(--papel); font-size: 12px; line-height: 1; }
+}
