@@ -1,0 +1,35 @@
+@layer componentes {
+  /* ADR-107 (D1): el segundo factor es de la familia del ingreso (mismas mitades, marca y pasos, de `Ingreso.module.css`); aquí solo lo propio:
+     el recuadro del QR como centro de la mitad derecha y el formulario del código debajo. Sin colores ni movimiento nuevos. */
+  .contenido { display: grid; gap: var(--espacio-5); align-content: center; justify-items: stretch; width: 100%; max-width: 460px; margin-inline: auto; padding-top: var(--espacio-3); }
+
+  /* El QR (o el botón que lo genera) ocupa siempre el mismo recuadro, para que al generarlo nada salte. */
+  .escenario { display: grid; justify-items: center; align-content: center; gap: var(--espacio-4); min-height: 21rem; padding: var(--espacio-5); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--tarjeta); text-align: center; }
+  .escenario > * { min-width: 0; }
+  .escenario > button { justify-self: center; }
+  .escenario p { text-wrap: balance; }
+  .titulo { font-size: var(--texto-l); font-weight: 600; text-wrap: balance; }
+  .activar .titulo { font-size: var(--texto-m); }
+
+  /* Sobre el papel blanco del QR, con el borde y el tamaño que lo hacen legible a la cámara. */
+  .escenario svg { width: min(264px, 100%); }
+
+  .clave { display: grid; gap: var(--espacio-2); justify-items: center; }
+  .secreto { font-family: var(--fuente-utilidad); font-size: var(--texto-l); font-weight: 600; color: var(--tinta); word-spacing: 0.5em; letter-spacing: 0.04em; overflow-wrap: anywhere; }
+  .aviso { max-width: 34ch; }
+
+  .generar { display: grid; justify-items: stretch; gap: var(--espacio-4); width: 100%; max-width: 320px; text-align: start; }
+  .generar > button { justify-self: center; }
+
+  .activar { display: grid; gap: var(--espacio-4); }
+  .pie { justify-self: center; }
+
+  /* Aquí los pasos dicen dónde va el alta; el que toca ahora se marca con el relleno de la pastilla, sin color nuevo. */
+  .pasos li[aria-current='step'] { color: var(--tinta); }
+  .pasos li[aria-current='step'] > span:first-child { border-color: var(--tinta); background: var(--tinta); color: var(--papel); }
+
+  @media (max-width: 899px) {
+    .escenario { min-height: 0; padding: var(--espacio-4); }
+    .escenario svg { width: min(260px, 100%); }
+  }
+}

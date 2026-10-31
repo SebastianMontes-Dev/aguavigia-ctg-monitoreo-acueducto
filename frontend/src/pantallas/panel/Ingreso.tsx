@@ -7,11 +7,11 @@ import { useAlcance, type MotivoIngreso } from '../../app/panel'
 import { usePaletaGrafito } from '../../app/paleta'
 import { Campo } from '../../componentes/Campo'
 import campos from '../../componentes/Campo.module.css'
-import bloques from '../../componentes/Bloques.module.css'
 import botones from '../../componentes/Botones.module.css'
 import { mensajeIngreso } from '../../dominio/mensajes-panel'
 import pagina from '../publico/Pagina.module.css'
 import estilos from './Formulario.module.css'
+import propios from './Ingreso.module.css'
 
 export const MOTIVO_INGRESO: Record<MotivoIngreso, string> = {
   vencida: 'Tu sesión terminó. Ingresa de nuevo.',
@@ -102,63 +102,74 @@ export function Ingreso() {
   const errorDelFormulario = codigoRechazado ? null : mensaje
 
   return (
-    <div className={`${pagina.pagina} ${pagina.vista}`}>
-      <header className={pagina.cabeceraVista}>
-        <p className={bloques.rotulo}>Panel de veedores</p>
-        <h1 className={`${pagina.titular} ${pagina.titularVista}`}>Ingreso al panel</h1>
-        <p className={pagina.entrada}>Para veedores y administradores. Consultar el mapa y reportar no necesitan cuenta.</p>
-      </header>
-      <div className={estilos.columna}>
-        {motivo && !resultado && <output className={estilos.aviso}>{MOTIVO_INGRESO[motivo]}</output>}
-        <form className={`${bloques.bloque} ${estilos.formulario}`} onSubmit={(evento) => void enviar(evento)} noValidate>
-          {conCodigo ? (
-            <>
-              <p className={estilos.nota}>
-                La clave de <strong>{correo.trim()}</strong> es correcta. Escribe el código de seis dígitos que muestra tu app de
-                autenticación.
-              </p>
-              <Campo
-                etiqueta="Código de la app"
-                tipo="codigo"
-                value={codigo}
-                onChange={(evento) => setCodigo(evento.target.value)}
-                error={errorDelCodigo}
-                ref={campoCodigo}
-              />
-            </>
-          ) : (
-            <>
-              <Campo
-                etiqueta="Correo"
-                tipo="correo"
-                value={correo}
-                onChange={(evento) => setCorreo(evento.target.value)}
-                error={errores.correo}
-                ref={campoCorreo}
-              />
-              <Campo
-                etiqueta="Clave"
-                tipo="clave"
-                autoComplete="current-password"
-                value={clave}
-                onChange={(evento) => setClave(evento.target.value)}
-                error={errores.clave}
-                ref={campoClave}
-              />
-            </>
-          )}
-          {errorDelFormulario && <p className={campos.error} role="alert">{errorDelFormulario}</p>}
-          <Button type="submit" className={`${botones.principal} ${botones.ancho}`} isDisabled={enviando}>
-            {enviando ? 'Ingresando…' : <>Ingresar <span className={botones.flecha} aria-hidden="true">→</span></>}
-          </Button>
-          {conCodigo && (
-            <div className={estilos.acciones}>
-              <button type="button" className={estilos.enlaceBoton} onClick={cambiarDeCuenta}>Ingresar con otra cuenta</button>
-            </div>
-          )}
-        </form>
-        <Link to="/" className={pagina.enlace}>Volver al mapa</Link>
-      </div>
-    </div>
+    <main className={propios.pantalla}>
+      <section className={propios.lado} aria-labelledby="titulo-pagina">
+        <p className={propios.marca}>AguaVigía <span className={propios.rotuloMarca}>Panel</span></p>
+        <div className={propios.presentacion}>
+          <span className={propios.filete} aria-hidden="true" />
+          <h1 id="titulo-pagina" className={`${pagina.titular} ${propios.titular}`}>Ingreso al panel</h1>
+          <p className={propios.entrada}>Para veedores y administradores. Consultar el mapa y reportar no necesitan cuenta.</p>
+        </div>
+        <ol className={propios.pasos} aria-label="Cómo se entra">
+          <li><span className={propios.numero} aria-hidden="true">1</span><span>Escribe tu correo y tu clave.</span></li>
+          <li><span className={propios.numero} aria-hidden="true">2</span><span>Si tu cuenta tiene segundo factor (los administradores siempre), escribe el código de seis dígitos de tu app.</span></li>
+          <li><span className={propios.numero} aria-hidden="true">3</span><span>Entras al panel. La sesión dura 8 horas y se cierra sola.</span></li>
+        </ol>
+      </section>
+      <section className={propios.acceso} aria-label="Formulario de ingreso">
+        <Link to="/" className={propios.volver}><span aria-hidden="true">←</span> Volver al mapa</Link>
+        <div className={propios.formulario}>
+          {motivo && !resultado && <output className={estilos.aviso}>{MOTIVO_INGRESO[motivo]}</output>}
+          <form className={propios.tarjeta} onSubmit={(evento) => void enviar(evento)} noValidate aria-labelledby="titulo-ingreso">
+            <h2 id="titulo-ingreso" className={propios.subtitulo}>{conCodigo ? 'Un código más' : 'Entra con tu cuenta'}</h2>
+            {conCodigo ? (
+              <>
+                <p className={estilos.nota}>
+                  La clave de <strong>{correo.trim()}</strong> es correcta. Escribe el código de seis dígitos que muestra tu app de
+                  autenticación.
+                </p>
+                <Campo
+                  etiqueta="Código de la app"
+                  tipo="codigo"
+                  value={codigo}
+                  onChange={(evento) => setCodigo(evento.target.value)}
+                  error={errorDelCodigo}
+                  ref={campoCodigo}
+                />
+              </>
+            ) : (
+              <>
+                <Campo
+                  etiqueta="Correo"
+                  tipo="correo"
+                  value={correo}
+                  onChange={(evento) => setCorreo(evento.target.value)}
+                  error={errores.correo}
+                  ref={campoCorreo}
+                />
+                <Campo
+                  etiqueta="Clave"
+                  tipo="clave"
+                  autoComplete="current-password"
+                  value={clave}
+                  onChange={(evento) => setClave(evento.target.value)}
+                  error={errores.clave}
+                  ref={campoClave}
+                />
+              </>
+            )}
+            {errorDelFormulario && <p className={campos.error} role="alert">{errorDelFormulario}</p>}
+            <Button type="submit" className={`${botones.principal} ${botones.ancho}`} isDisabled={enviando}>
+              {enviando ? 'Ingresando…' : <>Ingresar <span className={botones.flecha} aria-hidden="true">→</span></>}
+            </Button>
+            {conCodigo && (
+              <div className={estilos.acciones}>
+                <button type="button" className={estilos.enlaceBoton} onClick={cambiarDeCuenta}>Ingresar con otra cuenta</button>
+              </div>
+            )}
+          </form>
+        </div>
+      </section>
+    </main>
   )
 }
