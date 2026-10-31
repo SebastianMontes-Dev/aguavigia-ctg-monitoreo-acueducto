@@ -10,7 +10,7 @@ export const PERMISOS = [
 
 export type Permiso = typeof PERMISOS[number]
 
-export type RutaPanel = '/panel' | '/panel/cortes' | '/panel/ingesta' | '/panel/cuentas' | '/panel/auditoria' | '/panel/seguridad'
+export type RutaPanel = '/panel' | '/panel/cortes' | '/panel/disputas' | '/panel/ingesta' | '/panel/cuentas' | '/panel/auditoria' | '/panel/seguridad'
 
 export interface SeccionPanel {
   to: RutaPanel
@@ -22,6 +22,7 @@ export interface SeccionPanel {
 export const SECCIONES_PANEL: readonly SeccionPanel[] = [
   { to: '/panel', texto: 'Moderación', permiso: 'VER_PANEL' },
   { to: '/panel/cortes', texto: 'Cortes', permiso: 'VER_PANEL' },
+  { to: '/panel/disputas', texto: 'Disputas', permiso: 'VER_PANEL' },
   { to: '/panel/ingesta', texto: 'Ingesta', permiso: 'VER_PANEL' },
   { to: '/panel/cuentas', texto: 'Cuentas', permiso: 'GESTIONAR_USUARIOS' },
   { to: '/panel/auditoria', texto: 'Auditoría', permiso: 'VER_AUDITORIA' },

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState, useSyncExternalStore } from 'react'
 import { consultarCuentaActual } from '../api/panel'
 import { sesion, type Alcance } from '../api/sesion'
+import { permisosDe, type Permiso } from '../dominio/permisos'
 import { clienteConsultas } from './datos'
 
 // Lo del panel pertenece a una sesión: al entrar, salir o cambiar de cuenta no se reutiliza nada de la anterior.
@@ -49,4 +50,12 @@ export function useCuentaActual(habilitada: boolean) {
     queryFn: consultarCuentaActual,
     staleTime: 60_000,
   })
+}
+
+/**
+ * Los permisos con los que la pantalla pinta sus acciones (panel-veedor.md): ocultar un botón no es seguridad, el servidor
+ * valida siempre, pero un botón que el servidor va a rechazar es mala experiencia.
+ */
+export function usePermisos(): ReadonlySet<Permiso> {
+  return permisosDe(useCuentaActual(true).data?.permisosEfectivos)
 }

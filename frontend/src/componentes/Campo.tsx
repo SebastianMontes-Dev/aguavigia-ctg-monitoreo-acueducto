@@ -3,8 +3,8 @@ import estilos from './Campo.module.css'
 
 interface PropiedadesCampo extends Omit<InputHTMLAttributes<HTMLInputElement>, 'id' | 'type'> {
   etiqueta: string
-  /** `clave` añade «Mostrar»/«Ocultar» (guía §5.3); `codigo` es el de seis dígitos de la app de autenticación. */
-  tipo?: 'texto' | 'correo' | 'clave' | 'codigo'
+  /** `clave` añade «Mostrar»/«Ocultar» (guía §5.3); `codigo` es el de seis dígitos de la app de autenticación; `fechaHora` es un `datetime-local`, sin zona: quien lo usa dice cuál es. */
+  tipo?: 'texto' | 'correo' | 'clave' | 'codigo' | 'fechaHora'
   error?: string | null
   ayuda?: string
 }
@@ -29,7 +29,9 @@ export const Campo = forwardRef<HTMLInputElement, PropiedadesCampo>(function Cam
         ? { type: 'email', autoComplete: 'username' }
         : tipo === 'clave'
           ? { type: visible ? 'text' : 'password', autoCapitalize: 'none', spellCheck: false }
-          : { type: 'text' }
+          : tipo === 'fechaHora'
+            ? { type: 'datetime-local' }
+            : { type: 'text' }
   return (
     <div className={estilos.campo}>
       <label htmlFor={id} className={estilos.etiqueta}>{etiqueta}</label>
