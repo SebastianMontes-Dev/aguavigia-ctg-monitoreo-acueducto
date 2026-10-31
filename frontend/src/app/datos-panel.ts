@@ -1,6 +1,7 @@
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery, useQueries, useQuery } from '@tanstack/react-query'
 import { useCallback, useRef, useState } from 'react'
 import type { ResultadoAccion } from '../api/acciones-panel'
+import { leerAuditoria, leerCopias, leerCuentas, leerCuentasVisibles, leerMetricas, type FiltroCuentas } from '../api/administracion'
 import { api, normalizarError } from '../api/cliente'
 import { leerCorte, leerCortesDelBarrio, leerDisputas, leerVencidos } from '../api/cortes-veedor'
 import { leerFallidos, leerPropuestas, leerSalud } from '../api/ingesta'
@@ -88,6 +89,58 @@ export function useFallidos() {
 
 export function useSaludColectores() {
   return useQuery({ queryKey: ['panel', 'ingesta', 'salud'], queryFn: ({ signal }) => leerSalud({ signal }), staleTime: 15_000 })
+}
+
+/**
+ * FE5 · Una página de cuentas con el filtro elegido, a partir de `inicio`; sin las sintéticas, salta las páginas hechas solo de ellas.
+ * Al cambiar de página se conserva la anterior mientras llega la nueva.
+ */
+export function useCuentas(filtro: FiltroCuentas, inicio: number, ocultarSinteticas: boolean, habilitada = true) {
+  return useQuery({
+    enabled: habilitada,
+    queryKey: ['panel', 'cuentas', 'lista', filtro.estado ?? '', filtro.barrioId ?? '', inicio, ocultarSinteticas],
+    queryFn: ({ signal }) => leerCuentasVisibles(inicio, filtro, ocultarSinteticas, { signal }),
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+  })
+}
+
+const ESTADOS_EN_COLA = ['PENDIENTE_APROBACION', 'INVITADA', 'SUSPENDIDA'] as const
+
+/** Lo que espera una decisión: una página por estado (son listas cortas) para contar sin las sintéticas. */
+export function useColaDeCuentas(habilitada = true) {
+  return useQueries({
+    queries: ESTADOS_EN_COLA.map((estado) => ({
+      enabled: habilitada,
+      queryKey: ['panel', 'cuentas', 'cola', estado],
+      queryFn: ({ signal }: { signal: AbortSignal }) => leerCuentas(0, { estado }, { signal }),
+      staleTime: 15_000,
+    })),
+  })
+}
+
+export function useAuditoria(pagina: number, habilitada = true) {
+  return useQuery({
+    enabled: habilitada,
+    queryKey: ['panel', 'auditoria', pagina],
+    queryFn: ({ signal }) => leerAuditoria(pagina, { signal }),
+    placeholderData: keepPreviousData,
+    staleTime: 15_000,
+  })
+}
+
+export function useMetricas() {
+  return useQuery({ queryKey: ['panel', 'sistema', 'metricas'], queryFn: ({ signal }) => leerMetricas({ signal }), staleTime: 15_000 })
+}
+
+/** Un `503` no se reintenta: la copia está apagada y volver a pedirla no la enciende. */
+export function useCopias() {
+  return useQuery({
+    queryKey: ['panel', 'sistema', 'copias'],
+    queryFn: ({ signal }) => leerCopias({ signal }),
+    staleTime: 15_000,
+    retry: (fallos, error) => (error as { estado?: number }).estado !== 503 && fallos < 2 && (error as { reintentable?: boolean }).reintentable !== false,
+  })
 }
 
 /**

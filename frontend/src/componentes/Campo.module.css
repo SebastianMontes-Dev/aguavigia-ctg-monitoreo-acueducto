@@ -22,3 +22,10 @@
   .error { display: flex; align-items: flex-start; gap: var(--espacio-2); font-size: var(--texto-s); font-weight: 600; color: var(--tinta); }
   .error::before { content: '!' / ''; display: grid; place-items: center; flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: var(--radio-pastilla); background: var(--tinta); color: var(--papel); font-size: 12px; line-height: 1; }
 }
+
+@layer componentes {
+  /* ADR-107: la lista desplegable del panel es la caja de los campos de texto, con el control nativo de cada sistema (teclado y lector de pantalla sin trabajo extra). */
+  .seleccion { appearance: none; width: 100%; min-height: 48px; padding: 0 var(--espacio-6) 0 var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background-color: var(--elevada); background-image: linear-gradient(45deg, transparent 50%, var(--tinta) 50%), linear-gradient(135deg, var(--tinta) 50%, transparent 50%); background-repeat: no-repeat; background-size: 6px 6px; background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; color: var(--tinta); font: inherit; font-size: var(--texto-m); text-overflow: ellipsis; }
+  .seleccion:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .seleccion[aria-invalid='true'] { border-color: var(--tinta); border-width: 2px; }
+}

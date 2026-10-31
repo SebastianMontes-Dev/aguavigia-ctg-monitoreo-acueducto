@@ -1,0 +1,51 @@
+@layer componentes {
+  /* ADR-107 (D1): el ingreso son dos mitades a pantalla completa. A la izquierda, una franja teñida de cardenillo (la respuesta de una
+     página sin estado, como el resumen de Cuentas) con la marca, el titular y cómo se entra; a la derecha, el formulario centrado en
+     su mitad. Solo tokens del grafito; el único acento es el filete de latón, el mismo del subrayado del menú. */
+  .pantalla { display: grid; min-height: 100dvh; background: var(--papel); }
+
+  .lado {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: var(--espacio-6);
+    padding: var(--espacio-6) var(--margen-pagina);
+    border-bottom: 1px solid var(--linea);
+    background: color-mix(in srgb, var(--cardenillo) 8%, var(--tarjeta));
+  }
+  .marca { display: inline-flex; align-items: baseline; gap: var(--espacio-2); font-family: var(--fuente-marca); font-size: 1.75rem; font-weight: 500; letter-spacing: -0.01em; color: var(--tinta); }
+  .rotuloMarca { font-family: var(--fuente-cuerpo); font-size: var(--texto-xs); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tinta-2); }
+  .presentacion { display: grid; gap: var(--espacio-4); align-content: center; max-width: 30rem; }
+  .filete { width: 56px; height: 3px; border-radius: var(--radio-pastilla); background: var(--laton); }
+  .titular { font-size: clamp(2.25rem, 4.6vw, 4.25rem); line-height: 1.02; text-wrap: balance; }
+  .entrada { font-size: var(--texto-l); color: var(--tinta-2); text-wrap: pretty; }
+
+  /* Cómo se entra: tres pasos con la rejilla de «Cómo funciona» de Avisos, separados por reglas finas. */
+  .pasos { display: grid; max-width: 30rem; margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--linea); }
+  .pasos li { display: grid; grid-template-columns: 32px minmax(0, 1fr); align-items: start; gap: var(--espacio-3); padding: var(--espacio-3) 0; font-size: var(--texto-s); color: var(--tinta-2); }
+  .pasos li + li { border-top: 1px solid var(--linea-suave); }
+  .numero { display: grid; place-items: center; width: 28px; height: 28px; border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); color: var(--tinta); font-size: var(--texto-xs); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .acceso { position: relative; display: grid; grid-template-rows: auto 1fr; padding: var(--espacio-5) var(--margen-pagina) var(--espacio-7); }
+  .volver { justify-self: end; display: inline-flex; align-items: center; gap: var(--espacio-2); min-height: var(--objetivo-tactil); color: var(--tinta); font-size: var(--texto-s); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; }
+  .volver:hover { text-decoration-color: var(--laton); }
+  .volver:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 3px; }
+  .formulario { display: grid; gap: var(--espacio-4); align-content: center; justify-items: stretch; width: 100%; max-width: 420px; margin-inline: auto; }
+
+  /* El formulario va directo sobre el papel: la mitad entera ya es el recuadro. */
+  .tarjeta { display: grid; gap: var(--espacio-5); }
+  .subtitulo { font-size: var(--texto-l); font-weight: 600; }
+
+  @media (min-width: 900px) {
+    .pantalla { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
+    .lado { padding: var(--espacio-6) clamp(40px, 5vw, 88px) var(--espacio-6); border-bottom: 0; border-right: 1px solid var(--linea); }
+    .acceso { padding-inline: clamp(24px, 5vw, 88px); }
+  }
+
+  /* En el celular el lado es una franja con la marca y el titular; los pasos se dicen al ir pidiendo cada dato. */
+  @media (max-width: 899px) {
+    .lado { grid-template-rows: auto auto; gap: var(--espacio-4); padding-block: var(--espacio-5); }
+    .pasos { display: none; }
+    .titular { font-size: clamp(2rem, 9vw, 2.75rem); }
+    .acceso { padding-top: var(--espacio-3); }
+  }
+}
