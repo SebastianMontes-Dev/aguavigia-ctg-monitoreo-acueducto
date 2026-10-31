@@ -35,6 +35,9 @@ async function simularPanel(page: Page, opciones: OpcionesPanel = {}) {
     return route.fulfill({ status: 204 })
   })
   await page.route('**/api/veedor/yo', opciones.yo ?? ((route) => route.fulfill(cuenta(PERMISOS_VEEDOR))))
+  // Desde FE3 `/panel` es la cola de moderación: sin esta respuesta, el servidor de pruebas contesta 401 y la sesión se daría por terminada.
+  await page.route(/\/api\/veedor\/reportes\/pendientes(?:\?|$)/, (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: '[]', headers: { 'X-Total-Count': '0', 'X-Total-Pages': '0', 'X-Page': '0' } }))
   await page.route('**/api/veedor/segundo-factor/alta', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uri: URI_TOTP, secreto: 'JBSWY3DPEHPK3PXP' }) }))
   await page.route('**/api/veedor/segundo-factor/confirmacion', (route) => {

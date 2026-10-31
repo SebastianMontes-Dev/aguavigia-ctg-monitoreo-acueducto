@@ -3,7 +3,7 @@ import { permisosDe, seccionActiva, seccionesPermitidas } from './permisos'
 describe('permisos del panel', () => {
   it('debeMostrarAlObservadorSoloLasSeccionesDeLectura', () => {
     const secciones = seccionesPermitidas(permisosDe(['VER_PANEL', 'CONFIGURAR_SEGUNDO_FACTOR']))
-    expect(secciones.map((seccion) => seccion.texto)).toEqual(['Moderación', 'Cortes', 'Ingesta', 'Seguridad'])
+    expect(secciones.map((seccion) => seccion.texto)).toEqual(['Moderación', 'Cortes', 'Disputas', 'Ingesta', 'Seguridad'])
   })
 
   it('debeSumarCuentasYAuditoriaSoloConSusPermisos', () => {

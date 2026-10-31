@@ -1,0 +1,137 @@
+@layer componentes {
+  /* FE3 (ADR-107): moderación, cortes y disputas comparten el bloque del rediseño, con el grafito y sin colores nuevos. Los colores de
+     estado quedan para el estado del agua: aprobar, descartar o cerrar un trámite no se pintan con ellos. */
+  .columnas { display: grid; gap: var(--espacio-5); align-items: start; }
+  .principal { display: grid; gap: var(--espacio-4); min-width: 0; align-content: start; }
+  .lateral { display: grid; gap: var(--espacio-4); align-content: start; min-width: 0; }
+  .tresCifras { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .tituloLateral { font-size: var(--texto-s); font-weight: 600; }
+  .aviso { padding: var(--espacio-3) var(--espacio-4); border: 1px solid var(--linea); border-radius: var(--radio-flotante); background: var(--elevada); font-size: var(--texto-s); }
+  .vacio { color: var(--tinta-2); }
+  .encabezado { padding-top: var(--espacio-2); }
+  .vacioBloque { padding: var(--espacio-4) 0; }
+  .esqueleto { display: grid; color: var(--tinta-2); }
+  .esqueleto span { display: block; height: 72px; border-bottom: 1px solid var(--linea-suave); }
+  .reintentar, .enlace { min-height: 32px; padding: 0; border: 0; background: none; color: var(--tinta); font: inherit; font-size: var(--texto-s); text-decoration: underline; text-decoration-color: var(--tinta-3); text-underline-offset: 3px; cursor: pointer; }
+  .reintentar:hover, .enlace:hover { text-decoration-color: var(--laton); }
+  .reintentar:focus-visible, .enlace:focus-visible, .fila:focus-visible, .miniatura:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .mas { justify-self: start; min-height: var(--objetivo-tactil); padding: 0 var(--espacio-5); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background: transparent; color: var(--tinta); font-weight: 600; cursor: pointer; }
+  .mas:hover { border-color: var(--laton); }
+  .mas:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .mas:disabled { color: var(--tinta-2); cursor: progress; }
+
+  /* Un bloque con una fila por elemento, separadas por reglas finas (la fila compacta de la Bitácora, ADR-105). */
+  .lista { display: grid; margin: 0; padding: 0; list-style: none; }
+  .lista > li + li { border-top: 1px solid var(--linea-suave); }
+
+  /* La cola de moderación: glifo, lo que pasó y la hora; debajo la foto y las acciones. */
+  .reporte {
+    display: grid;
+    grid-template-columns: 32px minmax(0, 1fr) auto;
+    grid-template-areas:
+      'glifo cuerpo hora'
+      'glifo foto foto'
+      'glifo acciones acciones';
+    align-items: start;
+    gap: var(--espacio-2) var(--espacio-3);
+    padding: var(--espacio-4) 0;
+  }
+  .reporte[data-sin-foto] { grid-template-areas: 'glifo cuerpo hora' 'glifo acciones acciones'; }
+  .glifo { grid-area: glifo; display: grid; place-items: center; width: 32px; height: 32px; border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); color: var(--tinta-2); }
+  .cuerpo { grid-area: cuerpo; display: grid; gap: 2px; min-width: 0; }
+  .que { padding-top: 4px; font-size: var(--texto-m); }
+  .que strong { font-weight: 600; }
+  .meta { color: var(--tinta-2); font-size: var(--texto-s); }
+  .senal { display: flex; align-items: flex-start; gap: var(--espacio-2); font-size: var(--texto-s); }
+  .senal svg { flex: none; margin-top: 3px; }
+  .hora { grid-area: hora; padding-top: 5px; color: var(--tinta-2); font-size: var(--texto-s); font-variant-numeric: tabular-nums; text-align: right; }
+  .hora span { display: block; font-size: var(--texto-xs); }
+  .foto { grid-area: foto; display: grid; gap: var(--espacio-1); justify-items: start; min-width: 0; }
+  .miniatura { padding: 0; border: 1px solid var(--linea); border-radius: 8px; background: var(--elevada); cursor: zoom-in; overflow: hidden; line-height: 0; }
+  .miniatura img { display: block; width: 96px; height: 96px; object-fit: cover; }
+  .miniatura[aria-expanded='true'] { cursor: zoom-out; }
+  .miniatura[aria-expanded='true'] img { width: min(100%, 360px); height: auto; max-height: 360px; object-fit: contain; }
+  .pieFoto { color: var(--tinta-2); font-size: var(--texto-xs); }
+  .sinFoto { display: grid; place-items: center; width: 96px; height: 96px; padding: var(--espacio-2); border: 1px dashed var(--tinta-3); border-radius: 8px; color: var(--tinta-2); font-size: var(--texto-xs); text-align: center; }
+  .acciones { display: flex; flex-wrap: wrap; gap: var(--espacio-2) var(--espacio-3); min-width: 0; }
+  .reporte > .acciones { grid-area: acciones; }
+  .accion { min-height: 40px; padding: 0 var(--espacio-4); font-size: var(--texto-s); }
+
+  /* La acción que no se deshace se dice antes de pulsarla y se confirma aparte. */
+  .oculto { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .confirmar { min-width: 0; margin: 0; grid-column: 2 / -1; display: grid; gap: var(--espacio-3); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
+  .confirmar:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .confirmar p { font-size: var(--texto-s); }
+  .reporte > .confirmar, .reporte > .resultado { grid-area: auto; grid-column: 2 / -1; }
+  .resultado { color: var(--tinta); font-size: var(--texto-s); font-weight: 600; }
+
+  /* Cortes: la fila de un corte del barrio o de la cola de vencidos es un botón entero. */
+  .fila { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: var(--espacio-1) var(--espacio-3); width: 100%; min-height: 64px; padding: var(--espacio-3) 0; border: 0; background: none; color: var(--tinta); font: inherit; text-align: left; text-decoration: none; cursor: pointer; }
+  .quePaso { grid-column: 1; font-size: var(--texto-m); font-weight: 600; overflow-wrap: anywhere; }
+  .detalleFila { grid-column: 1; color: var(--tinta-2); font-size: var(--texto-s); }
+  .flecha { grid-column: 2; grid-row: 1 / span 2; color: var(--tinta-2); }
+  .fila[aria-current='true'] .quePaso { text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 4px; text-decoration-thickness: 2px; }
+
+  .barra { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--espacio-3); }
+  .selector { flex: 1; min-width: min(100%, 260px); max-width: 420px; }
+
+  /* El detalle de un corte: sus datos, un renglón por barrio y las acciones del corte entero. */
+  .barrio { display: grid; gap: var(--espacio-2); padding: var(--espacio-3) 0; }
+  .barrio + .barrio { border-top: 1px solid var(--linea-suave); }
+  .barrioCabeza { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--espacio-1) var(--espacio-3); }
+  .barrioNombre { font-weight: 600; }
+  .barrioEstado { color: var(--tinta-2); font-size: var(--texto-s); }
+  .formulario { display: grid; gap: var(--espacio-4); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
+  .pie > .formulario { width: 100%; }
+  .pie { display: flex; flex-wrap: wrap; gap: var(--espacio-2) var(--espacio-3); padding-top: var(--espacio-4); border-top: 1px solid var(--linea); }
+  .elegidos { display: flex; flex-wrap: wrap; gap: var(--espacio-2); margin: 0; padding: 0; list-style: none; }
+  .elegido { display: inline-flex; align-items: center; gap: var(--espacio-2); min-height: 36px; padding: 0 var(--espacio-2) 0 var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-pastilla); background: var(--tarjeta); font-size: var(--texto-s); }
+  .quitar { min-height: 32px; padding: 0 var(--espacio-3); border: 0; border-radius: var(--radio-pastilla); background: none; color: var(--tinta); font: inherit; font-size: var(--texto-xs); text-decoration: underline; cursor: pointer; }
+  .quitar:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+  .campoGrupo { display: grid; gap: var(--espacio-2); min-width: 0; }
+  .etiquetaGrupo { font-size: var(--texto-s); font-weight: 600; }
+
+  /* Disputas: nombre y estado vigente con su glifo, lo que contradicen los vecinos y a dónde ir. */
+  .disputa { display: grid; grid-template-columns: 32px minmax(0, 1fr); column-gap: var(--espacio-3); row-gap: var(--espacio-2); padding: var(--espacio-4) 0; align-items: start; }
+  .disputa > .glifoEstado { grid-row: span 3; padding-top: 2px; }
+  .disputa h2 { font-size: var(--texto-m); font-weight: 600; }
+  .cifrasDisputa { display: flex; flex-wrap: wrap; gap: var(--espacio-1) var(--espacio-5); margin: 0; font-size: var(--texto-s); color: var(--tinta-2); }
+  .cifrasDisputa strong { color: var(--tinta); font-variant-numeric: tabular-nums; }
+  .enlaces { display: flex; flex-wrap: wrap; gap: var(--espacio-1) var(--espacio-5); }
+  .enlaceFuerte { display: inline-flex; align-items: center; min-height: 40px; color: var(--tinta); font-size: var(--texto-s); font-weight: 600; text-decoration-color: var(--laton); text-underline-offset: 3px; }
+  .enlaceFuerte:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
+
+  @media (min-width: 1100px) {
+    .columnas { grid-template-columns: minmax(0, 1fr) 400px; column-gap: var(--espacio-5); }
+    .columnas[data-ancho='ancho'] { grid-template-columns: minmax(0, 1fr) minmax(420px, 520px); }
+    .lateral[data-fija] { position: sticky; top: var(--espacio-4); }
+    .reporte {
+      grid-template-columns: 32px minmax(14rem, 1fr) 96px 7rem;
+      grid-template-areas:
+        'glifo cuerpo foto hora'
+        'glifo acciones foto hora';
+      column-gap: var(--espacio-4);
+    }
+    .reporte[data-sin-foto] {
+      grid-template-columns: 32px minmax(14rem, 1fr) 7rem;
+      grid-template-areas:
+        'glifo cuerpo hora'
+        'glifo acciones hora';
+    }
+    .reporte > .confirmar, .reporte > .resultado { grid-column: 2 / -1; }
+    .disputa { grid-template-columns: 32px minmax(0, 1fr) auto; align-items: center; }
+    .disputa > .glifoEstado { grid-row: span 2; }
+    .disputa .enlaces { grid-column: 3; grid-row: 1 / span 2; justify-content: flex-end; }
+  }
+
+  @media (max-width: 1099px) {
+    .lateral[data-solo-ancho] { display: none; }
+  }
+
+  @media (max-width: 599px) {
+    .lista, .principal > section { min-width: 0; }
+    .que { font-size: var(--texto-s); }
+    .accion { flex: 1 1 auto; }
+    .miniatura img { width: 80px; height: 80px; }
+  }
+}

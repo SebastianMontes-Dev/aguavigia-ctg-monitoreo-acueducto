@@ -1,3 +1,4 @@
+import type { ResultadoAccion } from '../api/acciones-panel'
 import type { ResultadoAlta, ResultadoConfirmacionFactor, ResultadoCuenta, ResultadoIngreso } from '../api/panel'
 
 const SIN_RED = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo otra vez.'
@@ -89,6 +90,55 @@ export function mensajeSegundoFactor(resultado: ResultadoAlta | ResultadoConfirm
       return 'El código QR ya no está vigente. Genera uno nuevo y escanéalo otra vez.'
     case 'codigo-incorrecto':
       return 'El código no coincide. Revisa que la hora del teléfono sea la correcta y escribe el código que la app muestra ahora.'
+    case 'esperar':
+      return esperar(resultado.segundos)
+    case 'sin-red':
+      return SIN_RED
+    case 'fallo':
+      return FALLO
+  }
+}
+
+export type ContextoAccion = 'aprobar' | 'descartar' | 'foto' | 'alta' | 'cierre' | 'cierre-barrio' | 'confirmacion' | 'anulacion'
+
+const SOBRE_REPORTE: ContextoAccion[] = ['aprobar', 'descartar', 'foto']
+
+/** panel-veedor.md, tabla de códigos: cada `409` dice qué ya estaba hecho, para que nadie piense que su clic falló. */
+const CONFLICTOS: Record<ContextoAccion, string> = {
+  aprobar: 'Este reporte ya fue decidido por otra persona. Actualizamos la cola.',
+  descartar: 'Este reporte ya fue decidido por otra persona. Actualizamos la cola.',
+  foto: 'Este reporte no tiene una foto que descartar. Actualizamos la cola.',
+  alta: 'El servidor no pudo registrar el corte tal como está. Revisa los datos e inténtalo otra vez.',
+  cierre: 'Este corte ya estaba cerrado. Actualizamos sus barrios.',
+  'cierre-barrio': 'Este barrio ya estaba cerrado. Actualizamos el corte.',
+  confirmacion: 'Este cierre ya estaba confirmado. Actualizamos el corte.',
+  anulacion: 'Este corte ya estaba anulado. Actualizamos el corte.',
+}
+
+const RECHAZOS: Partial<Record<ContextoAccion, string>> = {
+  alta: 'El servidor no aceptó los datos. Revisa que los barrios existan y que el fin prometido sea posterior al inicio.',
+  anulacion: 'Falta el motivo de la anulación.',
+  cierre: 'El servidor no aceptó esa hora real. Revisa la fecha y la hora.',
+  'cierre-barrio': 'El servidor no aceptó esa hora real. Revisa la fecha y la hora.',
+  confirmacion: 'El servidor no aceptó esa hora real. Revisa la fecha y la hora.',
+}
+
+/** Resultado de moderar un reporte o de gestionar un corte; `hecho` y `sesion-terminada` no se dicen aquí: lo uno se ve y lo otro lleva al ingreso. */
+export function mensajeAccion(resultado: ResultadoAccion<unknown>, contexto: ContextoAccion): string | null {
+  switch (resultado.tipo) {
+    case 'hecho':
+    case 'sesion-terminada':
+      return null
+    case 'no-existe':
+      return SOBRE_REPORTE.includes(contexto)
+        ? 'Este reporte ya no está en la cola. Actualizamos la lista.'
+        : 'Este corte ya no existe. Actualizamos la lista.'
+    case 'conflicto':
+      return CONFLICTOS[contexto]
+    case 'rechazado':
+      return RECHAZOS[contexto] ?? 'El servidor no aceptó los datos. Revísalos e inténtalo otra vez.'
+    case 'sin-permiso':
+      return 'Tu sesión ya no tiene permiso para hacer esto. Actualizamos tus permisos.'
     case 'esperar':
       return esperar(resultado.segundos)
     case 'sin-red':

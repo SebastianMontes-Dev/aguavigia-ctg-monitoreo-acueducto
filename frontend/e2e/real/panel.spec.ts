@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import { guardarEstadoPanel } from './sesion-panel'
 import { codigoTotp, segundosHastaLaSiguienteFranja } from './totp'
 
 // El primer ADMIN nace con una clave aleatoria que el backend escribe una sola vez en su log (ADR-086). El CI fija una conocida
@@ -35,6 +36,8 @@ test('debeDarDeAltaElSegundoFactorEntrarCambiarLaClaveYVolverAEntrarConElCodigo'
   await page.getByLabel('Clave nueva', { exact: true }).fill(claveNueva)
   await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
   await expect(page).toHaveURL(/\/panel\/ingreso\?motivo=clave$/)
+  // Las pruebas que vienen después entran con la clave nueva y este secreto, que solo se ve una vez.
+  guardarEstadoPanel({ secreto, clave: claveNueva })
 
   await page.getByLabel('Correo').fill(correo!)
   await page.getByLabel('Clave', { exact: true }).fill(claveNueva)

@@ -98,8 +98,21 @@ const panel = createRoute({
 const seccionPanel = <Ruta extends string>(path: Ruta, titular: string) => createRoute({
   getParentRoute: () => panel, path, component: () => <PendientePanel titular={titular} />,
 })
-const panelModeracion = seccionPanel('/', 'Moderación')
-const panelCortes = seccionPanel('cortes', 'Cortes')
+const panelModeracion = createRoute({
+  getParentRoute: () => panel, path: '/', component: lazyRouteComponent(() => import('../pantallas/panel/Moderacion'), 'Moderacion'),
+})
+const panelCortes = createRoute({
+  getParentRoute: () => panel,
+  path: 'cortes',
+  validateSearch: (busqueda: Record<string, unknown>): { sector?: string; corte?: string } => ({
+    ...(typeof busqueda.sector === 'string' && busqueda.sector ? { sector: busqueda.sector } : {}),
+    ...(typeof busqueda.corte === 'string' && busqueda.corte ? { corte: busqueda.corte } : {}),
+  }),
+  component: lazyRouteComponent(() => import('../pantallas/panel/Cortes'), 'Cortes'),
+})
+const panelDisputas = createRoute({
+  getParentRoute: () => panel, path: 'disputas', component: lazyRouteComponent(() => import('../pantallas/panel/Disputas'), 'Disputas'),
+})
 const panelIngesta = seccionPanel('ingesta', 'Ingesta')
 const panelCuentas = seccionPanel('cuentas', 'Cuentas')
 const panelAuditoria = seccionPanel('auditoria', 'Auditoría')
@@ -114,7 +127,7 @@ const arbol = raiz.addChildren([
   ]),
   panelIngreso,
   panelSegundoFactor,
-  panel.addChildren([panelModeracion, panelCortes, panelIngesta, panelCuentas, panelAuditoria, panelSeguridad]),
+  panel.addChildren([panelModeracion, panelCortes, panelDisputas, panelIngesta, panelCuentas, panelAuditoria, panelSeguridad]),
   muestrario,
 ])
 
