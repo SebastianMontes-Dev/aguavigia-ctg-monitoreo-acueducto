@@ -121,7 +121,8 @@ hoja inferior. El mapa, el buscador y la lista accesible abren la misma ficha.
 **Elementos**
 - Separación por **reglas de 1 px**, no por cajas. Una regla de tinta abre los bloques de cifras. Excepción: la ficha del barrio
   se compone en bloques (`ADR-103`): estado en recuadro teñido, tarjetas de corte y una fila para el último aviso; y Cumplimiento, Bitácora,
-  Estadísticas y Avisos, con la respuesta en un recuadro teñido de cardenillo, cifras y eventos en bloques (`ADR-104`).
+  Estadísticas y Avisos, con la respuesta en un recuadro teñido de cardenillo, cifras y eventos en bloques (`ADR-104`). En Avisos (`ADR-108`) el
+  formulario y «Así funciona» (el recuadro teñido) son dos bloques de la misma altura; los barrios elegidos son filas con regla fina, no pastillas.
 - Radios: 999 px para botones y selectores de tema; 10–12 px solo en lo que flota, en el recuadro del índice y en los bloques de la ficha del barrio (`ADR-103`) y de las páginas de historia y Avisos (`ADR-104`);
   0 en tablas, listas y campos (el campo es una línea inferior).
 - Botón principal: pastilla cardenillo de 50 px de alto con flecha. Secundario: la misma pastilla en hueco. Enlace:
