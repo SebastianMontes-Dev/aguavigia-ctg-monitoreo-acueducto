@@ -57,8 +57,8 @@ Salen de los ADR-103 a 106 y de [`identidad.md`](../diseno/identidad.md) §4.1; 
 ## 5. Lo que falta, y cómo lo recibe el rediseño
 
 Estado de las fases al 2026-10-31 (la tabla de [`README.md`](README.md) tiene el detalle y los PR):
-FE0 y FE1 están en `develop` desde el [PR #122](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/122); **FE2 a FE5 están construidas** y viven en la rama
-`claude/fe3-moderacion-y-cortes-6979a7`, que falta llevar a `develop`; FE6 está en el [PR #129](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/129); FE7 sin empezar. Las decisiones D1 a D5 se aplicaron
+FE0 y FE1 están en `develop` desde el [PR #122](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/122); **FE2 a FE6 están construidas** y van a `develop` en el
+PR [#130](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/130); FE7 sin empezar. Las decisiones D1 a D5 se aplicaron
 (grafito, bloques con tablas, 1320 px); D5 sigue pendiente porque es de FE7. Lo que sigue, FE7, hereda además el rediseño de Avisos (ADR-108) y el del ingreso y el alta del segundo factor a dos columnas.
 
 ### Decisiones del panel (ADR-107, 2026-10-30)
