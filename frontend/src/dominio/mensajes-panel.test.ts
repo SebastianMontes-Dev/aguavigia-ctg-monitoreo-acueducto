@@ -61,3 +61,16 @@ describe('mensajes de moderación y cortes', () => {
     expect(mensajeAccion({ tipo: 'fallo' }, 'cierre')).toMatch(/Algo falló/)
   })
 })
+
+describe('mensajes de la ingesta', () => {
+  it('debeExplicarCadaConflictoSegunLaDecisionQueSeIntentaba', () => {
+    expect(mensajeAccion({ tipo: 'conflicto' }, 'aprobar-propuesta')).toMatch(/ya fue descartada/)
+    expect(mensajeAccion({ tipo: 'conflicto' }, 'descartar-propuesta')).toMatch(/ya fue aprobada/)
+    expect(mensajeAccion({ tipo: 'conflicto' }, 'anular-propuesta')).toMatch(/no estaba aprobada/)
+  })
+
+  it('debeDecirQueLaPropuestaYaNoExisteYQueFaltaElMotivo', () => {
+    expect(mensajeAccion({ tipo: 'no-existe' }, 'aprobar-propuesta')).toMatch(/propuesta ya no existe/)
+    expect(mensajeAccion({ tipo: 'rechazado', mensaje: 'crudo' }, 'anular-propuesta')).toBe('Falta el motivo de la anulación.')
+  })
+})
