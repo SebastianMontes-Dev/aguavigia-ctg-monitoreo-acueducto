@@ -36,6 +36,18 @@ export type ResultadoConfirmacionFactor =
   | { tipo: 'sin-red' }
   | { tipo: 'fallo' }
 
+export type ResultadoCuenta =
+  | { tipo: 'hecho' }
+  | { tipo: 'rechazado'; mensaje: string }
+  | { tipo: 'codigo-incorrecto' }
+  | { tipo: 'obligatorio' }
+  | { tipo: 'sin-permiso' }
+  | { tipo: 'sesion-terminada' }
+  | { tipo: 'bloqueada'; segundos: number | null }
+  | { tipo: 'esperar'; segundos: number | null }
+  | { tipo: 'sin-red' }
+  | { tipo: 'fallo' }
+
 function numero(valor: unknown): number | null {
   return typeof valor === 'number' && Number.isFinite(valor) ? valor : null
 }
@@ -98,10 +110,13 @@ export function interpretarAlta(respuesta: Response | null, cuerpo: unknown): Re
   return errorDeFactor(respuesta, cuerpo) ?? { tipo: 'fallo' }
 }
 
-/** Genera un secreto nuevo que reemplaza al pendiente: se pide solo al tocar, nunca al montar la pantalla. */
-export async function iniciarAltaSegundoFactor(cliente: Cliente = api): Promise<ResultadoAlta> {
+/**
+ * Genera un secreto nuevo que reemplaza al pendiente: se pide solo al tocar, nunca al montar la pantalla. Rehacer el alta de una
+ * cuenta que ya tiene segundo factor exige el código actual (cuentas-y-sesion.md): sin él, un token robado lo sustituiría.
+ */
+export async function iniciarAltaSegundoFactor(codigoActual?: string, cliente: Cliente = api): Promise<ResultadoAlta> {
   try {
-    const { data, error, response } = await cliente.POST('/api/veedor/segundo-factor/alta', {})
+    const { data, error, response } = await cliente.POST('/api/veedor/segundo-factor/alta', codigoActual ? { body: { codigo: codigoActual } } : {})
     return interpretarAlta(response, data ?? error)
   } catch {
     return interpretarAlta(null, null)
@@ -146,4 +161,44 @@ export async function consultarCuentaActual({ signal }: { signal?: AbortSignal }
     .catch(() => ({ data: undefined, error: undefined, response: null }))
   if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
   return data
+}
+
+/** Respuestas comunes de las acciones de seguridad de la cuenta; cada una añade sus propios casos antes de caer aquí. */
+export function interpretarAccionCuenta(respuesta: Response | null, cuerpo: unknown): ResultadoCuenta {
+  if (respuesta === null) return { tipo: 'sin-red' }
+  if (respuesta.status === 204) return { tipo: 'hecho' }
+  const error = normalizarError(respuesta, cuerpo)
+  if (respuesta.status === 401) return error.tipo === 'credencial-invalida' ? { tipo: 'codigo-incorrecto' } : { tipo: 'sesion-terminada' }
+  if (respuesta.status === 403) return { tipo: 'sin-permiso' }
+  if (respuesta.status === 423) return { tipo: 'bloqueada', segundos: numero(error.problema?.segundosRestantes) }
+  if (respuesta.status === 429) return { tipo: 'esperar', segundos: error.segundosParaReintentar }
+  return { tipo: 'fallo' }
+}
+
+/** Un `204` cierra todas las sesiones de la cuenta, la actual incluida: este navegador olvida el token y el marco lleva al ingreso. */
+export async function cambiarClave(claveActual: string, claveNueva: string, cliente: Cliente = api): Promise<ResultadoCuenta> {
+  let resultado: ResultadoCuenta
+  try {
+    const { error, response } = await cliente.POST('/api/veedor/cuenta/clave', { body: { claveActual, claveNueva } })
+    resultado = response?.status === 400
+      ? { tipo: 'rechazado', mensaje: normalizarError(response, error).mensaje }
+      : interpretarAccionCuenta(response, error)
+  } catch {
+    resultado = { tipo: 'sin-red' }
+  }
+  if (resultado.tipo === 'hecho') sesion.limpiar()
+  return resultado
+}
+
+/** Un ADMIN no puede desactivarlo (409); el código actual es obligatorio y la baja cierra todas las sesiones. */
+export async function desactivarSegundoFactor(codigo: string, cliente: Cliente = api): Promise<ResultadoCuenta> {
+  let resultado: ResultadoCuenta
+  try {
+    const { error, response } = await cliente.POST('/api/veedor/segundo-factor/baja', { body: { codigo } })
+    resultado = response?.status === 409 ? { tipo: 'obligatorio' } : interpretarAccionCuenta(response, error)
+  } catch {
+    resultado = { tipo: 'sin-red' }
+  }
+  if (resultado.tipo === 'hecho') sesion.limpiar()
+  return resultado
 }

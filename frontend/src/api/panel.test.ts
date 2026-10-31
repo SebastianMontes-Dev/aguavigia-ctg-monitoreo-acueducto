@@ -1,4 +1,4 @@
-import { cerrarSesion, confirmarSegundoFactor, iniciarSesion, interpretarAlta, interpretarConfirmacionFactor, interpretarIngreso } from './panel'
+import { cambiarClave, cerrarSesion, confirmarSegundoFactor, desactivarSegundoFactor, iniciarAltaSegundoFactor, iniciarSesion, interpretarAlta, interpretarConfirmacionFactor, interpretarIngreso } from './panel'
 import { crearCliente } from './cliente'
 import { sesion } from './sesion'
 
@@ -10,6 +10,12 @@ function respuesta(estado: number, cabeceras: Record<string, string> = {}) {
 
 function clienteCon(pedir: ReturnType<typeof vi.fn<typeof fetch>>) {
   return crearCliente({ baseUrl: 'http://api.prueba', fetch: pedir })
+}
+
+async function lecturaDe(pedir: ReturnType<typeof vi.fn<typeof fetch>>, n: number): Promise<Request> {
+  const enviada = pedir.mock.calls[n]?.[0]
+  if (!(enviada instanceof Request)) throw new Error(`la petición ${n} no se envió`)
+  return enviada.clone()
 }
 
 function json(estado: number, cuerpo: unknown) {
@@ -106,5 +112,62 @@ describe('cerrarSesion', () => {
     await cerrarSesion(clienteCon(vi.fn<typeof fetch>().mockRejectedValue(new TypeError('Failed to fetch'))))
     expect(sesion.token()).toBeNull()
     expect(sesion.alcance()).toBeNull()
+  })
+})
+
+describe('cambiarClave', () => {
+  it('debeOlvidarLaSesionAlCambiarLaClaveYMandarAmbasClaves', async () => {
+    sesion.guardar('vigente')
+    const pedir = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    expect(await cambiarClave('la clave de hoy', 'una clave nueva larga', clienteCon(pedir))).toEqual({ tipo: 'hecho' })
+    expect(sesion.token()).toBeNull()
+    const cuerpo = await (await lecturaDe(pedir, 0)).json()
+    expect(cuerpo).toEqual({ claveActual: 'la clave de hoy', claveNueva: 'una clave nueva larga' })
+  })
+
+  it('debeConservarLaSesionYMostrarElDetalleDelServidorAnteUn400', async () => {
+    sesion.guardar('vigente')
+    const pedir = vi.fn<typeof fetch>().mockResolvedValue(json(400, { type: `${TIPO}peticion-invalida`, detail: 'La clave actual no es correcta.' }))
+    expect(await cambiarClave('mala', 'una clave nueva larga', clienteCon(pedir))).toEqual({ tipo: 'rechazado', mensaje: 'La clave actual no es correcta.' })
+    expect(sesion.token()).toBe('vigente')
+  })
+
+  it('debeLeerElBloqueoYElLimiteDeIntentos', async () => {
+    sesion.guardar('vigente')
+    const bloqueada = vi.fn<typeof fetch>().mockResolvedValue(json(423, { type: `${TIPO}cuenta-bloqueada`, segundosRestantes: 600 }))
+    expect(await cambiarClave('a', 'b', clienteCon(bloqueada))).toEqual({ tipo: 'bloqueada', segundos: 600 })
+    const limite = vi.fn<typeof fetch>().mockResolvedValue(new Response(JSON.stringify({ type: `${TIPO}limite-de-peticiones-excedido` }), { status: 429, headers: { 'Retry-After': '90', 'Content-Type': 'application/problem+json' } }))
+    expect(await cambiarClave('a', 'b', clienteCon(limite))).toEqual({ tipo: 'esperar', segundos: 90 })
+    expect(sesion.token()).toBe('vigente')
+  })
+})
+
+describe('desactivarSegundoFactor', () => {
+  it('debeOlvidarLaSesionAlDesactivarlo', async () => {
+    sesion.guardar('vigente')
+    const pedir = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }))
+    expect(await desactivarSegundoFactor('123456', clienteCon(pedir))).toEqual({ tipo: 'hecho' })
+    expect(sesion.token()).toBeNull()
+  })
+
+  it('debeDistinguirElCodigoIncorrectoDelRolQueLoExige', async () => {
+    sesion.guardar('vigente')
+    const incorrecto = vi.fn<typeof fetch>().mockResolvedValue(json(401, { type: `${TIPO}credencial-invalida` }))
+    expect(await desactivarSegundoFactor('000000', clienteCon(incorrecto))).toEqual({ tipo: 'codigo-incorrecto' })
+    const admin = vi.fn<typeof fetch>().mockResolvedValue(json(409, { type: `${TIPO}conflicto-de-estado` }))
+    expect(await desactivarSegundoFactor('123456', clienteCon(admin))).toEqual({ tipo: 'obligatorio' })
+    expect(sesion.token()).toBe('vigente')
+  })
+})
+
+describe('iniciarAltaSegundoFactor', () => {
+  it('debeMandarElCodigoActualSoloAlRehacerElAlta', async () => {
+    const pedir = vi.fn<typeof fetch>().mockImplementation(() => Promise.resolve(json(200, { uri: 'otpauth://totp/x', secreto: 'ABC' })))
+    await iniciarAltaSegundoFactor(undefined, clienteCon(pedir))
+    await iniciarAltaSegundoFactor('654321', clienteCon(pedir))
+    const primero = await (await lecturaDe(pedir, 0)).text()
+    const segundo = await (await lecturaDe(pedir, 1)).json()
+    expect(primero).toBe('')
+    expect(segundo).toEqual({ codigo: '654321' })
   })
 })

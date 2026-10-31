@@ -1,4 +1,4 @@
-import type { ResultadoAlta, ResultadoConfirmacionFactor, ResultadoIngreso } from '../api/panel'
+import type { ResultadoAlta, ResultadoConfirmacionFactor, ResultadoCuenta, ResultadoIngreso } from '../api/panel'
 
 const SIN_RED = 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo otra vez.'
 const FALLO = 'Algo falló de nuestro lado. Inténtalo otra vez en un momento.'
@@ -43,6 +43,33 @@ export function mensajeIngreso(resultado: ResultadoIngreso, conCodigo: boolean):
       return esperar(resultado.segundos)
     case 'rechazado':
       return resultado.mensaje
+    case 'sin-red':
+      return SIN_RED
+    case 'fallo':
+      return FALLO
+  }
+}
+
+/** Resultado de cambiar la clave o quitar el segundo factor; `hecho` y `sesion-terminada` no se dicen aquí: llevan al ingreso. */
+export function mensajeCuenta(resultado: ResultadoCuenta): string | null {
+  switch (resultado.tipo) {
+    case 'hecho':
+    case 'sesion-terminada':
+      return null
+    case 'rechazado':
+      return resultado.mensaje
+    case 'codigo-incorrecto':
+      return 'El código no coincide o ya se usó. Espera el siguiente código de la app y escríbelo.'
+    case 'obligatorio':
+      return 'El rol de administrador exige segundo factor: no se puede desactivar.'
+    case 'sin-permiso':
+      return 'Tu sesión no puede hacer esto. Si acabas de crear la cuenta, configura primero el segundo factor.'
+    case 'bloqueada':
+      return resultado.segundos
+        ? `La cuenta está bloqueada por intentos fallidos. Podrás intentarlo en ${minutos(resultado.segundos)}.`
+        : 'La cuenta está bloqueada por intentos fallidos. Espera unos minutos.'
+    case 'esperar':
+      return esperar(resultado.segundos)
     case 'sin-red':
       return SIN_RED
     case 'fallo':

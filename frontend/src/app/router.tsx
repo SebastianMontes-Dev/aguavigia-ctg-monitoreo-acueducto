@@ -1,5 +1,6 @@
 import { createRootRoute, createRoute, createRouter, lazyRouteComponent, Outlet } from '@tanstack/react-router'
 import { Marco } from './Marco'
+import { esMotivoIngreso, type MotivoIngreso } from './panel'
 import { ConfirmarReporte } from '../pantallas/publico/ConfirmarReporte'
 import { FichaSector } from '../pantallas/publico/FichaSector'
 import { Historial, NoEncontrada } from '../pantallas/publico/Pendiente'
@@ -82,8 +83,8 @@ const muestrario = createRoute({
 const panelIngreso = createRoute({
   getParentRoute: () => raiz,
   path: 'panel/ingreso',
-  validateSearch: (busqueda: Record<string, unknown>): { motivo?: 'vencida' | 'cerrada' } =>
-    busqueda.motivo === 'vencida' || busqueda.motivo === 'cerrada' ? { motivo: busqueda.motivo } : {},
+  validateSearch: (busqueda: Record<string, unknown>): { motivo?: MotivoIngreso } =>
+    esMotivoIngreso(busqueda.motivo) ? { motivo: busqueda.motivo } : {},
   component: lazyRouteComponent(() => import('../pantallas/panel/Ingreso'), 'Ingreso'),
 })
 const panelSegundoFactor = createRoute({
@@ -102,7 +103,9 @@ const panelCortes = seccionPanel('cortes', 'Cortes')
 const panelIngesta = seccionPanel('ingesta', 'Ingesta')
 const panelCuentas = seccionPanel('cuentas', 'Cuentas')
 const panelAuditoria = seccionPanel('auditoria', 'Auditoría')
-const panelSeguridad = seccionPanel('seguridad', 'Seguridad')
+const panelSeguridad = createRoute({
+  getParentRoute: () => panel, path: 'seguridad', component: lazyRouteComponent(() => import('../pantallas/panel/Seguridad'), 'Seguridad'),
+})
 
 const arbol = raiz.addChildren([
   publico.addChildren([

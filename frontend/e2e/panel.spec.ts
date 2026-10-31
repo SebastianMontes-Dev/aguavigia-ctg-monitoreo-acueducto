@@ -15,8 +15,8 @@ function sesionEmitida(alcance: 'COMPLETO' | 'ALTA_SEGUNDO_FACTOR', permisos: st
   return { status: 200, contentType: 'application/json', body: JSON.stringify({ token: `token-${alcance}`, usuarioId: 'u1', nombre: 'Ana Pérez', correo: 'ana@example.com', rol: 'VEEDOR', permisos, alcance }) }
 }
 
-function cuenta(permisos: string[]) {
-  return { status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'u1', nombre: 'Ana Pérez', correo: 'ana@example.com', estado: 'ACTIVA', rol: 'VEEDOR', permisosEfectivos: permisos }) }
+function cuenta(permisos: string[], extra: Record<string, unknown> = {}) {
+  return { status: 200, contentType: 'application/json', body: JSON.stringify({ id: 'u1', nombre: 'Ana Pérez', correo: 'ana@example.com', estado: 'ACTIVA', rol: 'VEEDOR', permisosEfectivos: permisos, ...extra }) }
 }
 
 /** Simula `/api/veedor/**` y devuelve los cuerpos enviados, para comprobar qué se mandó en cada intento. */
@@ -48,7 +48,7 @@ async function simularPanel(page: Page, opciones: OpcionesPanel = {}) {
 async function ingresar(page: Page) {
   await page.goto('/panel/ingreso')
   await page.getByLabel('Correo').fill('ana@example.com')
-  await page.getByLabel('Clave').fill('una clave larga y única')
+  await page.getByLabel('Clave', { exact: true }).fill('una clave larga y única')
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click()
 }
 
@@ -152,7 +152,7 @@ test('debeOfrecerElAccesoDelVeedorAlFinalDelMenuPublico', async ({ page, isMobil
   await simularApi(page)
   await page.goto('/bitacora')
   await page.getByRole('button', { name: 'Menú' }).click()
-  await page.getByRole('link', { name: 'Acceso del veedor' }).click()
+  await page.getByRole('link', { name: 'Acceso al panel' }).click()
   await expect(page.getByRole('heading', { name: 'Ingreso al panel' })).toBeVisible()
 })
 
@@ -162,4 +162,107 @@ test('noDebeDesbordarseEnElCelular', async ({ page }) => {
   await expect(page.getByRole('navigation', { name: 'Secciones del panel' })).toBeVisible()
   const desborde = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
   expect(desborde).toBeLessThanOrEqual(0)
+})
+
+async function irASeguridad(page: Page) {
+  await ingresar(page)
+  await page.getByRole('navigation', { name: 'Secciones del panel' }).getByRole('link', { name: 'Seguridad' }).click()
+}
+
+test('debeCambiarLaClaveAvisandoElCierreDeSesionesYVolverAlIngresoConElMotivo', async ({ page }) => {
+  await simularPanel(page)
+  const cambios: Record<string, unknown>[] = []
+  await page.route('**/api/veedor/cuenta/clave', (route) => {
+    cambios.push(route.request().postDataJSON() as Record<string, unknown>)
+    return route.fulfill({ status: 204 })
+  })
+  await irASeguridad(page)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tu cuenta se protege solo con la clave')
+  await expect(page.getByText('Al cambiarla se cierran todas tus sesiones')).toBeVisible()
+
+  await page.getByLabel('Clave actual', { exact: true }).fill('la clave de hoy')
+  await page.getByLabel('Clave nueva', { exact: true }).fill('corta')
+  await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
+  await expect(page.getByLabel('Clave nueva', { exact: true })).toBeFocused()
+  await expect(page.getByLabel('Clave nueva', { exact: true })).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByText('Usa al menos 12 caracteres.')).toBeVisible()
+  expect(cambios).toHaveLength(0)
+
+  await page.getByRole('button', { name: 'Mostrar clave nueva' }).click()
+  await expect(page.getByLabel('Clave nueva', { exact: true })).toHaveAttribute('type', 'text')
+  await page.getByLabel('Clave nueva', { exact: true }).fill('una clave nueva y larga')
+  await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
+  await expect(page).toHaveURL(/\/panel\/ingreso\?motivo=clave$/)
+  await expect(page.getByText('Cambiaste tu clave y se cerraron todas las sesiones')).toBeVisible()
+  expect(cambios).toEqual([{ claveActual: 'la clave de hoy', claveNueva: 'una clave nueva y larga' }])
+  expect(await page.evaluate(() => sessionStorage.length)).toBe(0)
+})
+
+test('debeMostrarElDetalleDelServidorSiRechazaLaClaveYConservarLaSesion', async ({ page }) => {
+  await simularPanel(page)
+  await page.route('**/api/veedor/cuenta/clave', (route) => route.fulfill(problema(400, 'peticion-invalida', 'La clave actual no es correcta.')))
+  await irASeguridad(page)
+  await page.getByLabel('Clave actual', { exact: true }).fill('la clave de hoy')
+  await page.getByLabel('Clave nueva', { exact: true }).fill('una clave nueva y larga')
+  await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
+  await expect(page.getByRole('alert')).toHaveText('La clave actual no es correcta.')
+  await expect(page).toHaveURL(/\/panel\/seguridad$/)
+})
+
+test('debeDesactivarElSegundoFactorConSuCodigoYPedirIngresarDeNuevo', async ({ page }) => {
+  await simularPanel(page, { yo: (route) => route.fulfill(cuenta(PERMISOS_VEEDOR, { segundoFactorActivo: true })) })
+  const codigos: string[] = []
+  await page.route('**/api/veedor/segundo-factor/baja', (route) => {
+    codigos.push((route.request().postDataJSON() as { codigo: string }).codigo)
+    return codigos.length === 1 ? route.fulfill(problema(401, 'credencial-invalida', 'El código no coincide.')) : route.fulfill({ status: 204 })
+  })
+  await irASeguridad(page)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Tu cuenta pide un código además de la clave')
+  await expect(page.getByText('Al desactivarlo se cierran todas tus sesiones')).toBeVisible()
+  await page.getByLabel('Código de la app').fill('000000')
+  await page.getByRole('button', { name: 'Desactivar y cerrar sesiones' }).click()
+  await expect(page.getByLabel('Código de la app')).toHaveAttribute('aria-invalid', 'true')
+  await expect(page.getByText('El código no coincide o ya se usó')).toBeVisible()
+  await page.getByLabel('Código de la app').fill('123456')
+  await page.getByRole('button', { name: 'Desactivar y cerrar sesiones' }).click()
+  await expect(page).toHaveURL(/\/panel\/ingreso\?motivo=segundo-factor$/)
+  expect(codigos).toEqual(['000000', '123456'])
+})
+
+test('noDebeOfrecerDesactivarElSegundoFactorAUnAdmin', async ({ page }) => {
+  await simularPanel(page, { yo: (route) => route.fulfill(cuenta(PERMISOS_ADMIN, { rol: 'ADMIN', segundoFactorActivo: true })) })
+  await irASeguridad(page)
+  await expect(page.getByText('El rol de administrador lo exige: no se puede desactivar.')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Desactivar/ })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Cambiar de teléfono' })).toBeVisible()
+})
+
+test('debePedirElCodigoActualAlCambiarDeTelefonoYNoGenerarElQrSinEl', async ({ page }) => {
+  await simularPanel(page, { yo: (route) => route.fulfill(cuenta(PERMISOS_VEEDOR, { segundoFactorActivo: true })) })
+  const altas: unknown[] = []
+  await page.route('**/api/veedor/segundo-factor/alta', (route) => {
+    altas.push(route.request().postDataJSON())
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uri: URI_TOTP, secreto: 'JBSWY3DPEHPK3PXP' }) })
+  })
+  await irASeguridad(page)
+  await page.getByRole('link', { name: 'Cambiar de teléfono' }).click()
+  await expect(page.getByRole('button', { name: 'Generar código QR' })).toBeDisabled()
+  await page.getByLabel('Código actual de la app').fill('654321')
+  await page.getByRole('button', { name: 'Generar código QR' }).click()
+  await expect(page.getByText('JBSW Y3DP EHPK 3PXP')).toBeVisible()
+  expect(altas).toEqual([{ codigo: '654321' }])
+})
+
+test('debeConfirmarAntesDeCerrarTodasLasSesiones', async ({ page }) => {
+  const { cierres } = await simularPanel(page)
+  await irASeguridad(page)
+  await page.getByRole('button', { name: 'Cerrar todas mis sesiones' }).click()
+  await expect(page.getByText('Se cerrarán todas tus sesiones, también esta.')).toBeVisible()
+  expect(cierres).toHaveLength(0)
+  await page.getByRole('button', { name: 'Cancelar' }).click()
+  await expect(page.getByText('Se cerrarán todas tus sesiones, también esta.')).toHaveCount(0)
+  await page.getByRole('button', { name: 'Cerrar todas mis sesiones' }).click()
+  await page.getByRole('button', { name: 'Sí, cerrar todas' }).click()
+  await expect(page).toHaveURL(/\/panel\/ingreso\?motivo=cerrada$/)
+  expect(cierres).toEqual(['Bearer token-COMPLETO'])
 })

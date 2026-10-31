@@ -7,6 +7,29 @@ import { clienteConsultas } from './datos'
 // Lo del panel pertenece a una sesión: al entrar, salir o cambiar de cuenta no se reutiliza nada de la anterior.
 sesion.alCambiar(() => clienteConsultas.removeQueries({ queryKey: ['panel'] }))
 
+export const MOTIVOS_INGRESO = ['vencida', 'cerrada', 'clave', 'segundo-factor'] as const
+export type MotivoIngreso = typeof MOTIVOS_INGRESO[number]
+
+export function esMotivoIngreso(valor: unknown): valor is MotivoIngreso {
+  return MOTIVOS_INGRESO.some((motivo) => motivo === valor)
+}
+
+// Quien cierra la sesión por una acción propia (cambiar la clave, quitar el TOTP) dice por qué, para que el ingreso lo explique.
+let motivoAnunciado: MotivoIngreso | null = null
+sesion.alCambiar(() => {
+  if (sesion.token()) motivoAnunciado = null
+})
+
+/** Se anuncia antes de llamar a la API, porque la sesión se borra dentro de ella; `null` retira el anuncio si la acción falló. */
+export function anunciarSalida(motivo: MotivoIngreso | null): void {
+  motivoAnunciado = motivo
+}
+
+/** Por qué se llegó al ingreso: lo anunciado, «cerrada» si la persona pulsó salir, o «vencida» si la sesión terminó sola. */
+export function motivoDeSalida(perdida: boolean, saliendo = false): MotivoIngreso | undefined {
+  return motivoAnunciado ?? (saliendo ? 'cerrada' : perdida ? 'vencida' : undefined)
+}
+
 export function useAlcance(): Alcance | null {
   return useSyncExternalStore(sesion.alCambiar, sesion.alcance, () => null)
 }

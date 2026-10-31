@@ -1,7 +1,7 @@
-import { useLayoutEffect } from 'react'
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
 import { useModoSistema } from './datos'
+import { usePaletaGrafito } from './paleta'
 import { SelectorTema } from './SelectorTema'
 import estilos from './Marco.module.css'
 
@@ -56,10 +56,7 @@ export function Marco() {
   // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
   const simulacion = useModoSistema().data?.modo === 'SIMULACION'
   const grafito = usaGrafito(pathname)
-  useLayoutEffect(() => {
-    if (grafito) document.body.dataset.paleta = 'grafito'
-    else delete document.body.dataset.paleta
-  }, [grafito])
+  usePaletaGrafito(grafito)
   return (
     <div className={estilos.marco} data-simulacion={simulacion || undefined}>
       <a href="#contenido" className={estilos.saltar}>Saltar al contenido</a>
@@ -72,7 +69,7 @@ export function Marco() {
         </nav>
         <div className={estilos.temaEscritorio}>
           <SelectorTema />
-          <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso del veedor</Link>
+          <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso al panel</Link>
         </div>
         <DialogTrigger>
           <Button className={estilos.menu}>Menú</Button>
@@ -82,7 +79,7 @@ export function Marco() {
                 <EnlacesNavegacion clase={estilos.menuDestino} />
               </nav>
               <SelectorTema />
-              <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso del veedor</Link>
+              <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso al panel</Link>
             </Dialog>
           </Popover>
         </DialogTrigger>
