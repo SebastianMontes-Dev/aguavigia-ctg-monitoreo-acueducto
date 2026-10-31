@@ -2,9 +2,9 @@
 
 Resumen de lo que trabajó el rediseño de las vistas de datos ([PR #122](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/122),
 2026-10-25 a 2026-10-30) y de lo que **falta** del plan ([`README.md`](README.md), FE2–FE7), para que cada fase nueva
-herede ese diseño en vez de volver a la composición de ADR-070. Documento del 2026-10-30. No decide nada nuevo: las
-decisiones están en los ADR-103 a 106 de [`07-decisiones-clave.md`](../07-decisiones-clave.md) §7–§10 y este archivo solo las junta
-con los archivos que las llevan y con lo que falta. Lo que aún no está decidido está marcado como **por decidir** (§5).
+herede ese diseño en vez de volver a la composición de ADR-070. Documento del 2026-10-30. Las decisiones están en los ADR-103 a 106 y,
+para el panel, en el ADR-107 de [`07-decisiones-clave.md`](../07-decisiones-clave.md) §7–§11; este archivo solo las junta con los archivos
+que las llevan y con lo que falta.
 
 ## 1. Qué cambió, en una tabla
 
@@ -60,26 +60,28 @@ Estado de las fases al 2026-10-30 (de `frontend/src/`, no de la tabla del README
 FE0 en el [PR #121](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/121), abierto; FE1 construido y dentro del PR #122 (su puerta de
 cierre no se ha comprobado aquí; el PR #122 solo reporta la del rediseño); FE2–FE7 sin empezar (en `src/` no hay panel, sesión de veedor, segundo factor, cuentas ni vecino).
 
-### Decisiones por tomar antes de FE2 (candidatas a ADR-107)
+### Decisiones del panel (ADR-107, 2026-10-30)
 
-| # | Pregunta | Por qué importa |
+Yordy las decidió el 2026-10-30 y están en el [ADR-107](../07-decisiones-clave.md) (§11). Si una fase choca con ellas, se vuelve a decidir con Yordy y se registra un ADR nuevo.
+
+| # | Decisión | Qué implica |
 |---|---|---|
-| D1 | ¿Las pantallas de cuenta y del panel usan el grafito? | ADR-105 lo limita a cuatro páginas. [`guia-frontend.md`](../diseno/guia-frontend.md) §4.2 dice que el panel tiene navegación propia y «nunca hereda los colores de servicio para estados de cuenta o decisiones de moderación» |
-| D2 | ¿El panel usa bloques de `--tarjeta` o tablas a ras? | La guía pide tablas para cuentas y auditoría y cola + detalle en la moderación; los bloques sirven a las cifras y a las filas compactas, no a una tabla de 30 000 cuentas |
-| D3 | Ancho máximo del panel | La guía dice 1200 px; las páginas de lectura ya están en 1320 px (ADR-105) |
-| D4 | ¿Los iconos del panel siguen siendo «funcionales junto a una palabra»? | Aprobar/descartar con atajos `j`/`k`, `a`/`d` necesitan acciones muy visibles |
-| D5 | Qué pasa con el Historial del celular (`/historial`) | Conserva la paleta del mapa (ADR-105) y `Pendiente.tsx` debe desaparecer en FE7 |
+| D1 | **Sin colores nuevos.** El ingreso, las cuentas, el perfil del vecino y el panel usan el grafito del rediseño | Sus rutas se suman a `CON_GRAFITO` de `Marco.tsx`. Los colores de estado siguen siendo del servicio de agua: no pintan estados de cuenta ni decisiones de moderación (guía §4.2) |
+| D2 | **Bloques con tablas dentro** | Cuentas y auditoría, como tabla con columnas dentro de un bloque `--tarjeta`, paginada por cabeceras. La cola de reportes usa la fila compacta de la Bitácora |
+| D3 | **1320 px** | El ancho de las páginas de lectura (`.vista`); la guía decía 1200 px |
+| D4 | **Iconos como hasta ahora** (no se preguntó) | Solo funcionales y junto a una palabra; aprobar y descartar con texto y confirmación |
+| D5 | **`/historial` pasa a una página mínima** con las tres vistas de historia | En grafito y con bloques. `Pendiente.tsx` se elimina en FE7 y `NoEncontrada` pasa a su propio archivo |
 
 ### Qué le toca a cada fase
 
 | Fase | Qué falta | Cómo hereda el rediseño |
 |---|---|---|
-| **FE2** · [ingreso al panel](FE2-ingreso-al-panel.md) | Ingreso, segundo factor con QR, marco con permisos, seguridad de la cuenta. Base: `feat/f5-ingreso-panel`, que usa el diseño de antes del rediseño | Los formularios toman el patrón de Avisos: un bloque, errores junto al campo, borde a 3:1. **Hay que re-vestir** lo que traiga la rama vieja con las reglas de §4 al integrarla, no solo adaptar sus tipos |
+| **FE2** · [ingreso al panel](FE2-ingreso-al-panel.md) | Ingreso, segundo factor con QR, marco con permisos, seguridad de la cuenta. Base: `feat/f5-ingreso-panel`, que usa el diseño de antes del rediseño | Con el grafito (D1), los formularios toman el patrón de Avisos: un bloque, errores junto al campo, borde a 3:1. **Hay que re-vestir** lo que traiga la rama vieja con las reglas de §4 al integrarla, no solo adaptar sus tipos |
 | **FE3** · [moderación y cortes](FE3-moderacion-y-cortes.md) | Cola de reportes, fotos, cortes, vencidos, disputas | La cola usa la fila compacta de la Bitácora (glifo en círculo, qué pasó, hora). La señal de red es una señal, no una acusación (ya dicho en la guía). Confirmación antes de aprobar o descartar |
 | **FE4** · [ingesta](FE4-ingesta.md) | Propuestas, documentos fallidos, salud de los colectores | La **frase exacta del boletín** que respalda la extracción va a la vista (ética 4). La salud de los colectores, como fila de cifras en un bloque |
-| **FE5** · [administración](FE5-administracion.md) | Cuentas, permisos, auditoría, métricas, copia analítica | Tablas paginadas por cabeceras (D2). Las cuentas sintéticas nunca se cuentan como personas. Las cifras, en una fila como Estadísticas, y con la regla de la muestra pequeña donde aplique |
+| **FE5** · [administración](FE5-administracion.md) | Cuentas, permisos, auditoría, métricas, copia analítica | Cuentas y auditoría como tabla dentro de un bloque, paginada por cabeceras (D2). Las cuentas sintéticas nunca se cuentan como personas. Las cifras, en una fila como Estadísticas, y con la regla de la muestra pequeña donde aplique |
 | **FE6** · [cuentas y vecino](FE6-cuentas-y-vecino.md) | Registro, restablecimiento, ingreso y perfil del vecino; reportar con su sesión | Formularios de 480 px en un bloque, como Avisos; los enlaces del correo siguen siendo páginas HTML del backend |
-| **FE7** · [integración y entrega](FE7-integracion-y-entrega.md) | Quitar `Pendiente.tsx` y sacar `/muestrario` de la navegación (D5); axe sin violaciones con el grafito; guion de la demo; capturas y prueba de los cinco segundos | `/muestrario` hoy muestra el sistema de ADR-070: debe mostrar `--tarjeta`, grafito, bloques y glifos o retirarse. Revisar el PDF en Safari y Firefox |
+| **FE7** · [integración y entrega](FE7-integracion-y-entrega.md) | Convertir `/historial` en la página mínima de D5, quitar `Pendiente.tsx` y sacar `/muestrario` de la navegación; axe sin violaciones con el grafito; guion de la demo; capturas y prueba de los cinco segundos | `/muestrario` hoy muestra el sistema de ADR-070: debe mostrar `--tarjeta`, grafito, bloques y glifos o retirarse. Revisar el PDF en Safari y Firefox |
 
 ## 6. Pendientes del propio rediseño
 
@@ -98,5 +100,5 @@ Quedaron fuera del PR #122 y no son de una fase:
 
 1. Lee esto, [`guia-para-yordy.md`](guia-para-yordy.md) y la guía de la fase.
 2. Antes de tocar la interfaz, la skill `disenar-frontend`; antes de cerrar, `revisar-diseno`.
-3. Si algo de §5 «por decidir» te bloquea, **se decide con Yordy y se registra como ADR-107** en `07-decisiones-clave.md` antes de construir.
+3. Las decisiones del panel (D1 a D5) ya están en el ADR-107. Si algo te bloquea o choca con ellas, **se decide con Yordy y se registra como ADR-108** en `07-decisiones-clave.md` antes de construir.
 4. La puerta de cierre es la del README: lint, typecheck, `api:check`, tests, e2e simulado y real, capturas en los cuatro anchos y dos temas, y la prueba de los cinco segundos.

@@ -78,7 +78,7 @@ como plantilla sin criterio; un neutro con temperatura se lee como elegido.
 
 ### 3.1 Grafito — el oscuro de las páginas de historia y Avisos (`ADR-105`)
 
-Cumplimiento, Bitácora, Estadísticas y Avisos usan en el tema oscuro esta variante; el tema claro y el mapa siguen con la tabla de
+Cumplimiento, Bitácora, Estadísticas y Avisos, y por `ADR-107` el ingreso, las cuentas y el panel, usan en el tema oscuro esta variante; el tema claro y el mapa siguen con la tabla de
 arriba. Se declara sobre `[data-paleta="grafito"]` en `<body>`, nunca en `:root`, porque el mapa lee sus colores de `:root`. Los
 cuatro estados y el latón no cambian. `Tarjeta` es el fondo de los bloques; fuera del grafito vale lo mismo que `Elevada`.
 

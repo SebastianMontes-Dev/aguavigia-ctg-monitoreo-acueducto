@@ -193,7 +193,7 @@ Esquemas de disposición, no datos reales. La barra del sitio que aloja los Arti
 | Cumplimiento / estadísticas | Una columna: rótulo → titular-respuesta → cifras → evidencia | Una columna con figuras más anchas | Máximo 1320 px (`ADR-105`); respuesta y evidencia a dos columnas en el primer pliegue (`identidad.md` §4.1) |
 | Bitácora | Barra de filtros compacta; eventos agrupados por día, una o dos líneas cada uno | Igual, con la hora en su propia columna | Máximo 1320 px (`ADR-105`); filtros y resumen a la izquierda, cronología a la derecha |
 | Avisos / cuentas / ingreso | Formulario de una columna con margen 16 px | Formulario de 480 px | Avisos: formulario a la izquierda y qué pasa después a la derecha. Cuentas e ingreso: 480 px, sin ilustración que compita con la tarea |
-| Panel | Selector de sección y filas apiladas; detalle en pantalla completa | Filas apiladas y detalle debajo de selección | Área máxima 1200 px; cola de 384 px + detalle flexible cuando proceda; tablas para cuentas/auditoría |
+| Panel | Selector de sección y filas apiladas; detalle en pantalla completa | Filas apiladas y detalle debajo de selección | Área máxima 1320 px (`ADR-107`); bloques de `--tarjeta` en grafito; cola de 384 px + detalle flexible cuando proceda; cuentas y auditoría como tabla dentro de un bloque |
 
 **Altura en el celular (`ADR-077`).** A 390 × 844, la respuesta principal se ve sin scroll, por encima de la barra inferior, y la página inicial no pasa de dos pantallas (1 688 px; objetivo, una y media) con datos realistas. Una sola representación de cada dato por tamaño: la tabla alternativa de un gráfico va plegada o lo reemplaza, no se apila. Lo que crece se muestra por lotes («Ver todos», «Cargar más»). Cada pantalla lleva una E2E que lo comprueba.
 
