@@ -23,9 +23,9 @@ const DESTINOS_CELULAR = [
 
 const HISTORIAL = ['/historial', '/bitacora', '/cumplimiento', '/estadisticas']
 
-// ADR-105 y ADR-107 (D1): estas páginas, y las cuentas públicas y el vecino (FE6), toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
+// ADR-105 y ADR-107 (D1, D5): estas páginas, con la de Historial, y las cuentas públicas y el vecino (FE6), toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
 // ahí) y nunca en <html>, de donde el mapa lee sus colores.
-const CON_GRAFITO = ['/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/cuenta', '/vecino']
+const CON_GRAFITO = ['/historial', '/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/cuenta', '/vecino']
 
 export function usaGrafito(ruta: string): boolean {
   return CON_GRAFITO.some((prefijo) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))

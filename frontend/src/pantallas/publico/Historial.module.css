@@ -1,0 +1,50 @@
+@layer componentes {
+  /* Tres bloques enlazados: en escritorio uno al lado del otro, en el celular uno bajo otro. */
+  .vistas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+    gap: var(--espacio-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .vistas > li {
+    display: grid;
+  }
+
+  .vista {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas: 'circulo texto' 'ir ir';
+    align-items: start;
+    column-gap: var(--espacio-4);
+    row-gap: var(--espacio-4);
+    color: var(--tinta);
+    text-decoration: none;
+  }
+
+  .circulo { grid-area: circulo; }
+  .texto { grid-area: texto; display: grid; gap: var(--espacio-1); min-width: 0; }
+  .pregunta { font-size: var(--texto-l); font-weight: 600; line-height: 1.25; }
+
+  .ir {
+    grid-area: ir;
+    align-self: end;
+    min-height: var(--objetivo-tactil);
+    padding-top: var(--espacio-3);
+    border-top: 1px solid var(--linea-suave);
+    font-size: var(--texto-s);
+    font-weight: 600;
+  }
+
+  .vista:hover .ir { text-decoration: underline; text-decoration-color: var(--laton); text-underline-offset: 3px; }
+
+  .vista:focus-visible {
+    outline: var(--grosor-foco) solid var(--laton);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 599px) {
+    .vistas { gap: var(--espacio-3); }
+  }
+}
