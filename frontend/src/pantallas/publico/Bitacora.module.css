@@ -77,7 +77,7 @@
   .esqueleto { display: grid; color: var(--tinta-2); }
   .esqueleto span { display: block; height: 56px; border-bottom: 1px solid var(--linea-suave); }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     /* Los filtros siguen a mano al bajar por la lista. */
     .filtros { position: sticky; top: calc(var(--alto-cabecera) + var(--alto-aviso, 0px)); z-index: 5; margin-block: calc(-1 * var(--espacio-2)); padding-block: var(--espacio-2); background: var(--papel); }
     .barra { flex-wrap: nowrap; padding: var(--espacio-1); border: 1px solid var(--linea); border-radius: var(--radio-pastilla); background: var(--tarjeta); }
@@ -95,11 +95,11 @@
     .lateral { position: sticky; top: calc(var(--alto-cabecera) + var(--alto-aviso, 0px) + 72px); }
   }
 
-  @media (max-width: 1099px) {
+  @media (max-width: 68.6875em) {
     .lateral { display: none; }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .pestanas { margin: 0 calc(-1 * var(--margen-pagina)); padding: 0 var(--margen-pagina); }
     .pestana { border-color: var(--tinta-3); background: var(--tarjeta); }
     .botonesFiltro { width: 100%; }

@@ -94,11 +94,11 @@
   @keyframes subir { from { transform: scaleY(0); } }
   @keyframes crecer { from { transform: scaleX(0); } }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .columnas, .ayudas { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: var(--espacio-5); }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     /* Tres cifras no caben a lo ancho: una fila por cifra, qué es a la izquierda y la cifra a la derecha. */
     .resumen { padding-block: var(--espacio-2); }
     .datos, .resumen[data-pocos] .datos { grid-template-columns: minmax(0, 1fr); }

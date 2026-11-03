@@ -30,11 +30,11 @@
   /* La acción que cierra sesiones se dice antes de pulsarla y se confirma aparte. */
   .advertencia { display: grid; gap: var(--espacio-3); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: var(--espacio-5); }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .formulario > button { justify-self: stretch; }
   }
 }

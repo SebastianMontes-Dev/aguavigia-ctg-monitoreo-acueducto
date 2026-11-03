@@ -101,7 +101,7 @@
   .enlaceFuerte { display: inline-flex; align-items: center; min-height: 40px; color: var(--tinta); font-size: var(--texto-s); font-weight: 600; text-decoration-color: var(--laton); text-underline-offset: 3px; }
   .enlaceFuerte:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .columnas { grid-template-columns: minmax(0, 1fr) 400px; column-gap: var(--espacio-5); }
     .columnas[data-ancho='ancho'] { grid-template-columns: minmax(0, 1fr) minmax(420px, 520px); }
     .lateral[data-fija] { position: sticky; top: var(--espacio-4); }
@@ -124,11 +124,11 @@
     .disputa .enlaces { grid-column: 3; grid-row: 1 / span 2; justify-content: flex-end; }
   }
 
-  @media (max-width: 1099px) {
+  @media (max-width: 68.6875em) {
     .lateral[data-solo-ancho] { display: none; }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .lista, .principal > section { min-width: 0; }
     .que { font-size: var(--texto-s); }
     .accion { flex: 1 1 auto; }

@@ -190,7 +190,7 @@ export interface FiltrosBitacora {
 
 // ADR-077: en el celular, un lote que quepa en pantalla y media; en escritorio, uno que llene el primer pliegue.
 function tamanoLoteBitacora(): number {
-  return typeof window !== 'undefined' && window.matchMedia?.('(max-width: 599px)').matches ? 6 : 10
+  return typeof window !== 'undefined' && window.matchMedia?.('(max-width: 37.4375em)').matches ? 6 : 10
 }
 
 export function useBitacora(filtros: FiltrosBitacora) {

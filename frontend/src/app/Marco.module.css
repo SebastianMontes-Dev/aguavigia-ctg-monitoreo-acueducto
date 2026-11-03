@@ -54,18 +54,21 @@
     top: 0;
     z-index: 10;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--espacio-5);
+    gap: var(--espacio-1) var(--espacio-5);
     min-height: var(--alto-cabecera);
-    padding: 0 var(--margen-pagina);
+    padding: var(--espacio-1) var(--margen-pagina);
     background: var(--papel);
     border-bottom: 1px solid var(--linea);
   }
 
+  /* Con la letra al doble la marca no cabe junto al «Menú»: baja de línea en vez de salirse de la página. */
   .marca {
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: var(--espacio-2);
+    gap: 0 var(--espacio-2);
     font-family: var(--fuente-marca);
     font-size: 1.5rem;
     font-weight: 500;
@@ -270,13 +273,13 @@
     background: var(--laton);
   }
 
-  @media (min-width: 600px) {
+  @media (min-width: 37.5em) {
     .barraInferior {
       display: none;
     }
   }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .navegacion,
     .temaEscritorio {
       display: flex;

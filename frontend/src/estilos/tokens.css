@@ -152,7 +152,7 @@
   }
 
   /* identidad.md §4: cabecera de 68 px en escritorio. */
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     :root {
       --alto-cabecera: 68px;
     }

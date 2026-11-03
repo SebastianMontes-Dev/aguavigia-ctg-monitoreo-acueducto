@@ -105,7 +105,7 @@
   }
 
   /* En el celular la leyenda no tapa el mapa: va debajo, en el flujo. */
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .marco {
       display: flex;
       flex-direction: column;

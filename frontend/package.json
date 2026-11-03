@@ -33,6 +33,7 @@
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.11",
     "@playwright/test": "~1.56.1",
     "@protomaps/basemaps": "^5.7.2",
     "@testing-library/dom": "^10.4.2",

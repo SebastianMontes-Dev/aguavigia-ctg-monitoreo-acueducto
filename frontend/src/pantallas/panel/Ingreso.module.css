@@ -35,14 +35,14 @@
   .tarjeta { display: grid; gap: var(--espacio-5); }
   .subtitulo { font-size: var(--texto-l); font-weight: 600; }
 
-  @media (min-width: 900px) {
+  @media (min-width: 56.25em) {
     .pantalla { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); }
     .lado { padding: var(--espacio-6) clamp(40px, 5vw, 88px) var(--espacio-6); border-bottom: 0; border-right: 1px solid var(--linea); }
     .acceso { padding-inline: clamp(24px, 5vw, 88px); }
   }
 
   /* En el celular el lado es una franja con la marca y el titular; los pasos se dicen al ir pidiendo cada dato. */
-  @media (max-width: 899px) {
+  @media (max-width: 56.1875em) {
     .lado { grid-template-rows: auto auto; gap: var(--espacio-4); padding-block: var(--espacio-5); }
     .pasos { display: none; }
     .titular { font-size: clamp(2rem, 9vw, 2.75rem); }

@@ -32,7 +32,7 @@
     text-wrap: balance;
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .vista {
       gap: var(--espacio-4);
       padding-top: var(--espacio-4);

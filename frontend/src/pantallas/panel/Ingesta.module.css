@@ -61,14 +61,14 @@
   .pieBloque { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--espacio-2); }
 
   /* Bloques lado a lado con la misma altura: el de propuestas y la columna de salud y fallidos se estiran juntos. */
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .propuesta { padding: var(--espacio-5) 0; }
     .dosColumnas[data-ancho] { align-items: stretch; }
     .lateral { grid-template-rows: auto 1fr; align-content: stretch; }
     .cifrasColector { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--espacio-2) var(--espacio-3); }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .cabeza { grid-template-columns: auto minmax(0, 1fr); }
     .hora { grid-column: 2; text-align: left; padding-top: 0; }
     .pie .acciones { margin-left: 0; width: 100%; }
