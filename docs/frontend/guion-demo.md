@@ -104,4 +104,4 @@ docker compose --profile simulacion run --rm simulador iniciar --velocidad 300  
 
 ## Cómo salió la última ejecución
 
-Ver la sección «Ejecución del guion» de [`FE7-integracion-y-entrega.md`](FE7-integracion-y-entrega.md#ejecución-del-guion).
+Ver la sección «5. Ejecución del guion» de [`FE7-integracion-y-entrega.md`](FE7-integracion-y-entrega.md#5-ejecución-del-guion).

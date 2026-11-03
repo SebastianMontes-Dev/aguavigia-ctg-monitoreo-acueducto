@@ -443,15 +443,16 @@ Marca cada línea con fecha y PR cuando se cumpla.
 
 - [x] FE0 · contrato al día · en `develop` (2026-10-30, #122; el #121 se cerró sin fusionar)
 - [x] FE1 · lo público, completo · en `develop` (2026-10-30, #122)
-- [ ] FE2 · ingreso al panel · construido · PR a `develop` #130 (la rama `feat/f5-ingreso-panel` ya se archivó como la etiqueta `archivo/yordy-2026-10-31/f5-ingreso-panel`)
-- [ ] FE3 · moderación y cortes · construido · PR a `develop` #130
-- [ ] FE4 · ingesta · construido · PR a `develop` #130 (antes #126)
-- [ ] FE5 · administración (con «Copia analítica» en `/panel/sistema`) · construido · PR a `develop` #130 (antes #127)
-- [ ] FE6 · cuentas públicas y vecino · construido · PR a `develop` #130 (antes #129)
-- [ ] FE7 · integración y entrega
-- [ ] Cobertura del contrato sin huecos fuera de las exclusiones
-- [ ] axe en verde; prueba de los cinco segundos anotada
-- [ ] Guion de la demo ejecutado de principio a fin sobre un `docker compose up` limpio
+- [x] FE2 · ingreso al panel · en `develop` (2026-10-31, #130; la rama `feat/f5-ingreso-panel` ya se archivó como la etiqueta `archivo/yordy-2026-10-31/f5-ingreso-panel`)
+- [x] FE3 · moderación y cortes · en `develop` (2026-10-31, #130)
+- [x] FE4 · ingesta · en `develop` (2026-10-31, #130; antes #126)
+- [x] FE5 · administración (con «Copia analítica» en `/panel/sistema`) · en `develop` (2026-10-31, #130; antes #127)
+- [x] FE6 · cuentas públicas y vecino · en `develop` (2026-10-31, #130; antes #129)
+- [ ] FE7 · integración y entrega · construido en `feature/fe7-integracion` (2026-11-03), sin PR
+- [x] Cobertura del contrato sin huecos fuera de las exclusiones (`npm run api:cobertura`, 2026-11-03)
+- [x] axe en verde (34 pantallas y estados, 2026-11-03)
+- [ ] Prueba de los cinco segundos con otra persona anotada (pasos en [FE7 §8](FE7-integracion-y-entrega.md#8-la-prueba-de-los-cinco-segundos-para-yordy))
+- [x] Guion de la demo ejecutado de principio a fin sobre un `docker compose up` limpio (2026-11-03, `npm run demo:guion`; la alternativa en modo simulación no se ejecutó)
 - [ ] Frontend CI en verde en `main` (los dos jobs)
 
 ---
