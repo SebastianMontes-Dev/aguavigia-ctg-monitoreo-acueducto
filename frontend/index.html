@@ -17,6 +17,13 @@
       if (/^\/(sectores\/[^/]+)?$/.test(location.pathname)) {
         window.listadoPrecargado = fetch('/api/sectores').catch(function () { return null })
       }
+      // Lo mismo para Cumplimiento: su respuesta es el índice global y la serie mensual.
+      if (location.pathname === '/cumplimiento') {
+        window.precargas = {
+          '/api/cumplimiento': fetch('/api/cumplimiento').catch(function () { return null }),
+          '/api/cumplimiento/serie': fetch('/api/cumplimiento/serie').catch(function () { return null }),
+        }
+      }
     </script>
   </head>
   <body>
