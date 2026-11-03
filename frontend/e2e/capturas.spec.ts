@@ -5,7 +5,7 @@ import { PANTALLAS, titular } from './pantallas'
 
 // FE7 · capturas para revisar-diseno: cada pantalla en 1440×900, 1024×768, 768×1024 y 390×844, en claro, en oscuro y con movimiento
 // reducido (en claro). No es una prueba: solo corre con CAPTURAS=1 y escribe en test-results/capturas/fe7/ (ignorado por git).
-// `npm run test:e2e` vacía test-results al empezar: se corre al final y, si hace falta conservarlas, se copian aparte.
+// Playwright vacía test-results al empezar CADA corrida (también con -g): para no perder lo ya tomado, CAPTURAS_DIR apunta a otra carpeta.
 //   CAPTURAS=1 npx playwright test e2e/capturas.spec.ts --project=escritorio
 test.skip(!process.env.CAPTURAS, 'Solo con CAPTURAS=1')
 
@@ -21,7 +21,7 @@ const VARIANTES = [
   { nombre: 'reducido', esquema: 'light', movimiento: 'reduce' },
 ] as const
 
-const CARPETA = join(process.cwd(), 'test-results', 'capturas', 'fe7')
+const CARPETA = process.env.CAPTURAS_DIR ?? join(process.cwd(), 'test-results', 'capturas', 'fe7')
 const archivo = (nombre: string) => nombre.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/gi, '-').toLowerCase().replace(/^-|-$/g, '')
 
 for (const pantalla of PANTALLAS) {
@@ -39,7 +39,8 @@ for (const pantalla of PANTALLAS) {
         await page.evaluate(() => document.fonts.ready)
         // La entrada escalonada dura 560 ms (identidad.md §5): la captura se toma cuando terminó.
         await page.waitForTimeout(variante.movimiento === 'reduce' ? 150 : 900)
-        await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible()
+        // Con la lista de opciones abierta react-aria oculta el resto de la página a los lectores: el titular ya se comprobó en `listo`.
+        await expect(page.getByRole('heading', { level: 1, includeHidden: true }).first()).toBeVisible()
         await page.screenshot({ path: join(CARPETA, `${archivo(pantalla.nombre)}__${nombre}__${variante.nombre}.png`) })
         await contexto.close()
       }

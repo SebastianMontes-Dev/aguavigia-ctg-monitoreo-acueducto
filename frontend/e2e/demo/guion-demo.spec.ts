@@ -68,7 +68,7 @@ test('debeRecorrerLaDemoDePrincipioAFinSobreUnaBaseLimpia', async ({ browser, re
   const publico = await browser.newContext({ baseURL: 'http://localhost:4173', viewport: { width: 1280, height: 800 }, locale: 'es-CO' })
   const indice = await publico.newPage()
   await indice.goto('/cumplimiento')
-  await expect(indice.getByRole('heading', { level: 1 })).toBeVisible()
+  await expect(indice.getByRole('main')).toContainText(/Aún no hay cortes cerrados/)
   const textoAntes = (await indice.getByRole('main').innerText()).replace(/\s+/g, ' ')
   await captura(indice, '01-indice-antes')
   marcar('0 · el Índice antes', textoAntes.slice(0, 140))
