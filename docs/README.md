@@ -12,7 +12,7 @@ Guías por tema, escritas conforme se valida cada parte del backend y contrastad
 | [05 · Seguridad y claves](05-seguridad-y-claves.md) | Hecha; pendientes en §5 |
 | [06 · Ética de datos](06-etica-de-datos.md) | Hecha; pendientes en §3 |
 | [07 · Decisiones clave](07-decisiones-clave.md) | Hecha (ADR-001 a 100; ojo con la nota de numeración) |
-| 08 · Guion de la presentación | Pendiente |
+| [08 · Guion de la presentación](frontend/guion-demo.md) | Escrito (2026-11-03): ciudadano reporta con foto → el veedor modera → el consenso cambia el mapa en vivo → el corte se cierra → el Índice se mueve → un suscriptor responde «ya volvió»; con alternativa en modo simulación |
 | [09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) | **Ejecutada y cerrada** (2026-10-15; CI verde el 2026-10-18): copia analítica del Índice de Cumplimiento; fases 2 y 3 sin hacer |
 | [Guía para Yordy](frontend/guia-para-yordy.md) | **Empieza aquí si trabajas el frontend** (2026-10-18): estado de hoy, todo lo que el backend ya hace, entorno y plan fase por fase |
 | [Plan del frontend (FE0–FE7)](frontend/README.md) | Plan del 2026-10-06; en curso (Yordy), actualizado el 2026-10-18 con las rutas de PostgreSQL y el 2026-10-25 con el backend cerrado, los topes de cuentas y el trabajo en la nube |
