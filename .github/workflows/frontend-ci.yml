@@ -55,6 +55,10 @@ jobs:
       - name: Contrato de la API sin deriva
         run: npm run api:check
 
+      # Cada ruta del contrato la llama algún módulo de src o está excluida a propósito (docs/frontend/README.md).
+      - name: Cobertura del contrato
+        run: npm run api:cobertura
+
       # tokens.test.ts compara tokens.css con DESIGN.md: por eso DESIGN.md dispara este workflow.
       - name: Pruebas unitarias (Vitest)
         run: npm test
