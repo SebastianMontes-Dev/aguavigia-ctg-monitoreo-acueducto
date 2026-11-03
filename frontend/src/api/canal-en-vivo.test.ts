@@ -99,4 +99,34 @@ describe('entornoNavegador', () => {
     expect(() => entorno.cancelar(entorno.programar(() => {}, 1000))).not.toThrow()
     expect(cancelar).toHaveBeenCalledOnce()
   })
+
+  // RNF001: index.html pide el listado mientras baja el JavaScript; el canal lo toma una sola vez y las lecturas siguientes van a la red.
+  it('debeUsarElListadoPrecargadoUnaSolaVezYLuegoPedirloDeNuevo', async () => {
+    const precargada = new Response('{"sectores":[],"generadoEn":"2026-11-03T00:00:00Z"}')
+    const red = vi.fn<typeof fetch>(() => Promise.resolve(new Response('{}')))
+    vi.stubGlobal('fetch', red)
+    window.listadoPrecargado = Promise.resolve(precargada)
+    const entorno = entornoNavegador()
+    expect(await entorno.fetch('/api/sectores')).toBe(precargada)
+    expect(red).not.toHaveBeenCalled()
+    await entorno.fetch('/api/sectores')
+    expect(red).toHaveBeenCalledOnce()
+  })
+
+  it('debePedirElListadoNormalSiLaPrecargaFallo', async () => {
+    const red = vi.fn<typeof fetch>(() => Promise.resolve(new Response('{}')))
+    vi.stubGlobal('fetch', red)
+    window.listadoPrecargado = Promise.resolve(null)
+    await entornoNavegador().fetch('/api/sectores')
+    expect(red).toHaveBeenCalledOnce()
+  })
+
+  it('noDebeTocarLasDemasRutasConLaPrecargaPendiente', async () => {
+    const red = vi.fn<typeof fetch>(() => Promise.resolve(new Response('{}')))
+    vi.stubGlobal('fetch', red)
+    window.listadoPrecargado = Promise.resolve(new Response('{}'))
+    await entornoNavegador().fetch('/api/sistema/modo')
+    expect(red).toHaveBeenCalledOnce()
+    window.listadoPrecargado = undefined
+  })
 })

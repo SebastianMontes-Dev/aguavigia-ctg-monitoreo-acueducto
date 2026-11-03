@@ -16,9 +16,11 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:real": "playwright test --config playwright.real.config.ts",
+    "demo:guion": "playwright test --config playwright.demo.config.ts",
     "api:sync": "node scripts/contrato-api.mjs --escribir",
     "api:check": "node scripts/contrato-api.mjs --comprobar",
-    "api:cobertura": "node scripts/cobertura-contrato.mjs"
+    "api:cobertura": "node scripts/cobertura-contrato.mjs",
+    "medir:rendimiento": "node scripts/medir-rendimiento.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",
