@@ -150,10 +150,11 @@ test('noDebeOfrecerElBotonDeAvisosSiElBarrioNoTieneNinguno', async ({ page }) =>
   await expect(page.getByRole('link', { name: /Ver todos/ })).toHaveCount(0)
 })
 
+// El fixture de Armenia se actualizó «hace una hora»: según los milisegundos que pasen hasta pintar, la línea dice 59 o 60 min, o «1 h».
 test('debeDarUnaSolaLineaDeFrescuraSinRepetirVerificadoNiElListadoDeLaCiudad', async ({ page }) => {
   await simularApi(page)
   await page.goto('/sectores/armenia')
-  await expect(page.getByRole('region', { name: 'Estado actual' }).getByText(/Actualizado hace \d+ min/)).toBeVisible()
+  await expect(page.getByRole('region', { name: 'Estado actual' }).getByText(/Actualizado hace (\d+ min|\d+ h)/)).toBeVisible()
   await expect(page.getByText(/Listado generado/)).toHaveCount(0)
   await expect(page.getByText(/verificado hace/i)).toHaveCount(0)
   await expect(page.getByText(/Estado registrado/)).toHaveCount(0)
