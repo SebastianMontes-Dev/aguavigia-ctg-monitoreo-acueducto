@@ -171,7 +171,7 @@ Una sesión de Claude no puede hacerla: necesita a una persona que no haya visto
 3. En cada una, a 1440×900 y a 390×844, muéstrala **cinco segundos** y tápala. Pregunta: «¿qué responde esta página?» y «¿qué puedes hacer aquí?».
 4. Anota la respuesta textual y si coincide con el titular de la pantalla. Pasa si lo dice sin bajar la página.
 5. Si falla en alguna, anota cuál y qué entendió en su lugar; abre un ADR solo si el cambio es de diseño.
-6. Anota el resultado aquí, con fecha: ______
+6. Anota el resultado aquí, con fecha: ______ (sin hacer a 2026-11-03)
 
 ### 9. La puerta, tal como quedó (2026-11-03)
 
