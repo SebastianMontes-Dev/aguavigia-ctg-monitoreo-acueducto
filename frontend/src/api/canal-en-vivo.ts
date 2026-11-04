@@ -166,9 +166,23 @@ export function crearCanal(entorno: EntornoCanal) {
   }
 }
 
+declare global {
+  interface Window {
+    /** El listado que `index.html` empezó a pedir antes de que bajara el resto de la aplicación (RNF001); se usa una sola vez. */
+    listadoPrecargado?: Promise<Response | null>
+  }
+}
+
 export function entornoNavegador(): EntornoCanal {
   return {
-    fetch: window.fetch.bind(window), conectar: window.fetch.bind(window), ahora: Date.now, aleatorio: Math.random,
+    fetch: (entrada, opciones) => {
+      const precargado = entrada === '/api/sectores' ? window.listadoPrecargado : undefined
+      if (!precargado) return window.fetch(entrada, opciones)
+      window.listadoPrecargado = undefined
+      // Si la petición adelantada falló, se hace la normal: el canal no se entera de la diferencia.
+      return precargado.then((respuesta) => respuesta ?? window.fetch(entrada, opciones))
+    },
+    conectar: window.fetch.bind(window), ahora: Date.now, aleatorio: Math.random,
     programar: (accion, ms) => setTimeout(accion, ms), cancelar: (id) => clearTimeout(id),
     visible: () => document.visibilityState === 'visible', enLinea: () => navigator.onLine,
     observar: (accion) => {

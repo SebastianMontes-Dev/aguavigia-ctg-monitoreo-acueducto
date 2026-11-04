@@ -5,6 +5,7 @@ import { Button } from 'react-aria-components'
 import { iniciarSesion, type ResultadoIngreso } from '../../api/panel'
 import { useAlcance, type MotivoIngreso } from '../../app/panel'
 import { usePaletaGrafito } from '../../app/paleta'
+import { FranjaSimulacion, useEnSimulacion } from '../../componentes/FranjaSimulacion'
 import { Campo } from '../../componentes/Campo'
 import campos from '../../componentes/Campo.module.css'
 import botones from '../../componentes/Botones.module.css'
@@ -32,6 +33,7 @@ interface ErroresIngreso {
  */
 export function Ingreso() {
   usePaletaGrafito()
+  const simulacion = useEnSimulacion()
   const { motivo } = useSearch({ from: '/panel/ingreso' })
   const navegar = useNavigate()
   const alcance = useAlcance()
@@ -102,80 +104,83 @@ export function Ingreso() {
   const errorDelFormulario = codigoRechazado ? null : mensaje
 
   return (
-    <main className={propios.pantalla}>
-      <section className={propios.lado} aria-labelledby="titulo-pagina">
-        <p className={propios.marca}>AguaVigía <span className={propios.rotuloMarca}>Panel</span></p>
-        <div className={propios.presentacion}>
-          <span className={propios.filete} aria-hidden="true" />
-          <h1 id="titulo-pagina" className={`${pagina.titular} ${propios.titular}`}>Ingreso al panel</h1>
-          <p className={propios.entrada}>Para veedores y administradores. Consultar el mapa y reportar no necesitan cuenta.</p>
-        </div>
-        <ol className={propios.pasos} aria-label="Cómo se entra">
-          <li><span className={propios.numero} aria-hidden="true">1</span><span>Escribe tu correo y tu clave.</span></li>
-          <li><span className={propios.numero} aria-hidden="true">2</span><span>Si tu cuenta tiene segundo factor (los administradores siempre), escribe el código de seis dígitos de tu app.</span></li>
-          <li><span className={propios.numero} aria-hidden="true">3</span><span>Entras al panel. La sesión dura 8 horas y se cierra sola.</span></li>
-        </ol>
-      </section>
-      <section className={propios.acceso} aria-label="Formulario de ingreso">
-        <Link to="/" className={propios.volver}><span aria-hidden="true">←</span> Volver al mapa</Link>
-        <div className={propios.formulario}>
-          {motivo && !resultado && <output className={estilos.aviso}>{MOTIVO_INGRESO[motivo]}</output>}
-          <form className={propios.tarjeta} onSubmit={(evento) => void enviar(evento)} noValidate aria-labelledby="titulo-ingreso">
-            <h2 id="titulo-ingreso" className={propios.subtitulo}>{conCodigo ? 'Un código más' : 'Entra con tu cuenta'}</h2>
-            {conCodigo ? (
-              <>
-                <p className={estilos.nota}>
-                  La clave de <strong>{correo.trim()}</strong> es correcta. Escribe el código de seis dígitos que muestra tu app de
-                  autenticación.
-                </p>
-                <Campo
-                  etiqueta="Código de la app"
-                  tipo="codigo"
-                  value={codigo}
-                  onChange={(evento) => setCodigo(evento.target.value)}
-                  error={errorDelCodigo}
-                  ref={campoCodigo}
-                />
-              </>
-            ) : (
-              <>
-                <Campo
-                  etiqueta="Correo"
-                  tipo="correo"
-                  value={correo}
-                  onChange={(evento) => setCorreo(evento.target.value)}
-                  error={errores.correo}
-                  ref={campoCorreo}
-                />
-                <Campo
-                  etiqueta="Clave"
-                  tipo="clave"
-                  autoComplete="current-password"
-                  value={clave}
-                  onChange={(evento) => setClave(evento.target.value)}
-                  error={errores.clave}
-                  ref={campoClave}
-                />
-              </>
-            )}
-            {errorDelFormulario && <p className={campos.error} role="alert">{errorDelFormulario}</p>}
-            <Button type="submit" className={`${botones.principal} ${botones.ancho}`} isDisabled={enviando}>
-              {enviando ? 'Ingresando…' : <>Ingresar <span className={botones.flecha} aria-hidden="true">→</span></>}
-            </Button>
-            {conCodigo ? (
-              <div className={estilos.acciones}>
-                <button type="button" className={estilos.enlaceBoton} onClick={cambiarDeCuenta}>Ingresar con otra cuenta</button>
-              </div>
-            ) : (
-              <div className={estilos.acciones}>
-                <Link to="/cuenta/olvide" className={estilos.enlaceBoton}>Olvidé mi clave</Link>
-                <Link to="/cuenta/solicitar" className={estilos.enlaceBoton}>Solicitar acceso</Link>
-                <Link to="/cuenta/reenviar" className={estilos.enlaceBoton}>¿No te llegó el correo?</Link>
-              </div>
-            )}
-          </form>
-        </div>
-      </section>
-    </main>
+    <>
+      <FranjaSimulacion />
+      <main className={propios.pantalla} data-simulacion={simulacion || undefined}>
+        <section className={propios.lado} aria-labelledby="titulo-pagina">
+          <p className={propios.marca}>AguaVigía <span className={propios.rotuloMarca}>Panel</span></p>
+          <div className={propios.presentacion}>
+            <span className={propios.filete} aria-hidden="true" />
+            <h1 id="titulo-pagina" className={`${pagina.titular} ${propios.titular}`}>Ingreso al panel</h1>
+            <p className={propios.entrada}>Para veedores y administradores. Consultar el mapa y reportar no necesitan cuenta.</p>
+          </div>
+          <ol className={propios.pasos} aria-label="Cómo se entra">
+            <li><span className={propios.numero} aria-hidden="true">1</span><span>Escribe tu correo y tu clave.</span></li>
+            <li><span className={propios.numero} aria-hidden="true">2</span><span>Si tu cuenta tiene segundo factor (los administradores siempre), escribe el código de seis dígitos de tu app.</span></li>
+            <li><span className={propios.numero} aria-hidden="true">3</span><span>Entras al panel. La sesión dura 8 horas y se cierra sola.</span></li>
+          </ol>
+        </section>
+        <section className={propios.acceso} aria-label="Formulario de ingreso">
+          <Link to="/" className={propios.volver}><span aria-hidden="true">←</span> Volver al mapa</Link>
+          <div className={propios.formulario}>
+            {motivo && !resultado && <output className={estilos.aviso}>{MOTIVO_INGRESO[motivo]}</output>}
+            <form className={propios.tarjeta} onSubmit={(evento) => void enviar(evento)} noValidate aria-labelledby="titulo-ingreso">
+              <h2 id="titulo-ingreso" className={propios.subtitulo}>{conCodigo ? 'Un código más' : 'Entra con tu cuenta'}</h2>
+              {conCodigo ? (
+                <>
+                  <p className={estilos.nota}>
+                    La clave de <strong>{correo.trim()}</strong> es correcta. Escribe el código de seis dígitos que muestra tu app de
+                    autenticación.
+                  </p>
+                  <Campo
+                    etiqueta="Código de la app"
+                    tipo="codigo"
+                    value={codigo}
+                    onChange={(evento) => setCodigo(evento.target.value)}
+                    error={errorDelCodigo}
+                    ref={campoCodigo}
+                  />
+                </>
+              ) : (
+                <>
+                  <Campo
+                    etiqueta="Correo"
+                    tipo="correo"
+                    value={correo}
+                    onChange={(evento) => setCorreo(evento.target.value)}
+                    error={errores.correo}
+                    ref={campoCorreo}
+                  />
+                  <Campo
+                    etiqueta="Clave"
+                    tipo="clave"
+                    autoComplete="current-password"
+                    value={clave}
+                    onChange={(evento) => setClave(evento.target.value)}
+                    error={errores.clave}
+                    ref={campoClave}
+                  />
+                </>
+              )}
+              {errorDelFormulario && <p className={campos.error} role="alert">{errorDelFormulario}</p>}
+              <Button type="submit" className={`${botones.principal} ${botones.ancho}`} isDisabled={enviando}>
+                {enviando ? 'Ingresando…' : <>Ingresar <span className={botones.flecha} aria-hidden="true">→</span></>}
+              </Button>
+              {conCodigo ? (
+                <div className={estilos.acciones}>
+                  <button type="button" className={estilos.enlaceBoton} onClick={cambiarDeCuenta}>Ingresar con otra cuenta</button>
+                </div>
+              ) : (
+                <div className={estilos.acciones}>
+                  <Link to="/cuenta/olvide" className={estilos.enlaceBoton}>Olvidé mi clave</Link>
+                  <Link to="/cuenta/solicitar" className={estilos.enlaceBoton}>Solicitar acceso</Link>
+                  <Link to="/cuenta/reenviar" className={estilos.enlaceBoton}>¿No te llegó el correo?</Link>
+                </div>
+              )}
+            </form>
+          </div>
+        </section>
+      </main>
+    </>
   )
 }

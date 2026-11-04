@@ -11,9 +11,10 @@
     padding: var(--espacio-3) var(--margen-pagina) var(--espacio-4);
   }
 
+  /* Alto mínimo y no fijo: con la letra del navegador al doble la leyenda ocupa varias filas y el mapa crece en vez de quedarse sin lienzo. */
   .mapa {
     grid-area: mapa;
-    height: max(240px, 36svh);
+    min-height: max(240px, 36svh);
     border-block: 1px solid var(--linea);
   }
 
@@ -23,9 +24,10 @@
   }
 
   /* Tableta: el mapa arriba (44 vh) y el panel debajo. */
-  @media (min-width: 600px) {
+  @media (min-width: 37.5em) {
     .mapa {
       height: 44vh;
+      min-height: 0;
     }
 
     .panel {
@@ -35,7 +37,7 @@
   }
 
   /* Escritorio: panel contextual de 440 px a la izquierda y mapa a la derecha; el panel se desplaza por dentro. */
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .pantalla {
       grid-template-columns: 440px minmax(0, 1fr);
       grid-template-rows: auto minmax(0, 1fr);

@@ -3,6 +3,23 @@
 El backend manda y el frontend se adapta (decisión del dueño, 2026-09-30). Cada fase añade aquí su sección: qué rompe, qué es
 nuevo y qué debe cambiar el frontend. Sin periodo de compatibilidad: lo viejo se elimina.
 
+## Qué secciones adoptó ya el frontend (cierre de FE7, 2026-11-03)
+
+Revisado contra `frontend/src`. «Adoptada» quiere decir que cada ítem de la sección que toca al cliente está construido y probado; el detalle de cada fase del
+cliente está en [`docs/frontend/`](../frontend/README.md). `frontend/scripts/cobertura-contrato.mjs` comprueba además, en cada CI, que ninguna ruta del contrato
+quede sin cliente salvo las excluidas a propósito.
+
+| Sección | Estado | Dónde / qué queda fuera |
+|---|---|---|
+| F0 — Base | **Adoptada** (FE0) | Sin `image/webp` en las fotos |
+| F1 — Núcleo de estado | **Adoptada** (FE0, FE1) | `cierres[]` por barrio, `EXPIRADO` y `ANULADO`, `enDisputa`, `respaldo`, insignias del estado del barrio |
+| F2 — Identidad | **Adoptada** (FE0, FE6) | `X-Dispositivo` pedido una vez; sesión de vecino; cuentas, registro y restablecimiento. Los correos siguen llevando a las páginas HTML del backend (FE6b, decisión D-C) |
+| F3 — Fotos, ingesta y «¿ya volvió el agua?» | **Adoptada** (FE0, FE1, FE3, FE4) | `subidaToken`/`X-Subida`, `fotoEstado`, fotos del panel con `Authorization`, propuestas con `citaTextual` y `motivoDeRevision`, página «¿Ya volvió el agua?». `GET /api/fotos/{nombre}` no tiene pantalla (no hay lista pública de reportes) |
+| F4 — Datos, modo y calidad del Índice | **Adoptada** (FE1, FE3, FE5) | Banner de `modo`, `calidad` y los tres campos del Índice, `senalRed` en la cola, `sintetica` en las cuentas. `cuentasSinteticas` no se muestra: ninguna pantalla habla de ellas |
+| F5 — Simulación | **Adoptada** (FE1, FE7) | Franja fija «Simulación» en el marco público y, desde FE7, también en el ingreso y todo el panel, `CORTE_PROGRAMADO` en el mapa y la leyenda. `/api/sim/**` no lo llama el frontend |
+| F6 — Métricas de calibración | **Adoptada** (FE5) | `/panel/sistema`; `sectorIds` de 1 a 211 en avisos. Las exportaciones CSV se descargan sin procesarse |
+| F7 — PostgreSQL, copia analítica | **Adoptada en parte** (FE5) | `GET /api/veedor/analitica/copia` en `/panel/sistema`. Las dos rutas públicas (`/api/analitica/cumplimiento` y `/mensual`) se excluyen a propósito (decisión D-A) |
+
 ## F0 — Base
 
 ### Rompe

@@ -1,8 +1,8 @@
 import { usaGrafito } from './Marco'
 
 describe('usaGrafito', () => {
-  it('debeUsarElGrafitoEnLasCuatroPaginasYEnLosEnlacesDeAvisos', () => {
-    for (const ruta of ['/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/avisos/confirmar', '/avisos/baja']) {
+  it('debeUsarElGrafitoEnLasPaginasDeHistoriaYEnLosEnlacesDeAvisos', () => {
+    for (const ruta of ['/historial', '/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/avisos/confirmar', '/avisos/baja']) {
       expect(usaGrafito(ruta), ruta).toBe(true)
     }
   })
@@ -14,7 +14,7 @@ describe('usaGrafito', () => {
   })
 
   it('noDebeUsarElGrafitoEnElMapaNiEnLaFichaDelBarrio', () => {
-    for (const ruta of ['/', '/sectores/manga', '/sectores/manga/restablecimiento', '/historial', '/confirmar/abc', '/avisosx']) {
+    for (const ruta of ['/', '/sectores/manga', '/sectores/manga/restablecimiento', '/confirmar/abc', '/avisosx']) {
       expect(usaGrafito(ruta), ruta).toBe(false)
     }
   })

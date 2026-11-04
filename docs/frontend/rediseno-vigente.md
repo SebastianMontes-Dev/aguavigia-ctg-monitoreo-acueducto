@@ -88,7 +88,7 @@ Yordy las decidió el 2026-10-30 y están en el [ADR-107](../07-decisiones-clave
 
 Quedaron fuera del PR #122 y no son de una fase:
 
-- **El rediseño del ingreso y del alta del segundo factor a dos columnas** (commit `7a5e674`, 2026-10-31) **no tiene ADR.** La skill `disenar-frontend` pide registrar una decisión visual nueva en `docs/07-decisiones-clave.md` y `identidad.md`; el siguiente número libre es el 109. Hay que registrarlo antes de cerrar FE7.
+- ~~El rediseño del ingreso y del alta del segundo factor a dos columnas (commit `7a5e674`, 2026-10-31) no tenía ADR.~~ Registrado el 2026-11-03 como el [ADR-109](../07-decisiones-clave.md); el cierre de FE7 suma el ADR-110.
 - **El orden de las capas CSS** se fija ahora en `frontend/index.html` (commit `8b1861d`, del PR #129) y debe coincidir con `frontend/src/estilos/capas.css`. Cambió el aspecto de todas las pantallas de la build: hay que mirar las de FE2 a FE5 antes de dar por buena FE7.
 - **Las capturas de FE5 se perdieron** (`npm run test:e2e` borra `frontend/test-results/`): hay que sacarlas de nuevo después del último e2e, o respaldarlas fuera de esa carpeta.
 - **El e2e real del panel** (FE2 a FE5) no ha corrido nunca; ver la actualización del 2026-10-31 de [`README.md`](README.md).

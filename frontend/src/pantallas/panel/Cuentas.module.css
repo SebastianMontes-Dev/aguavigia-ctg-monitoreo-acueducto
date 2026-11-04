@@ -7,14 +7,14 @@
   .aviso { display: block; }
   .bloqueTabla { gap: var(--espacio-4); }
   .cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--espacio-3); }
-  .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-3) var(--espacio-4); align-items: end; }
+  .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: var(--espacio-3) var(--espacio-4); align-items: end; }
   .interruptor { display: flex; align-items: flex-start; gap: var(--espacio-3); min-height: 48px; font-size: var(--texto-s); font-weight: 600; cursor: pointer; }
   .interruptor input, .casilla input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--cardenillo); }
   .interruptor input:focus-visible, .casilla input:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
   .interruptor .origen { display: block; font-weight: 400; }
 
   .invitar { display: grid; gap: var(--espacio-4); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
-  .camposInvitacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-4); align-items: start; }
+  .camposInvitacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: var(--espacio-4); align-items: start; }
 
   .contenedorTabla { min-width: 0; overflow-x: auto; }
   .tabla { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
@@ -55,21 +55,21 @@
   .resumen { display: grid; gap: var(--espacio-1); margin: 0; padding-left: var(--espacio-5); font-size: var(--texto-s); }
 
   /* Tres cifras: en el celular, una línea por cifra con el número delante en vez de una fila apretada. */
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .cifrasResumen { grid-template-columns: 1fr; }
     .cifrasResumen > div, .cifrasResumen > div + div { display: flex; align-items: baseline; gap: var(--espacio-3); padding: var(--espacio-2) 0 0; border-left: 0; }
     .cifrasResumen dd { order: 1; min-width: 2ch; }
     .cifrasResumen dt { order: 2; font-size: var(--texto-s); }
   }
 
-  @media (min-width: 900px) {
+  @media (min-width: 56.25em) {
     .cuerpoPanel { grid-template-columns: minmax(12rem, 18rem) minmax(0, 1fr); }
     .cuerpoPanel:has([data-ancha]) { grid-template-columns: minmax(0, 1fr); }
     .editor { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
   }
 
   /* Debajo de 900 px la tabla se vuelve una lista de cuentas: cada fila, un bloque con sus datos rotulados en dos columnas. */
-  @media (max-width: 899px) {
+  @media (max-width: 56.1875em) {
     .tabla, .tabla tbody, .tabla tr, .tabla td { display: block; }
     .tabla thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
     .tabla .fila { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--espacio-2) var(--espacio-4); padding: var(--espacio-3) 0; border-bottom: 1px solid var(--linea-suave); }
@@ -81,7 +81,7 @@
     .fila[data-abierta] { border-bottom-color: transparent; }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .cabecera > button { width: 100%; }
     .pie .acciones { width: 100%; }
   }

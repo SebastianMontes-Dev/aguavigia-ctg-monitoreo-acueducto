@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
-import { useModoSistema } from './datos'
+import { FranjaSimulacion, useEnSimulacion } from '../componentes/FranjaSimulacion'
 import { useHaySesionVecino } from './vecino'
 import { usePaletaGrafito } from './paleta'
 import { SelectorTema } from './SelectorTema'
@@ -23,9 +23,9 @@ const DESTINOS_CELULAR = [
 
 const HISTORIAL = ['/historial', '/bitacora', '/cumplimiento', '/estadisticas']
 
-// ADR-105 y ADR-107 (D1): estas páginas, y las cuentas públicas y el vecino (FE6), toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
+// ADR-105 y ADR-107 (D1, D5): estas páginas, con la de Historial, y las cuentas públicas y el vecino (FE6), toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
 // ahí) y nunca en <html>, de donde el mapa lee sus colores.
-const CON_GRAFITO = ['/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/cuenta', '/vecino']
+const CON_GRAFITO = ['/historial', '/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/cuenta', '/vecino']
 
 export function usaGrafito(ruta: string): boolean {
   return CON_GRAFITO.some((prefijo) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))
@@ -61,7 +61,7 @@ function EnlaceCuenta({ clase }: { clase: string | undefined }) {
 export function Marco() {
   const { pathname } = useLocation()
   // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
-  const simulacion = useModoSistema().data?.modo === 'SIMULACION'
+  const simulacion = useEnSimulacion()
   const grafito = usaGrafito(pathname)
   usePaletaGrafito(grafito)
   return (
@@ -93,11 +93,7 @@ export function Marco() {
           </Popover>
         </DialogTrigger>
       </header>
-      {simulacion && (
-        <output className={estilos.simulacion}>
-          <strong>Simulación.</strong> Datos de una simulación; no son reales.
-        </output>
-      )}
+      <FranjaSimulacion className={estilos.simulacion} />
       <main id="contenido" className={estilos.principal} tabIndex={-1}>
         <Outlet />
       </main>

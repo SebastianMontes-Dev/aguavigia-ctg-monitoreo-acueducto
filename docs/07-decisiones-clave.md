@@ -12,7 +12,7 @@ Cada fila tiene su número de ADR para buscarla ahí. Las decisiones tomadas des
 **Ojo con la numeración.** El registro histórico llega hasta el ADR-089, y la §4 de este archivo reutilizó los números 087, 088 y 089 para
 decisiones distintas. Aquí y en el código, **ADR-087 a 097 significan siempre las decisiones de la §4**. Para citar una del registro histórico
 se escribe «histórico ADR-0xx» (por ejemplo, el registro masivo de cuentas de la demo de carga es el histórico ADR-088). Los números 098 y 099
-se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) el **ADR-106** (§10), el **ADR-107** (§11) y el **ADR-108** (§12) son los últimos usados; el siguiente libre es el 109.
+se usaron en el plan de reducción del backend, que se canceló y revirtió el 2026-10-14: no tienen decisión vigente y no se reutilizan. El **ADR-100** (§5), el **ADR-101** y el **ADR-102** (§6), el **ADR-103** (§7), el **ADR-104** (§8), el **ADR-105** (§9) el **ADR-106** (§10), el **ADR-107** (§11), el **ADR-108** (§12), el **ADR-109** (§13) y el **ADR-110** (§14) son los últimos usados; el siguiente libre es el 111.
 
 ## 1. Decisiones que se conservan
 
@@ -717,3 +717,37 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Una composición con jerarquía y sin huecos entre bloques, que el panel y las cuentas (ADR-107) pueden copiar. **Pierde.** En los enlaces del correo el bloque de la tarea queda con aire
   debajo del botón, porque se estira a la altura del bloque teñido.
 - **Se revierte** con los archivos `Avisos.tsx`, `Avisos.module.css` y `SelectorBarrio`; no toca datos.
+
+## 13. El ingreso y el alta del segundo factor a dos columnas (2026-10-31, registrado el 2026-11-03)
+
+### ADR-109 — Ingreso al panel y alta del segundo factor: la presentación a la izquierda y la tarea a la derecha
+
+- **Contexto.** El commit `7a5e674` (Yordy Pardo, 2026-10-31) rediseñó estas dos pantallas sin ADR, y la skill `disenar-frontend` exige registrar una decisión visual. Este registro la deja escrita; no cambia lo construido.
+- **Decisión.**
+  1. **El ingreso son dos mitades a pantalla completa** desde 900 px. A la izquierda, una franja teñida de cardenillo (la respuesta de una página sin estado, regla 4 de `rediseno-vigente.md` §4) con la marca,
+     el titular, un filete de latón y los tres pasos de cómo se entra; a la derecha, el formulario centrado en su mitad, a 420 px, sin tarjeta propia: la mitad entera ya es el recuadro.
+  2. **El alta del segundo factor usa la misma pantalla.** Los pasos de la izquierda marcan el que toca (`aria-current="step"`) y la tarea de la derecha cambia: generar el QR, escanearlo, escribir el código.
+     Al cambiar de teléfono se conserva el código ya escrito.
+  3. **En el celular** la mitad izquierda es una franja con la marca y el titular, y los pasos se dicen al ir pidiendo cada dato (se ocultan en la franja).
+- **Sin colores, sombras ni animaciones nuevas.** Solo los tokens del grafito (ADR-107, D1). El único acento es el filete de latón, el mismo del subrayado del menú.
+- **Gana.** Una pantalla que dice dónde está la persona (el panel comparte paleta con el sitio, ADR-107) y qué falta para entrar. **Pierde.** Es la única pantalla del sitio sin la cabecera pública.
+- **Se revierte** con `Ingreso.tsx`, `SegundoFactor.tsx` y sus dos hojas de estilos.
+
+## 14. Cierre del frontend: Historial en bloques y puntos de quiebre en `em` (2026-11-03)
+
+### ADR-110 — `/historial` en tres bloques enlazados, y las consultas de medios y la cabecera que aguantan la letra al doble
+
+- **Contexto.** FE7 retira lo provisional (D5 de ADR-107) y mide accesibilidad: con el tamaño de letra del navegador al 200 %, la cabecera de escritorio seguía en su forma ancha y las pantallas
+  públicas se salían 692 px de la ventana.
+- **Decisión.**
+  1. **`/historial` es una página mínima**: rótulo, titular («Lo que pasó con el agua en Cartagena») y tres bloques de `--tarjeta`, uno por vista de historia (Cumplimiento, Bitácora, Estadísticas), con
+     un icono funcional en un círculo teñido, la pregunta que responde la vista y «Ver →». El primero (Cumplimiento) va teñido de cardenillo: es la pregunta que más se hace. En escritorio, tres bloques
+     en fila; en el celular, uno bajo otro. Entra al grafito (`CON_GRAFITO`). No pide datos: no tiene estados de carga ni de error.
+  2. **Las consultas de medios pasan de `px` a `em`** (`600px` → `37.5em`, `1100px` → `68.75em`, `599px` → `37.4375em`…). Con la letra del navegador a 16 px es lo mismo; con la letra al doble, la
+     cabecera pasa al «Menú» y las composiciones de dos columnas pasan a una, que es lo que haría el zoom. También la consulta de `datos.ts` que decide cuántas filas trae la bitácora.
+  3. **La marca y la cabecera pueden bajar de línea** (`flex-wrap`) en vez de salirse de la página.
+  4. **`/muestrario` solo existe en desarrollo** (`import.meta.env.DEV`): la build de producción no lo trae ni empaqueta. `NoEncontrada` vive en su archivo.
+- **Sin colores, sombras ni animaciones nuevas.**
+- **Gana.** Texto grande usable sin hacer nada extra y una página de historia con la misma composición del resto. **Pierde.** Una regla global bajo `22.5em` (elementos que encogen, palabras que se parten) que a 360 px con letra normal también aplica. A 360 px con la letra base al doble, nueve de diez pantallas se salían
+  entre 20 y 250 px; se resolvió el mismo día (rejillas `auto-fit` acotadas, filas de Cumplimiento apiladas, barra inferior y alto del mapa del celular) y el detalle está en `FE7-integracion-y-entrega.md` §3.
+- **Se revierte** con `Historial.tsx`/`.module.css`, el cambio de `em` en las hojas de estilos y `datos.ts`, y el `flex-wrap` de `Marco.module.css`.

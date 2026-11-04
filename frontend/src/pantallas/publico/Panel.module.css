@@ -215,7 +215,7 @@
     letter-spacing: -0.02em;
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .barrio {
       font-size: 2rem;
     }

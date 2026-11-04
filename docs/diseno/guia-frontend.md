@@ -365,4 +365,16 @@ no generar tipos de API a mano y no añadir endpoints para imitar datos de ejemp
 | Movimiento reducido, axe y contraste manual | Sin transiciones obligatorias; axe sin violaciones y revisión de mapa/SVG/transparencias, que el cálculo de tokens no cubre |
 | 3G simulado y mapa lento | Respuesta útil antes de 3 s según RNF001; comprensión de la ficha en menos de 5 s validada con una persona; sin inferir comprensión de Lighthouse |
 
+**Resultados reales de FE7 (2026-11-03, rama `feature/fe7-integracion`).** Detalle y cifras en [`FE7-integracion-y-entrega.md`](../frontend/FE7-integracion-y-entrega.md#cómo-quedó-2026-11-03).
+
+| Escenario | Resultado |
+|---|---|
+| Texto al 200 %, nombre largo, teclado móvil y poca altura | **Cumple.** Con la letra del navegador al doble, la cabecera pasa al «Menú» y las composiciones pasan a una columna (consultas de medios en `em`, ADR-110); sin scroll horizontal en las 10 rutas probadas a 360 px con la letra al doble y a 320 px con letra normal (`e2e/texto-grande.spec.ts`, `e2e/teclado-y-zoom.spec.ts`). No se probó con el teclado virtual real |
+| Teclado y lector de pantalla | **Cumple.** Recorrido con teclado, foco visible y devuelto al cerrar (`e2e/teclado-y-zoom.spec.ts`); alternativa en lista del mapa. No se probó con un lector de pantalla real |
+| Movimiento reducido, axe y contraste manual | **Cumple.** axe con cero violaciones de WCAG 2.2 AA en 34 pantallas y estados, claro y oscuro, escritorio y celular; capturas con movimiento reducido miradas. La revisión manual de mapa y SVG se hizo sobre capturas |
+| 3G simulado y mapa lento | **Cumple con Fast 3G de DevTools:** mapa 2,61 s, ficha 2,62 s y Cumplimiento 2,60 s (CPU 4× más lenta, mediana de 5 cargas en frío) frente al límite de 3 s. **Con Slow 3G tardan unos 9,5 s.** La comprensión en menos de 5 s con una persona **no se ha validado**: queda para Yordy |
+| 211 sectores, islas y MultiPolygon | **Cumple:** un solo SSE a la vez por pestaña con 211 sectores; la geometría se baja 1 vez y 0 al recargar (`Cache-Control: max-age=86400`) |
+
+Los demás escenarios de la tabla no se midieron de nuevo en FE7.
+
 Las pruebas funcionales y de rendimiento de esta tabla son criterios para Claude durante implementación, **no resultados obtenidos por escribir esta guía**. Registrar capturas y resultados reales por fase antes de marcar cada criterio como cumplido.

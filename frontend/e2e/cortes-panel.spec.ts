@@ -44,6 +44,9 @@ test('debeValidarLasFechasDelAltaYMandarlasEnUtcDesdeLaHoraDeCartagena', async (
   await expect(page.getByText('Escribe la causa que dio la fuente.')).toBeVisible()
   expect(visto.altas).toEqual([])
 
+  // El formulario manda el foco al primer campo con error, en un efecto posterior al clic: si se escribe antes, ese foco llega a mitad de la
+  // escritura, cierra la lista y la opción no aparece. Se espera a que ya esté ahí (falló una de cada ~80 corridas en paralelo).
+  await expect(page.getByRole('combobox', { name: 'Barrios afectados' })).toBeFocused()
   await page.getByRole('combobox', { name: 'Barrios afectados' }).fill('Manga')
   await page.getByRole('option', { name: 'Manga' }).click()
   await expect(page.getByRole('list', { name: 'Barrios elegidos' })).toContainText('Manga')

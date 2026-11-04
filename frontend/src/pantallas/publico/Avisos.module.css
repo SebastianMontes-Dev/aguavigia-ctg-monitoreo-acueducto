@@ -69,13 +69,13 @@
   .pasos strong { font-size: var(--texto-m); font-weight: 600; line-height: 1.3; }
   .pasos li > span:last-child:not(.circulo) { color: var(--tinta-2); font-size: var(--texto-s); }
 
-  @media (min-width: 900px) {
+  @media (min-width: 56.25em) {
     .columnas { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); column-gap: var(--espacio-5); }
     .tarea, .explicacion { padding: var(--espacio-6); }
     .pasos strong { font-size: var(--texto-l); }
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .tarea { gap: var(--espacio-4); }
     .campo { padding-top: var(--espacio-4); }
     .paso { font-size: var(--texto-m); }

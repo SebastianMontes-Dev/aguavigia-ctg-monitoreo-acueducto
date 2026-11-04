@@ -5,6 +5,7 @@ import { cerrarSesion } from '../../api/panel'
 import { motivoDeSalida, useAlcance, useCuentaActual, useSesionPerdida } from '../../app/panel'
 import { usePaletaGrafito } from '../../app/paleta'
 import { SelectorTema } from '../../app/SelectorTema'
+import { FranjaSimulacion } from '../../componentes/FranjaSimulacion'
 import { permisosDe, seccionActiva, seccionesPermitidas } from '../../dominio/permisos'
 import estilos from './MarcoPanel.module.css'
 
@@ -37,6 +38,7 @@ export function MarcoPanel() {
   return (
     <div className={estilos.marco}>
       <a href="#contenido-panel" className={estilos.saltar}>Saltar al contenido</a>
+      <FranjaSimulacion />
       <header className={estilos.cabecera}>
         <Link to="/panel" className={estilos.marca} aria-label="AguaVigía, panel del veedor: ir a la moderación">
           AguaVigía <span className={estilos.rotulo}>Panel</span>

@@ -76,8 +76,12 @@ test('debeAprobarUnReporteConFotoYPasarSuFotoAPublica', async ({ page, request }
 test('debeCrearUnCorteCerrarloBarrioPorBarrioYVerloEnLaFichaPublica', async ({ page }) => {
   test.setTimeout(240_000)
   const volvieron = async () => {
+    // Los cortes del barrio llegan en su propia petición, después del titular: se cuenta cuando ya llegaron.
+    const cortes = page.waitForResponse((respuesta) => /\/api\/sectores\/manga\/cortes\?/.test(respuesta.url()))
     await page.goto('/sectores/manga')
     await expect(page.getByRole('heading', { level: 1, name: 'Manga' })).toBeVisible()
+    await cortes
+    await page.evaluate(() => new Promise<void>((listo) => requestAnimationFrame(() => requestAnimationFrame(() => listo()))))
     return page.getByText('Volvió', { exact: true }).count()
   }
   await entrarAlPanel(page)

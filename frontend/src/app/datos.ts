@@ -4,6 +4,7 @@ import { api, normalizarError } from '../api/cliente'
 import { crearCanal, entornoNavegador, type LecturaCanal } from '../api/canal-en-vivo'
 import { almacenIndexedDb, cargarGeometria } from '../api/geometria'
 import { leerPaginacion } from '../api/paginacion'
+import { leerPrecargado } from '../api/precarga'
 import type { Corte } from '../dominio/cortes'
 import type { Sector } from '../dominio/sectores'
 import type { Calidad, Indice, PuntoSerie } from '../dominio/cumplimiento'
@@ -103,6 +104,12 @@ export function useIndiceCumplimiento(sectorId?: string) {
   return useQuery({
     queryKey: ['cumplimiento', sectorId ?? 'global'],
     queryFn: async ({ signal }) => {
+      // RNF001: la primera lectura del índice global ya salió desde index.html; si esa petición falló, se hace la normal.
+      const adelantada = sectorId ? null : await leerPrecargado<Indice>('/api/cumplimiento')
+      if (adelantada) {
+        if (adelantada.respuesta.ok && adelantada.cuerpo) return adelantada.cuerpo
+        throw normalizarError(adelantada.respuesta, adelantada.cuerpo)
+      }
       const resultado = sectorId
         ? await api.GET('/api/cumplimiento/sectores/{sectorId}', { params: { path: { sectorId } }, signal })
           .catch(() => ({ data: undefined, error: undefined, response: null }))
@@ -158,6 +165,12 @@ export function useSerieCumplimiento(filtros: FiltrosSerie, habilitado = true) {
     queryKey: ['cumplimiento-serie', filtros.sectorId, filtros.desde, filtros.hasta],
     enabled: habilitado,
     queryFn: async ({ signal }) => {
+      const sinFiltros = !filtros.sectorId && !filtros.desde && !filtros.hasta
+      const adelantada = sinFiltros ? await leerPrecargado<PuntoSerie[]>('/api/cumplimiento/serie') : null
+      if (adelantada) {
+        if (adelantada.respuesta.ok && adelantada.cuerpo) return adelantada.cuerpo
+        throw normalizarError(adelantada.respuesta, adelantada.cuerpo)
+      }
       const { data, error, response } = await api.GET('/api/cumplimiento/serie', {
         params: { query: { sectorId: filtros.sectorId, desde: filtros.desde, hasta: filtros.hasta } }, signal,
       }).catch(() => ({ data: undefined, error: undefined, response: null }))
@@ -190,7 +203,7 @@ export interface FiltrosBitacora {
 
 // ADR-077: en el celular, un lote que quepa en pantalla y media; en escritorio, uno que llene el primer pliegue.
 function tamanoLoteBitacora(): number {
-  return typeof window !== 'undefined' && window.matchMedia?.('(max-width: 599px)').matches ? 6 : 10
+  return typeof window !== 'undefined' && window.matchMedia?.('(max-width: 37.4375em)').matches ? 6 : 10
 }
 
 export function useBitacora(filtros: FiltrosBitacora) {

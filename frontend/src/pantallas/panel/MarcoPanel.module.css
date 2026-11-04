@@ -107,6 +107,12 @@
     overflow-x: auto;
     border-bottom: 1px solid var(--linea);
     scrollbar-width: none;
+    /* Sombra de borde solo del lado donde hay más pestañas: avisa que la franja sigue sin JavaScript (las «tapas» locales cubren la sombra en el tope). */
+    background:
+      linear-gradient(to right, var(--papel), transparent) left center / 2rem 100% no-repeat local,
+      linear-gradient(to left, var(--papel), transparent) right center / 2rem 100% no-repeat local,
+      linear-gradient(to right, color-mix(in srgb, var(--tinta-3) 45%, transparent), transparent) left center / 0.75rem 100% no-repeat scroll,
+      linear-gradient(to left, color-mix(in srgb, var(--tinta-3) 45%, transparent), transparent) right center / 0.75rem 100% no-repeat scroll;
   }
 
   .seccion {
@@ -179,14 +185,19 @@
     cursor: pointer;
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .correo {
       display: none;
     }
 
-    /* Marca, nombre y «Cerrar sesión» caben en una sola fila a 390 px. */
+    /* Marca, nombre y «Cerrar sesión» caben en una sola fila a 390 px (la marca en 20 px: con 24 px faltaban 2 px). Con la letra al doble, la cabecera
+       baja de línea (flex-wrap) en vez de salirse. */
     .cabecera {
-      gap: var(--espacio-2) var(--espacio-3);
+      gap: var(--espacio-2);
+    }
+
+    .marca {
+      font-size: 1.25rem;
     }
 
     .salir {
@@ -195,7 +206,7 @@
     }
   }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .tema {
       display: block;
     }

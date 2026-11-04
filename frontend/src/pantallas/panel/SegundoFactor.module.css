@@ -28,7 +28,7 @@
   .pasos li[aria-current='step'] { color: var(--tinta); }
   .pasos li[aria-current='step'] > span:first-child { border-color: var(--tinta); background: var(--tinta); color: var(--papel); }
 
-  @media (max-width: 899px) {
+  @media (max-width: 56.1875em) {
     .escenario { min-height: 0; padding: var(--espacio-4); }
     .escenario svg { width: min(260px, 100%); }
   }

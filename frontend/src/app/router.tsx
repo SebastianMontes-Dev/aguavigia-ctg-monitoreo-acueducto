@@ -4,7 +4,8 @@ import { esMotivoIngreso, type MotivoIngreso } from './panel'
 import { esMotivoVecino, type MotivoVecino } from './vecino'
 import { ConfirmarReporte } from '../pantallas/publico/ConfirmarReporte'
 import { FichaSector } from '../pantallas/publico/FichaSector'
-import { Historial, NoEncontrada } from '../pantallas/publico/Pendiente'
+import { Historial } from '../pantallas/publico/Historial'
+import { NoEncontrada } from '../pantallas/publico/NoEncontrada'
 import { PantallaMapa } from '../pantallas/publico/PantallaMapa'
 import { ResumenCiudad } from '../pantallas/publico/ResumenCiudad'
 import { Cumplimiento } from '../pantallas/publico/Cumplimiento'
@@ -94,10 +95,10 @@ const vecinoIngreso = createRoute({
 })
 const vecinoPerfil = createRoute({ getParentRoute: () => publico, path: 'vecino/perfil', component: PerfilVecino })
 
-// Provisional de F0–F1: tokens y contraste medidos en pantalla, fuera de la navegación ciudadana.
-const muestrario = createRoute({
-  getParentRoute: () => raiz, path: 'muestrario', component: lazyRouteComponent(() => import('./Muestrario'), 'Muestrario'),
-})
+// Herramienta de desarrollo (FE7): tokens y contraste medidos en pantalla. En la build de producción la ruta no existe ni se empaqueta.
+const muestrario = import.meta.env.DEV
+  ? createRoute({ getParentRoute: () => raiz, path: 'muestrario', component: lazyRouteComponent(() => import('./Muestrario'), 'Muestrario') })
+  : null
 
 // Panel del veedor (F5): cada pantalla se carga aparte para que no pese en la carga del mapa (plan §3).
 const panelIngreso = createRoute({
@@ -155,7 +156,7 @@ const arbol = raiz.addChildren([
   panelIngreso,
   panelSegundoFactor,
   panel.addChildren([panelModeracion, panelCortes, panelDisputas, panelIngesta, panelSistema, panelCuentas, panelAuditoria, panelSeguridad]),
-  muestrario,
+  ...(muestrario ? [muestrario] : []),
 ])
 
 export const router = createRouter({ routeTree: arbol, defaultPreload: 'intent', scrollRestoration: true })
