@@ -7,14 +7,14 @@
   .aviso { display: block; }
   .bloqueTabla { gap: var(--espacio-4); }
   .cabecera { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--espacio-3); }
-  .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-3) var(--espacio-4); align-items: end; }
+  .filtros { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: var(--espacio-3) var(--espacio-4); align-items: end; }
   .interruptor { display: flex; align-items: flex-start; gap: var(--espacio-3); min-height: 48px; font-size: var(--texto-s); font-weight: 600; cursor: pointer; }
   .interruptor input, .casilla input { flex: none; width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--cardenillo); }
   .interruptor input:focus-visible, .casilla input:focus-visible { outline: var(--grosor-foco) solid var(--laton); outline-offset: 2px; }
   .interruptor .origen { display: block; font-weight: 400; }
 
   .invitar { display: grid; gap: var(--espacio-4); padding: var(--espacio-4); border: 1px solid var(--tinta-3); border-radius: var(--radio-flotante); background: var(--elevada); }
-  .camposInvitacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-4); align-items: start; }
+  .camposInvitacion { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: var(--espacio-4); align-items: start; }
 
   .contenedorTabla { min-width: 0; overflow-x: auto; }
   .tabla { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }

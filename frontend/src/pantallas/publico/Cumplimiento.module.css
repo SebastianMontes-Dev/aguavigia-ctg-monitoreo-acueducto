@@ -79,4 +79,14 @@
     .mes { grid-template-columns: 3.5rem minmax(0, 1fr) 6.5rem; gap: var(--espacio-3); min-height: 48px; }
     .guiaLinea strong { font-size: 11px; }
   }
+
+  /* Letra del navegador al doble en un celular de 360 px (ADR-110): las columnas en `rem` se comen el ancho. El mes y su cifra arriba, la línea
+     debajo a todo el ancho; la guía «Antes / Hora anunciada / Tarde» es decoración (aria-hidden) y la cifra ya lo dice en palabras. */
+  @media (max-width: 22.5em) {
+    .mes { grid-template-columns: minmax(0, 1fr) auto; row-gap: var(--espacio-2); padding-block: var(--espacio-2); }
+    .mes > :nth-child(1) { grid-column: 1; grid-row: 1; }
+    .mes > :nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+    .mes > :nth-child(3) { grid-column: 2; grid-row: 1; }
+    .guia { display: none; }
+  }
 }

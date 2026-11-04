@@ -71,7 +71,7 @@
   .reglas { display: grid; padding: 0 0 var(--espacio-2); list-style: none; font-size: var(--texto-s); color: var(--tinta-2); }
   .reglas li { padding-block: var(--espacio-2); border-top: 1px solid var(--linea-suave); }
 
-  .verDatos .tablaContenedor { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: var(--espacio-4); max-width: 100%; overflow-x: auto; }
+  .verDatos .tablaContenedor { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr)); gap: var(--espacio-4); max-width: 100%; overflow-x: auto; }
   .tablaContenedor table { width: 100%; border-collapse: collapse; font-size: var(--texto-s); }
   .tablaContenedor caption { text-align: left; font-weight: 600; padding: var(--espacio-2) 0; }
   .tablaContenedor th, .tablaContenedor td { padding: var(--espacio-2); border-top: 1px solid var(--linea); text-align: left; font-variant-numeric: tabular-nums; }

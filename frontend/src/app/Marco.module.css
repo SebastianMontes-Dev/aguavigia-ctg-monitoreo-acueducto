@@ -243,7 +243,8 @@
     bottom: 0;
     z-index: 10;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    /* Con la letra al doble, una columna nunca es más angosta que su palabra: «Historial» no se parte. */
+    grid-template-columns: repeat(3, minmax(max-content, 1fr));
     padding-bottom: env(safe-area-inset-bottom);
     background: var(--papel);
     border-top: 1px solid var(--linea);
@@ -257,6 +258,7 @@
     font-weight: 600;
     color: var(--tinta-2);
     text-decoration: none;
+    overflow-wrap: normal;
   }
 
   .destinoInferior[aria-current='page'] {

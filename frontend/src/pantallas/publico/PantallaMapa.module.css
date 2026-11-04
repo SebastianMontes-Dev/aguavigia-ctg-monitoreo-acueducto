@@ -11,9 +11,10 @@
     padding: var(--espacio-3) var(--margen-pagina) var(--espacio-4);
   }
 
+  /* Alto mínimo y no fijo: con la letra del navegador al doble la leyenda ocupa varias filas y el mapa crece en vez de quedarse sin lienzo. */
   .mapa {
     grid-area: mapa;
-    height: max(240px, 36svh);
+    min-height: max(240px, 36svh);
     border-block: 1px solid var(--linea);
   }
 
@@ -26,6 +27,7 @@
   @media (min-width: 37.5em) {
     .mapa {
       height: 44vh;
+      min-height: 0;
     }
 
     .panel {

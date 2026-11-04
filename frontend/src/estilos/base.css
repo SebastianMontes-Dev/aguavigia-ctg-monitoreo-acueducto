@@ -43,6 +43,16 @@
     text-size-adjust: 100%;
   }
 
+  /* Con la letra del navegador al doble, un celular de 360 px son 11 em de ancho (la consulta va en `em`, ADR-110): lo que no puede
+     encogerse ensancha la página. Aquí, y en la capa `base` para que cualquier `min-width` de un componente siga ganando, los elementos
+     pueden encoger y las palabras largas partirse. Con la letra normal, a 360 px también aplica y no cambia nada que no se saliera. */
+  @media (max-width: 22.5em) {
+    *, *::before, *::after {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+
   body {
     min-height: 100dvh;
     background: var(--papel);
