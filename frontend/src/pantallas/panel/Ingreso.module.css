@@ -3,6 +3,8 @@
      página sin estado, como el resumen de Cuentas) con la marca, el titular y cómo se entra; a la derecha, el formulario centrado en
      su mitad. Solo tokens del grafito; el único acento es el filete de latón, el mismo del subrayado del menú. */
   .pantalla { display: grid; min-height: 100dvh; background: var(--papel); }
+  /* La franja de la simulación (32 px) va encima: la pantalla sigue ocupando justo la ventana. */
+  .pantalla[data-simulacion] { min-height: calc(100dvh - 32px); }
 
   .lado {
     display: grid;

@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
-import { useModoSistema } from './datos'
+import { FranjaSimulacion, useEnSimulacion } from '../componentes/FranjaSimulacion'
 import { useHaySesionVecino } from './vecino'
 import { usePaletaGrafito } from './paleta'
 import { SelectorTema } from './SelectorTema'
@@ -61,7 +61,7 @@ function EnlaceCuenta({ clase }: { clase: string | undefined }) {
 export function Marco() {
   const { pathname } = useLocation()
   // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
-  const simulacion = useModoSistema().data?.modo === 'SIMULACION'
+  const simulacion = useEnSimulacion()
   const grafito = usaGrafito(pathname)
   usePaletaGrafito(grafito)
   return (
@@ -93,11 +93,7 @@ export function Marco() {
           </Popover>
         </DialogTrigger>
       </header>
-      {simulacion && (
-        <output className={estilos.simulacion}>
-          <strong>Simulación.</strong> Datos de una simulación; no son reales.
-        </output>
-      )}
+      <FranjaSimulacion className={estilos.simulacion} />
       <main id="contenido" className={estilos.principal} tabIndex={-1}>
         <Outlet />
       </main>
