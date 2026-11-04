@@ -748,6 +748,6 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
   3. **La marca y la cabecera pueden bajar de línea** (`flex-wrap`) en vez de salirse de la página.
   4. **`/muestrario` solo existe en desarrollo** (`import.meta.env.DEV`): la build de producción no lo trae ni empaqueta. `NoEncontrada` vive en su archivo.
 - **Sin colores, sombras ni animaciones nuevas.**
-- **Gana.** Texto grande usable sin hacer nada extra y una página de historia con la misma composición del resto. **Pierde.** A 360 px de ancho con la letra base al doble, nueve de diez pantallas
-  siguen saliéndose entre 20 y 250 px (pestañas, selector de barrio, tablas): no se resolvió y se anotó en `FE7-integracion-y-entrega.md`.
+- **Gana.** Texto grande usable sin hacer nada extra y una página de historia con la misma composición del resto. **Pierde.** Una regla global bajo `22.5em` (elementos que encogen, palabras que se parten) que a 360 px con letra normal también aplica. A 360 px con la letra base al doble, nueve de diez pantallas se salían
+  entre 20 y 250 px; se resolvió el mismo día (rejillas `auto-fit` acotadas, filas de Cumplimiento apiladas, barra inferior y alto del mapa del celular) y el detalle está en `FE7-integracion-y-entrega.md` §3.
 - **Se revierte** con `Historial.tsx`/`.module.css`, el cambio de `em` en las hojas de estilos y `datos.ts`, y el `flex-wrap` de `Marco.module.css`.

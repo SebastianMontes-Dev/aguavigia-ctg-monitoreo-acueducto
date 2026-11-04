@@ -369,7 +369,7 @@ no generar tipos de API a mano y no añadir endpoints para imitar datos de ejemp
 
 | Escenario | Resultado |
 |---|---|
-| Texto al 200 %, nombre largo, teclado móvil y poca altura | **Cumple en parte.** Con la letra del navegador al doble, la cabecera pasa al «Menú» y las composiciones pasan a una columna (consultas de medios en `em`, ADR-110); reflujo a 320 px con letra normal sin scroll horizontal. **No cumple** a 360 px con la letra al doble: 9 de 10 pantallas se salen entre 20 y 250 px |
+| Texto al 200 %, nombre largo, teclado móvil y poca altura | **Cumple.** Con la letra del navegador al doble, la cabecera pasa al «Menú» y las composiciones pasan a una columna (consultas de medios en `em`, ADR-110); sin scroll horizontal en las 10 rutas probadas a 360 px con la letra al doble y a 320 px con letra normal (`e2e/texto-grande.spec.ts`, `e2e/teclado-y-zoom.spec.ts`). No se probó con el teclado virtual real |
 | Teclado y lector de pantalla | **Cumple.** Recorrido con teclado, foco visible y devuelto al cerrar (`e2e/teclado-y-zoom.spec.ts`); alternativa en lista del mapa. No se probó con un lector de pantalla real |
 | Movimiento reducido, axe y contraste manual | **Cumple.** axe con cero violaciones de WCAG 2.2 AA en 34 pantallas y estados, claro y oscuro, escritorio y celular; capturas con movimiento reducido miradas. La revisión manual de mapa y SVG se hizo sobre capturas |
 | 3G simulado y mapa lento | **Cumple con Fast 3G de DevTools:** mapa 2,61 s, ficha 2,62 s y Cumplimiento 2,60 s (CPU 4× más lenta, mediana de 5 cargas en frío) frente al límite de 3 s. **Con Slow 3G tardan unos 9,5 s.** La comprensión en menos de 5 s con una persona **no se ha validado**: queda para Yordy |

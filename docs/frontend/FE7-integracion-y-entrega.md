@@ -61,7 +61,16 @@ Rama `feature/fe7-integracion` (sin push ni PR). Todo lo medido es de una máqui
 celular (`e2e/accesibilidad.spec.ts`, lista en `e2e/pantallas.ts`). Además: recorrido con teclado y foco visible, foco devuelto al cerrar (`e2e/teclado-y-zoom.spec.ts`), alternativa en lista del mapa, texto al 200 % (`e2e/texto-grande.spec.ts`) y movimiento reducido.
 Se corrigió el tamaño táctil de los enlaces del pie de las cuentas y las consultas de medios pasaron de `px` a `em` (ADR-110).
 
-**Sin resolver:** a 360 px de ancho **con la letra base al doble**, 9 de 10 pantallas se salen de la ventana entre 20 y 250 px (pestañas, selector de barrio, tablas). A 320 px con letra normal sí reflujan. Queda para Yordy.
+**Letra del navegador al doble en un celular de 360 px (resuelto el 2026-11-03).** Antes, 9 de 10 pantallas se salían de la ventana entre 20 y 250 px. Ahora `e2e/texto-grande.spec.ts` pasa en las 10 rutas, en escritorio y en celular (ya no se omite el celular). Qué lo resolvió, sin tocar el aspecto a anchos normales:
+
+- En `base.css`, bajo `max-width: 22.5em` (360 px con la letra normal, 11 em con la letra al doble): los elementos pueden encoger (`min-width: 0`) y las palabras largas partirse (`overflow-wrap: anywhere`). En la capa `base`, para que cualquier `min-width` de un componente siga ganando.
+- Las rejillas `auto-fit` con mínimo en `rem` (`minmax(14rem, 1fr)`) pasan a `minmax(min(14rem, 100%), 1fr)` en Cuentas del panel, Estadísticas y Bitácora.
+- Cumplimiento, «Mes a mes»: con la letra al doble el mes y su cifra van arriba y la línea abajo a todo el ancho.
+- Barra inferior: las columnas nunca son más angostas que su palabra («Historial» ya no se parte).
+- Mapa del celular: el recuadro tiene alto mínimo y no fijo, y el lienzo un mínimo de 11 rem, para que la leyenda, que ocupa varias filas con la letra al doble, no se coma el mapa.
+- La prueba cuenta solo lo que ensancha la página (lo que está dentro de una franja con scroll propio, como las pestañas, no cuenta). En el mapa y la ficha comprueba que la búsqueda se vea sin bajar, no el titular: ahí el titular va después del mapa (identidad.md §4).
+
+Se comparó la captura de 408 pantallas antes y después: a 390 px y más, las pantallas que no muestran horas relativas son idénticas byte a byte; las que sí (mapa, moderación, ingesta…) difieren solo en el texto de la hora. No se mide con un lector de pantalla real.
 
 ### 4. Rendimiento (RNF001)
 
@@ -144,14 +153,14 @@ Qué pasó en el camino (para no repetirlo):
 también con `-g`, y se pierde todo lo tomado. Se miraron las de las pantallas principales (mapa, ficha, Historial, Cumplimiento, Estadísticas, ingreso al panel, moderación, cortes, ingesta, cuentas, invitar, hoja de reporte) en los cuatro anchos y las tres variantes, y se revisó el CSS añadido (92 líneas:
 sin hexadecimales fuera de `tokens.css`, sin `font-family` fuera de los tokens, sin `transition` ni `animation` nuevos, sin `box-shadow`).
 
-**Sin hallazgos que bloqueen.** Para pulir (no se tocaron):
+**Sin hallazgos que bloqueen.** Los cuatro detalles para pulir:
 
-| Gravedad | Pantalla y tamaño | Elemento | Qué se ve | Corrección |
+| Gravedad | Pantalla y tamaño | Elemento | Qué se ve | Qué se hizo |
 |---|---|---|---|---|
-| pule | Panel, 390 y 768 | Navegación del panel | La fila de pestañas se corta a la derecha («Si…», «Vo…») y se desplaza | Está bien como patrón, pero conviene una sombra o un borde que avise que sigue |
-| pule | Panel, 390 | Cabecera | «Cerrar sesión» queda en una fila propia y empuja el contenido ~50 px | Ponerlo junto al nombre, o dentro de un menú |
-| pule | Historial, 1440 | Bloques | Los tres bloques ocupan solo la mitad superior; el resto queda vacío | Es una página de paso a propósito (ADR-110); se puede alinear al centro vertical |
-| pule | Estadísticas, 1440 | «Barrios con más cortes» | Con 3 barrios queda un hueco entre la lista y el enlace del pie | Anclar el pie a la lista, no al fondo del bloque |
+| pule | Panel, 390 y 768 | Navegación del panel | La fila de pestañas se corta a la derecha («Si…», «Vo…») y se desplaza | **Hecho:** sombra de borde del lado donde hay más pestañas (solo CSS, `MarcoPanel.module.css`) |
+| pule | Panel, 390 | Cabecera | «Cerrar sesión» quedaba en una fila propia y empujaba el contenido ~50 px | **Hecho:** la marca pasa a 20 px y el espacio entre elementos a 8 px; caben en una fila (faltaban 2 px). Con la letra al doble sigue bajando de línea |
+| pule | Historial, 1440 | Bloques | Los tres bloques ocupan solo la mitad superior | **Sin cambio, a propósito:** es una página de paso (ADR-110) y centrar o estirar los bloques la haría parecer otra cosa |
+| pule | Estadísticas, 1440 | «Barrios con más cortes» | Con 3 barrios queda un hueco entre la lista y el enlace del pie | **Sin cambio, a propósito:** el pie va en la misma línea que el del otro bloque (ADR-106, «los pies quedan en la misma línea») |
 
 ### 8. La prueba de los cinco segundos (para Yordy)
 
