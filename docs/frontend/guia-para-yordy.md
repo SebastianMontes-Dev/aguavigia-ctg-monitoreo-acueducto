@@ -452,7 +452,7 @@ Marca cada línea con fecha y PR cuando se cumpla.
 - [x] Cobertura del contrato sin huecos fuera de las exclusiones (`npm run api:cobertura`, 2026-11-03)
 - [x] axe en verde (34 pantallas y estados, 2026-11-03)
 - [ ] Prueba de los cinco segundos con otra persona anotada (pasos en [FE7 §8](FE7-integracion-y-entrega.md#8-la-prueba-de-los-cinco-segundos-para-yordy))
-- [x] Guion de la demo ejecutado de principio a fin sobre un `docker compose up` limpio (2026-11-03, `npm run demo:guion`; la alternativa en modo simulación no se ejecutó)
+- [x] Guion de la demo ejecutado de principio a fin sobre un `docker compose up` limpio (2026-11-03, `npm run demo:guion`; la alternativa en modo simulación también: 54/54 aserciones)
 - [ ] Frontend CI en verde en `main` (los dos jobs)
 
 ---

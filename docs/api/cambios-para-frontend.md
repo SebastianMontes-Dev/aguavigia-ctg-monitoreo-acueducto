@@ -16,7 +16,7 @@ quede sin cliente salvo las excluidas a propósito.
 | F2 — Identidad | **Adoptada** (FE0, FE6) | `X-Dispositivo` pedido una vez; sesión de vecino; cuentas, registro y restablecimiento. Los correos siguen llevando a las páginas HTML del backend (FE6b, decisión D-C) |
 | F3 — Fotos, ingesta y «¿ya volvió el agua?» | **Adoptada** (FE0, FE1, FE3, FE4) | `subidaToken`/`X-Subida`, `fotoEstado`, fotos del panel con `Authorization`, propuestas con `citaTextual` y `motivoDeRevision`, página «¿Ya volvió el agua?». `GET /api/fotos/{nombre}` no tiene pantalla (no hay lista pública de reportes) |
 | F4 — Datos, modo y calidad del Índice | **Adoptada** (FE1, FE3, FE5) | Banner de `modo`, `calidad` y los tres campos del Índice, `senalRed` en la cola, `sintetica` en las cuentas. `cuentasSinteticas` no se muestra: ninguna pantalla habla de ellas |
-| F5 — Simulación | **Adoptada** (FE1) | Franja fija «Simulación», `CORTE_PROGRAMADO` en el mapa y la leyenda. `/api/sim/**` no lo llama el frontend |
+| F5 — Simulación | **Adoptada** (FE1, FE7) | Franja fija «Simulación» en el marco público y, desde FE7, también en el ingreso y todo el panel, `CORTE_PROGRAMADO` en el mapa y la leyenda. `/api/sim/**` no lo llama el frontend |
 | F6 — Métricas de calibración | **Adoptada** (FE5) | `/panel/sistema`; `sectorIds` de 1 a 211 en avisos. Las exportaciones CSV se descargan sin procesarse |
 | F7 — PostgreSQL, copia analítica | **Adoptada en parte** (FE5) | `GET /api/veedor/analitica/copia` en `/panel/sistema`. Las dos rutas públicas (`/api/analitica/cumplimiento` y `/mensual`) se excluyen a propósito (decisión D-A) |
 

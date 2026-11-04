@@ -111,7 +111,7 @@ Qué pasó en el camino, tal cual:
 
 - **Primera ejecución (sobre volúmenes borrados): pasó,** pero su comprobación del «antes» era débil: capturó la pantalla en «Consultando el cumplimiento…» y solo comparaba que el texto cambiara. Se endureció para exigir «Aún no hay cortes cerrados» y se repitió sobre otra base limpia.
 - La demo **no es repetible sobre la misma base**: deja un barrio en «Sin servicio», un corte cerrado y al ADMIN con su segundo factor dado de alta. Para repetirla hay que borrar los volúmenes (`docker compose down -v`).
-- **El modo simulación no se ejecutó** en FE7: está descrito en el guion, pero no se levantó `backend-sim` ni se miró su banner de punta a punta (el banner sí lo cubren los e2e simulados de FE1).
+- **El modo simulación sí se ejecutó** (2026-11-03): `backend-sim` en el puerto 28082 de la pila aparte, la interfaz apuntada con `AGUAVIGIA_BACKEND=http://localhost:28082` y `simulador iniciar --velocidad 300`: **54 de 54 aserciones correctas en 195 s**. Al terminar, el mapa queda con los 211 barrios «Sin datos verificados» (el último acto deja pasar 65 horas sin renovar nada y los cortes expiran) y Cumplimiento muestra 2 cortes cerrados, sin concluir. `GET /api/sistema/modo` dijo `SIMULACION` y la franja salió en el mapa, la ficha y Cumplimiento. **En el ingreso al panel y en todo el panel no salía**: FE1 la pide en todas las pantallas y solo estaba en el marco público. Se corrigió (`FranjaSimulacion` en `MarcoPanel`, `Ingreso` y `SegundoFactor`) y se añadió el e2e `debeMostrarLaFranjaDeSimulacionTambienEnElIngresoYEnElPanel`; el segundo factor no tiene e2e propio porque exige una sesión limitada.
 - No hay credenciales fijas del panel: la clave del ADMIN sale del log (ADR-086) y la lee la prueba sin que nadie la copie.
 
 ### 6. e2e reales del panel y flujo de invitación
@@ -172,6 +172,21 @@ Una sesión de Claude no puede hacerla: necesita a una persona que no haya visto
 4. Anota la respuesta textual y si coincide con el titular de la pantalla. Pasa si lo dice sin bajar la página.
 5. Si falla en alguna, anota cuál y qué entendió en su lugar; abre un ADR solo si el cambio es de diseño.
 6. Anota el resultado aquí, con fecha: ______
+
+### 9. La puerta, tal como quedó (2026-11-03)
+
+| Paso | Resultado |
+|---|---|
+| `npm run lint`, `typecheck`, `api:check`, `api:cobertura` | Verdes. Cobertura: 81 rutas, 87 operaciones, 14 excluidas, sin huecos |
+| `npm test` | 714 pasan, 1 omitida |
+| `npm run build` | Verde |
+| `npm run test:e2e` (simulado) | **632 de 632 con `--workers=3`**; con los 5 workers por defecto de esta máquina fallan 1 a 3 pruebas distintas por corrida (la de cortes, la de sesión terminada y una del panel de cuentas) que **pasan solas y repetidas decenas de veces**. Es carga: la máquina tiene Docker con tres bases y dos JVM corriendo a la vez; con el proxy apuntado a un puerto muerto, una corrida dio 634 de 634. El e2e simulado ya no depende de que haya un backend en el 8081 (`playwright.config.ts` fija `AGUAVIGIA_BACKEND` a un puerto muerto), pero no se pudo demostrar que eso elimine todas las intermitencias |
+| `npm run test:e2e:real` | 25 de 25 en una sola pasada, sobre la pila `fe7demo` con la siembra del CI |
+| `npm run demo:guion` | Pasó, sobre una base recién borrada |
+| Simulación (`simulador iniciar --velocidad 300`) | 54 de 54 aserciones |
+| Capturas en 4 anchos, claro, oscuro y movimiento reducido | 408, miradas las principales y pasadas por `revisar-diseno` (§7) |
+
+**Lo que sigue sin hacerse:** la prueba de los cinco segundos con otra persona (§8) y que el job «backend real» del CI pase `PANEL_CORREO` y `PANEL_CLAVE` (propuesta en §6, para Sebastian).
 
 ## Terminado cuando
 
