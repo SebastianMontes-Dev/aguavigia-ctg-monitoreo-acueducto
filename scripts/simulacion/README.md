@@ -124,3 +124,16 @@ docker compose --profile simulacion up -d --build backend-sim
 - **Todo declarado:** cada documento lleva `sintetico: true`, los cortes son de origen `SINTETICO` y los eventos de bitácora terminan en "(dato sintético)".
 - **Idempotente:** al reiniciar el contenedor solo completa lo que falta. Todo cae en los últimos `DATOS_SINTETICOS_DIAS` (300 por defecto), dentro del TTL de 365 días de los reportes.
 - **No se mezcla con el guion completo:** corre uno u otro sobre una base limpia (`simulador reiniciar`).
+
+### Generar o contar datos con volumen en caliente
+
+Sin reiniciar el contenedor, y también sobre una base ya en marcha:
+
+```bash
+docker compose --profile simulacion run --rm simulador datos generar --reportes 20000 --cortes 100 --semilla 42
+docker compose --profile simulacion run --rm simulador datos contar
+```
+
+`datos generar` llama a `POST /api/sim/datos` (con `X-Sim-Key`) y `datos contar` a `GET /api/sim/datos`; el backend de simulación hace el trabajo para que pase por el dominio.
+Acepta `--reportes` (0 a 200 000), `--cortes` (0 a 5 000), `--dispositivos` (1 a 50 000, por defecto 9 000), `--dias` (1 a 330, por defecto 300) y `--semilla`; el simulador valida
+los rangos antes de llamar. Cada corrida **suma** a lo que ya hay (no reemplaza), y `simulador reiniciar` lo borra todo. Estas rutas no están en `backend/openapi.yaml`, como el resto de `/api/sim/**`.

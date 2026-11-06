@@ -1,6 +1,10 @@
 package com.aguavigia.ctg.api;
 
 import com.aguavigia.ctg.api.dto.BoletinSimuladoRespuesta;
+import com.aguavigia.ctg.api.dto.DatosSinteticosRespuesta;
+import com.aguavigia.ctg.api.dto.SolicitudDatosSinteticos;
+import com.aguavigia.ctg.domain.PlanDeDatosSinteticos;
+import com.aguavigia.ctg.domain.port.in.GenerarDatosSinteticosUseCase;
 import com.aguavigia.ctg.api.dto.EstadoDelRelojRespuesta;
 import com.aguavigia.ctg.api.dto.SesionVeedor;
 import com.aguavigia.ctg.api.dto.SolicitudBoletinSimulado;
@@ -50,10 +54,12 @@ public class SimController {
     private final InyectarBoletinSimuladoUseCase boletines;
     private final IniciarSesionDeAdminDeSimulacionUseCase sesionAdmin;
     private final ReiniciarSimulacionUseCase reinicio;
+    private final GenerarDatosSinteticosUseCase datos;
 
     public SimController(GuardiaDeSimulacion guardia, ControlarRelojDeSimulacionUseCase reloj,
                          InyectarBoletinSimuladoUseCase boletines, IniciarSesionDeAdminDeSimulacionUseCase sesionAdmin,
-                         ReiniciarSimulacionUseCase reinicio) {
+                         ReiniciarSimulacionUseCase reinicio, GenerarDatosSinteticosUseCase datos) {
+        this.datos = datos;
         this.reinicio = reinicio;
         this.guardia = guardia;
         this.reloj = reloj;
@@ -95,6 +101,32 @@ public class SimController {
         long id = solicitud.id() != null ? solicitud.id() : ((solicitud.titulo() + solicitud.contenido()).hashCode() & 0xffffffffL);
         return BoletinSimuladoRespuesta.de(boletines.inyectar(new BoletinSimulado(id, leerFecha(solicitud.fecha()),
                 solicitud.enlace(), solicitud.titulo(), solicitud.contenido(), solicitud.portada())));
+    }
+
+    @Operation(summary = "Generar al azar reportes, cortes y bitácora para llenar la simulación (ADR-111)",
+            description = "Lo que no se manda toma el valor por defecto (0 reportes, 0 cortes, 9 000 dispositivos, 300 días). Todo queda "
+                    + "marcado como sintético y los cortes son de origen SINTETICO. La misma `semilla` repite la misma corrida; si falta se "
+                    + "sortea y se devuelve. Genera en el acto y puede tardar unos segundos con decenas de miles de reportes.")
+    @PostMapping("/datos")
+    @ResponseStatus(HttpStatus.CREATED)
+    public DatosSinteticosRespuesta generarDatos(@RequestHeader(value = CABECERA, required = false) String clave,
+                                                 @Valid @RequestBody SolicitudDatosSinteticos solicitud) {
+        guardia.exigir(clave);
+        PlanDeDatosSinteticos plan = new PlanDeDatosSinteticos(
+                solicitud.reportes() != null ? solicitud.reportes() : 0,
+                solicitud.cortes() != null ? solicitud.cortes() : 0,
+                solicitud.dispositivos() != null ? solicitud.dispositivos() : 9_000,
+                solicitud.dias() != null ? solicitud.dias() : 300,
+                solicitud.semilla());
+        return DatosSinteticosRespuesta.de(datos.generar(plan));
+    }
+
+    @Operation(summary = "Cuántos datos sintéticos hay en la simulación",
+            description = "Cuenta solo los documentos marcados como sintéticos; lo que crea el guion o una persona no entra.")
+    @GetMapping("/datos")
+    public DatosSinteticosRespuesta contarDatos(@RequestHeader(value = CABECERA, required = false) String clave) {
+        guardia.exigir(clave);
+        return DatosSinteticosRespuesta.de(datos.contar());
     }
 
     @Operation(summary = "Reiniciar lo que la simulación guarda en memoria del backend",

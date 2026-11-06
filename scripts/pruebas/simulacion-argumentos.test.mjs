@@ -45,3 +45,23 @@ test('un comando o una opción desconocidos fallan diciendo cuáles hay', () => 
   assert.throws(() => analizarArgumentos(['iniciar', '--turbo']), /opción '--turbo'/);
   assert.throws(() => analizarArgumentos(['iniciar', '--velocidad']), /--velocidad.*valor/);
 });
+
+test('datos generar valida el plan y lo devuelve listo para la API', () => {
+  assert.deepEqual(analizarArgumentos(['datos', 'generar', '--reportes', '20000', '--cortes', '100', '--semilla', '42']), {
+    comando: 'datos',
+    accion: 'generar',
+    plan: { reportes: 20000, cortes: 100, semilla: 42 },
+  });
+  assert.deepEqual(analizarArgumentos(['datos', 'contar']), { comando: 'datos', accion: 'contar' });
+});
+
+test('datos generar rechaza lo que la API rechazaría, antes de llamarla', () => {
+  assert.throws(() => analizarArgumentos(['datos', 'generar']), /al menos --reportes o --cortes/);
+  assert.throws(() => analizarArgumentos(['datos', 'generar', '--reportes', '200001']), /entre 0 y 200000/);
+  assert.throws(() => analizarArgumentos(['datos', 'generar', '--reportes', '10', '--dias', '331']), /entre 1 y 330/);
+  assert.throws(() => analizarArgumentos(['datos', 'generar', '--reportes', 'muchos']), /entero/);
+  assert.throws(() => analizarArgumentos(['datos', 'generar', '--reportes']), /necesita un valor/);
+  assert.throws(() => analizarArgumentos(['datos', 'generar', '--colores', '3']), /no existe/);
+  assert.throws(() => analizarArgumentos(['datos', 'borrar']), /Uso: simulador datos/);
+  assert.throws(() => analizarArgumentos(['datos', 'contar', '--x']), /no recibe opciones/);
+});
