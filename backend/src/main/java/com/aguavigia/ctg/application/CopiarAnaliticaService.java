@@ -1,6 +1,7 @@
 package com.aguavigia.ctg.application;
 
 import com.aguavigia.ctg.domain.ConteosAnaliticos;
+import com.aguavigia.ctg.domain.FilaReporteDiaAnalitica;
 import com.aguavigia.ctg.domain.CierreDeCorte;
 import com.aguavigia.ctg.domain.CorteAgua;
 import com.aguavigia.ctg.domain.FilaCorteAnalitica;
@@ -12,6 +13,7 @@ import com.aguavigia.ctg.domain.SectorId;
 import com.aguavigia.ctg.domain.port.in.CopiarAnaliticaUseCase;
 import com.aguavigia.ctg.domain.port.out.AlmacenAnaliticoPort;
 import com.aguavigia.ctg.domain.port.out.CorteAguaRepository;
+import com.aguavigia.ctg.domain.port.out.LectorDeReportesAgregadosPort;
 import com.aguavigia.ctg.domain.port.out.RelojPort;
 import com.aguavigia.ctg.domain.port.out.SectorRepository;
 import org.slf4j.Logger;
@@ -39,13 +41,21 @@ public class CopiarAnaliticaService implements CopiarAnaliticaUseCase {
     private final CorteAguaRepository cortes;
     private final AlmacenAnaliticoPort almacen;
     private final RelojPort reloj;
+    /** Nulo en la fase 1: sin él la copia solo lleva el Índice. Con él, también los reportes contados por día (ADR-112). */
+    private final LectorDeReportesAgregadosPort reportes;
 
     public CopiarAnaliticaService(SectorRepository sectores, CorteAguaRepository cortes, AlmacenAnaliticoPort almacen,
                                   RelojPort reloj) {
+        this(sectores, cortes, almacen, reloj, null);
+    }
+
+    public CopiarAnaliticaService(SectorRepository sectores, CorteAguaRepository cortes, AlmacenAnaliticoPort almacen,
+                                  RelojPort reloj, LectorDeReportesAgregadosPort reportes) {
         this.sectores = sectores;
         this.cortes = cortes;
         this.almacen = almacen;
         this.reloj = reloj;
+        this.reportes = reportes;
     }
 
     @Override
@@ -81,8 +91,20 @@ public class CopiarAnaliticaService implements CopiarAnaliticaUseCase {
 
             ConteosAnaliticos enSql = almacen.reemplazar(filasDeSectores, filasDeCortes, inicio);
 
-            ResultadoDeCopia resultado = enMongo.equals(enSql) ? ResultadoDeCopia.OK : ResultadoDeCopia.CON_DIFERENCIAS;
-            String detalle = resultado == ResultadoDeCopia.OK ? null : detalleDeDiferencias(enMongo, enSql, huerfanos);
+            // Los reportes cuentan aparte: si no hay lector (fase 1) no se comparan. Un día de un barrio que no existe no se copia
+            // (la clave foránea lo rechazaría) y la comparación de totales lo delata.
+            long reportesEnMongo = 0;
+            long reportesEnSql = 0;
+            if (reportes != null) {
+                List<FilaReporteDiaAnalitica> filas = reportes.agregarPorDia();
+                reportesEnMongo = filas.stream().mapToLong(FilaReporteDiaAnalitica::cantidad).sum();
+                reportesEnSql = almacen.reemplazarReportes(
+                        filas.stream().filter(fila -> conocidos.contains(new SectorId(fila.sectorId()))).toList(), inicio);
+            }
+
+            boolean cuadra = enMongo.equals(enSql) && reportesEnMongo == reportesEnSql;
+            ResultadoDeCopia resultado = cuadra ? ResultadoDeCopia.OK : ResultadoDeCopia.CON_DIFERENCIAS;
+            String detalle = cuadra ? null : detalleDeDiferencias(enMongo, enSql, huerfanos, reportesEnMongo, reportesEnSql);
             if (resultado != ResultadoDeCopia.OK) {
                 log.warn("Copia analítica con diferencias: {}", detalle);
             }
@@ -111,8 +133,12 @@ public class CopiarAnaliticaService implements CopiarAnaliticaUseCase {
                 corte.ventana().inicio(), corte.ventana().finPrometido(), pares);
     }
 
-    private static String detalleDeDiferencias(ConteosAnaliticos enMongo, ConteosAnaliticos enSql, List<String> huerfanos) {
+    private static String detalleDeDiferencias(ConteosAnaliticos enMongo, ConteosAnaliticos enSql, List<String> huerfanos,
+                                               long reportesEnMongo, long reportesEnSql) {
         StringBuilder detalle = new StringBuilder("Mongo y PostgreSQL no cuadran:");
+        if (reportesEnMongo != reportesEnSql) {
+            detalle.append(" reportes ").append(reportesEnMongo).append(" vs ").append(reportesEnSql).append(';');
+        }
         if (enMongo.sectores() != enSql.sectores()) {
             detalle.append(" barrios ").append(enMongo.sectores()).append(" vs ").append(enSql.sectores()).append(';');
         }

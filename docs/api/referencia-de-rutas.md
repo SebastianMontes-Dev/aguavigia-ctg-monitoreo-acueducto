@@ -6,7 +6,7 @@
 >
 > Las **guías** de esta carpeta explican el porqué y los flujos; esta página es el catálogo exacto.
 
-**87 operaciones** en 81 rutas, más las páginas HTML de cortesía y el SSE.
+**89 operaciones** en 83 rutas, más las páginas HTML de cortesía y el SSE.
 
 Leyenda de **Acceso**: *Público* no exige token · *Sesión + `PERMISO`* exige `Authorization: Bearer <token>` de una
 cuenta que tenga ese permiso · *Sesión (cualquier cuenta)* exige token pero ningún permiso concreto.
@@ -14,7 +14,7 @@ Todo error sale en RFC 7807: ver [Errores y límites](errores-y-limites.md).
 
 ## Índice
 
-- [Analítica](#anal-tica) (3)
+- [Analítica](#anal-tica) (5)
 - [Bitácora](#bit-cora) (2)
 - [Cuentas](#cuentas) (13)
 - [Cumplimiento](#cumplimiento) (6)
@@ -68,6 +68,32 @@ El índice agrupado por mes en hora de Cartagena, de más antiguo a más recient
 | **Parámetros** | — |
 | **Cuerpo** | — |
 | **Respuestas** | `200` Serie calculada → [SerieMensualAnaliticaRespuesta](#esquema-seriemensualanaliticarespuesta)<br>`503` La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia → [ProblemDetail](#esquema-problemdetail) |
+
+### `GET /api/analitica/reportes/ranking`
+
+**Barrios con más reportes, desde la copia SQL**
+
+El ranking de los últimos 30 días con datos (se cuenta hacia atrás desde el último día copiado), sin contar los reportes descartados. Lo calcula una vista de PostgreSQL con `RANK()`: los empates comparten posición. `limite` va de 1 a 50.
+
+| | |
+|---|---|
+| **Acceso** | Público |
+| **Parámetros** | `limite` (query) |
+| **Cuerpo** | — |
+| **Respuestas** | `200` Ranking calculado → [RankingReportesAnaliticoRespuesta](#esquema-rankingreportesanaliticorespuesta)<br>`503` La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia → [ProblemDetail](#esquema-problemdetail) |
+
+### `GET /api/analitica/reportes/tendencia`
+
+**Reportes por día con media móvil, desde la copia SQL**
+
+Los últimos `dias` días con datos (de 1 a 365), de más antiguo a más reciente, sin huecos y sin contar los reportes descartados. La media móvil de 7 días la calcula PostgreSQL con una función de ventana.
+
+| | |
+|---|---|
+| **Acceso** | Público |
+| **Parámetros** | `dias` (query) |
+| **Cuerpo** | — |
+| **Respuestas** | `200` Serie calculada → [TendenciaReportesAnaliticaRespuesta](#esquema-tendenciareportesanaliticarespuesta)<br>`503` La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia → [ProblemDetail](#esquema-problemdetail) |
 
 ### `GET /api/veedor/analitica/copia`
 
@@ -1252,6 +1278,22 @@ Datos para dar de alta el segundo factor. El secreto solo se muestra aqui, una v
 | `uri` | string |  |  | URI otpauth:// para pintar el QR |
 | `secreto` | string |  |  | El mismo secreto en Base32, para teclearlo si la camara falla |
 
+<a id="esquema-barrio"></a>
+
+### Barrio
+
+Un barrio del ranking. `posicion` se repite entre empates; los reportes descartados no cuentan
+
+| Campo | Tipo | Oblig. | Nulo | Descripción |
+|---|---|---|---|---|
+| `posicion` | integer (int32) |  |  |  |
+| `sectorId` | string |  |  |  |
+| `nombre` | string |  |  |  |
+| `reportes` | integer (int64) |  |  |  |
+| `sinAgua` | integer (int64) |  |  |  |
+| `presionBaja` | integer (int64) |  |  |  |
+| `porcentajeDeLaCiudad` | number (double) |  |  |  |
+
 <a id="esquema-calidaddelcumplimientorespuesta"></a>
 
 ### CalidadDelCumplimientoRespuesta
@@ -1420,7 +1462,7 @@ Documento de la ingesta que falló al procesarse y sigue en cola de reintento
 
 ### EstadisticaSectorRespuesta
 
-Sector con su cantidad de cortes registrados
+Sector con las veces que aparece en avisos de corte de Acuacar aprobados (no son cortes con duración medida)
 
 | Campo | Tipo | Oblig. | Nulo | Descripción |
 |---|---|---|---|---|
@@ -1438,7 +1480,7 @@ Estadísticas públicas globales (M7, RF023)
 |---|---|---|---|---|
 | `sectoresMasAfectados` | lista de [EstadisticaSectorRespuesta](#esquema-estadisticasectorrespuesta) |  |  |  |
 | `cortesPorDiaDeSemana` | mapa de integer (int32) |  |  |  |
-| `duracionPromedioHoras` | number (double) |  |  |  |
+| `duracionPromedioHoras` | number (double) |  | sí | Media en horas de los cortes cerrados; nula si no hay ninguno |
 
 <a id="esquema-eventoauditoriarespuesta"></a>
 
@@ -1612,6 +1654,19 @@ Propuesta de cambio de estado detectada por la ingesta automatizada (M9), espera
 | `finPrometido` | string (date-time) |  | sí | Fin prometido de la misma ventana. Junto con el inicio es lo que permite que el estado del sector evolucione solo (ADR-033) y lo que alimenta el Índice de Cumplimiento (RF020-RF022). |
 | `motivoDeRevision` | string |  | sí | Por qué esta propuesta espera al veedor en vez de haberse publicado sola (D5): confianza baja, una ventana de más de 72 horas, más de 40 barrios, un nombre ambiguo, o que viene de prensa. Nulo si salió sola. |
 
+<a id="esquema-punto"></a>
+
+### Punto
+
+Un día (hora de Cartagena). Los días sin reportes valen 0; los descartados no cuentan
+
+| Campo | Tipo | Oblig. | Nulo | Descripción |
+|---|---|---|---|---|
+| `dia` | string (date) |  |  |  |
+| `reportes` | integer (int64) |  |  |  |
+| `media7Dias` | number (double) |  |  |  |
+| `cambioRespectoAlDiaAnterior` | integer (int64) |  | sí | Frente al día anterior; nulo en el primer día de la serie |
+
 <a id="esquema-puntomensualanaliticorespuesta"></a>
 
 ### PuntoMensualAnaliticoRespuesta
@@ -1640,6 +1695,17 @@ Un mes de la evolución del Índice de Cumplimiento (RF024)
 | `desviacionSegundos` | integer (int64) |  |  | duracionReal - duracionPrometida. Negativa si terminaron antes de lo prometido |
 | `porcentajeCumplimiento` | number (double) |  |  | Capado en 100 cuando los cortes terminan antes o a tiempo |
 | `cantidadCortes` | integer (int32) |  |  | Cortes cerrados sobre los que se calculó el mes. Un 40% sobre un solo corte y uno sobre veinte no significan lo mismo. |
+
+<a id="esquema-rankingreportesanaliticorespuesta"></a>
+
+### RankingReportesAnaliticoRespuesta
+
+Barrios con más reportes en los últimos 30 días con datos, desde la copia analítica (ADR-112)
+
+| Campo | Tipo | Oblig. | Nulo | Descripción |
+|---|---|---|---|---|
+| `copiadoEn` | string (date-time) |  | sí | Cuándo terminó la última copia que cuadró con MongoDB; nulo si todavía no hay ninguna |
+| `barrios` | lista de [Barrio](#esquema-barrio) |  |  |  |
 
 <a id="esquema-reportemoderacionrespuesta"></a>
 
@@ -1986,6 +2052,17 @@ Suscripción creada, pendiente de confirmación por correo (RF013)
 | `sectorIds` | lista de string |  |  |  |
 | `estado` | string |  |  | PENDIENTE_CONFIRMACION, CONFIRMADA o CANCELADA |
 | `creadaEn` | string (date-time) |  |  |  |
+
+<a id="esquema-tendenciareportesanaliticarespuesta"></a>
+
+### TendenciaReportesAnaliticaRespuesta
+
+Reportes por día con su media móvil de 7 días, desde la copia analítica (ADR-112)
+
+| Campo | Tipo | Oblig. | Nulo | Descripción |
+|---|---|---|---|---|
+| `copiadoEn` | string (date-time) |  | sí | Cuándo terminó la última copia que cuadró con MongoDB; nulo si todavía no hay ninguna |
+| `puntos` | lista de [Punto](#esquema-punto) |  |  |  |
 
 <a id="esquema-tiempohastaelcambio"></a>
 

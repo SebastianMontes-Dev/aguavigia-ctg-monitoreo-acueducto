@@ -2,6 +2,8 @@ package com.aguavigia.ctg.api;
 
 import com.aguavigia.ctg.api.dto.CopiaAnaliticaRespuesta;
 import com.aguavigia.ctg.api.dto.CumplimientoAnaliticoRespuesta;
+import com.aguavigia.ctg.api.dto.RankingReportesAnaliticoRespuesta;
+import com.aguavigia.ctg.api.dto.TendenciaReportesAnaliticaRespuesta;
 import com.aguavigia.ctg.api.dto.SerieMensualAnaliticaRespuesta;
 import com.aguavigia.ctg.api.error.RecursoNoEncontradoException;
 import com.aguavigia.ctg.api.mapper.AnaliticaApiMapper;
@@ -76,6 +78,38 @@ public class AnaliticaController {
     public SerieMensualAnaliticaRespuesta cumplimientoMensual() {
         Instant copiadoEn = consulta.ultimaCopiaOk().orElse(null);
         return new SerieMensualAnaliticaRespuesta(copiadoEn, mapper.aRespuestas(consulta.cumplimientoMensual()));
+    }
+
+    @Operation(operationId = "rankingDeReportesAnalitico", summary = "Barrios con más reportes, desde la copia SQL",
+            description = "El ranking de los últimos 30 días con datos (se cuenta hacia atrás desde el último día copiado), sin contar los reportes "
+                    + "descartados. Lo calcula una vista de PostgreSQL con `RANK()`: los empates comparten posición. `limite` va de 1 a 50.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Ranking calculado"),
+            @ApiResponse(responseCode = "503", description = "La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia",
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @GetMapping("/analitica/reportes/ranking")
+    public RankingReportesAnaliticoRespuesta rankingDeReportes(@RequestParam(defaultValue = "10") int limite) {
+        Instant copiadoEn = consulta.ultimaCopiaOk().orElse(null);
+        return new RankingReportesAnaliticoRespuesta(copiadoEn, consulta.rankingDeBarrios(Math.max(1, Math.min(50, limite))).stream()
+                .map(RankingReportesAnaliticoRespuesta.Barrio::de).toList());
+    }
+
+    @Operation(operationId = "tendenciaDeReportesAnalitica", summary = "Reportes por día con media móvil, desde la copia SQL",
+            description = "Los últimos `dias` días con datos (de 1 a 365), de más antiguo a más reciente, sin huecos y sin contar los reportes descartados. "
+                    + "La media móvil de 7 días la calcula PostgreSQL con una función de ventana.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Serie calculada"),
+            @ApiResponse(responseCode = "503", description = "La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia",
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @GetMapping("/analitica/reportes/tendencia")
+    public TendenciaReportesAnaliticaRespuesta tendenciaDeReportes(@RequestParam(defaultValue = "30") int dias) {
+        Instant copiadoEn = consulta.ultimaCopiaOk().orElse(null);
+        return new TendenciaReportesAnaliticaRespuesta(copiadoEn, consulta.tendenciaDeReportes(Math.max(1, Math.min(365, dias))).stream()
+                .map(TendenciaReportesAnaliticaRespuesta.Punto::de).toList());
     }
 
     @Operation(operationId = "ultimasCopiasAnaliticas", summary = "Últimas copias de MongoDB a la base analítica",

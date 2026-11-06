@@ -98,6 +98,8 @@ services:
       - "127.0.0.1:${POSTGRES_PUERTO:-5433}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      # Crea aguavigia_sim_analitica al inicializar un volumen nuevo (ADR-112).
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
     networks:
       - aguavigia
     healthcheck:
@@ -206,8 +208,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: "8080"
-      # La simulación tiene su propia base de Mongo: si copiara a PostgreSQL pisaría la copia de la instancia real.
-      AGUAVIGIA_SQL_HABILITADO: "false"
+      # La simulación tiene su propia base de Mongo y, desde ADR-112, su propia base analítica en el mismo servidor de PostgreSQL
+      # (aguavigia_sim_analitica): si copiara a la de la instancia real pisaría su copia. Si esa base no existe (volumen anterior a ADR-112),
+      # créala una vez: docker exec aguavigia-postgres createdb -U aguavigia aguavigia_sim_analitica. Sin ella solo falla la copia, no el backend.
+      AGUAVIGIA_SQL_HABILITADO: "true"
+      AGUAVIGIA_SQL_URL: jdbc:postgresql://postgres:5432/aguavigia_sim_analitica
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/aguavigia_sim?replicaSet=rs0
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"

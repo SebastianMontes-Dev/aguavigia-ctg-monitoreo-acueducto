@@ -311,3 +311,16 @@ Ahora el campo es **nullable**: `null` sin cortes cerrados. En `exportar.csv` la
 **Qué debe adaptar el frontend (Yordy):**
 1. Regenerar los tipos: `npm run api:sync` en `frontend/` (el campo pasa a `number | null`); si no, `api:check` falla.
 2. Quitar el esquive del `0` en `frontend/src/dominio/estadisticas.ts` (`duracionMedible`): basta con `!= null`. Hoy ya funciona con `null`, así que no es urgente.
+
+### PostgreSQL: los reportes en la copia analítica (ADR-112)
+
+**No rompe nada.** El contrato suma **2 rutas públicas** (de 81 a 83) que leen de la copia en PostgreSQL, igual que las de F7: pueden responder `503` (`servicio-no-disponible`) y van hasta 5 minutos por detrás de Mongo.
+
+| Ruta | Qué devuelve |
+|---|---|
+| `GET /api/analitica/reportes/ranking?limite=` (1 a 50, por defecto 10) | `RankingReportesAnaliticoRespuesta`: `copiadoEn` y `barrios[]` con `posicion` (se repite entre empates), `sectorId`, `nombre`, `reportes`, `sinAgua`, `presionBaja` y `porcentajeDeLaCiudad`. Últimos 30 días **con datos**, sin contar los descartados |
+| `GET /api/analitica/reportes/tendencia?dias=` (1 a 365, por defecto 30) | `TendenciaReportesAnaliticaRespuesta`: `copiadoEn` y `puntos[]` con `dia`, `reportes`, `media7Dias` y `cambioRespectoAlDiaAnterior` (nulo el primer día). Sin huecos: un día sin reportes vale 0 |
+
+**Qué debe adaptar el frontend (Yordy):**
+1. Regenerar los tipos: `npm run api:sync`.
+2. `npm run api:cobertura` va a pedir que las dos rutas tengan cliente o figuren como excluidas. Son **opcionales**: duplican datos que la interfaz ya saca de Mongo y pueden dar `503`; se pueden excluir como las dos públicas de F7 (`/api/analitica/cumplimiento`), o usarlas en `/estadisticas` para mostrar la tendencia semanal y el ranking de barrios.

@@ -778,3 +778,21 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Pierde.** La simulación con volumen no es compatible con el guion completo (que mide barrios concretos): son dos usos distintos de `backend-sim`. La copia analítica de PostgreSQL de la simulación
   sigue apagada (ADR-100): copiaría el Mongo de simulación sobre la copia real.
 - **Se revierte** quitando `GenerarDatosSinteticosService`, su componente, `OrigenCorte.SINTETICO` y el campo `sintetico`; Mongo ignora los documentos con campos que ya no se leen.
+
+## 16. PostgreSQL: los reportes y una base analítica para la simulación (2026-11-06)
+
+### ADR-112 — La copia analítica cuenta también los reportes (sin datos personales) y la simulación tiene su propia base SQL
+
+**Estado: aceptada.** Amplía ADR-100 (sigue siendo una copia derivada: Mongo no cambia ni lee de PostgreSQL). Los pasos siguientes del plan de cierre (vigilante de integridad y bitácora inmutable) añaden sus propias secciones aquí.
+
+- **Contexto.** PostgreSQL solo copiaba el Índice de Cumplimiento. Con los reportes como el grueso de los datos (ADR-111), el modelo relacional tenía poco que mostrar sobre lo que más importa, y la simulación tenía el SQL apagado para no pisar la copia real.
+- **Decisión.**
+  1. **`analitica.reporte_dia`**: un conteo por barrio, día de Cartagena, tipo y estado de moderación. La cuenta la hace Mongo (`ReportesAgregadosMongoAdapter`, una agregación con `allowDiskUse`), no la memoria de Java. **Sin coordenadas, huella de dispositivo, red ni foto**: una prueba comprueba que la tabla no tiene otras columnas que las seis esperadas.
+  2. **Vistas con funciones de ventana** (migración `V3`): `v_reportes_vigentes` (todo menos los descartados), `v_ranking_barrios` (`RANK()` sobre los últimos 30 días con datos, contados hacia atrás desde el último día copiado y no desde hoy) y `v_tendencia_diaria` (sin huecos, con media móvil de 7 días `AVG() OVER (… ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)` y cambio frente al día anterior con `LAG`).
+  3. **Dos rutas públicas de solo lectura**: `GET /api/analitica/reportes/ranking?limite=` y `GET /api/analitica/reportes/tendencia?dias=`. Igual que las de ADR-100: 503 si la copia está apagada o PostgreSQL no responde, y nunca suplen leyendo de Mongo.
+  4. **La copia comprueba los reportes**: compara el total de Mongo con el que quedó en SQL; si no cuadra, la copia queda `CON_DIFERENCIAS` y el detalle dice «reportes N vs M». Un día de un barrio que no existe no se copia (la clave foránea lo rechazaría) y se delata igual.
+  5. **La simulación tiene su propia base analítica**, `aguavigia_sim_analitica`, en el mismo servidor de PostgreSQL, y su SQL pasa a estar encendido. Copiar a la base de la instancia real habría pisado su copia. Se crea con `scripts/postgres-init/` al inicializar un volumen nuevo; en un volumen anterior, una vez: `docker exec aguavigia-postgres createdb -U aguavigia aguavigia_sim_analitica`. Si no existe, solo falla la copia (no el backend).
+- **Verificado de verdad:** con 20 000 reportes generados en la simulación, Mongo y SQL suman lo mismo (20 000), la copia queda `OK` y las dos rutas responden con datos.
+- **Gana.** Un modelo relacional con claves foráneas, restricciones, vistas, `RANK`, `AVG OVER` y `LAG` sobre lo que el proyecto más recoge, probado contra un PostgreSQL real; la simulación puede enseñar SQL sin tocar la copia real.
+- **Pierde.** Un conteo más que mantener en dos sitios (si cambian los estados de moderación hay que tocar el `CHECK`); la simulación necesita su base creada una vez en volúmenes antiguos.
+- **Se revierte** con `V4__quitar_reportes.sql` (borrar las vistas y la tabla), el adaptador `ReportesAgregadosMongoAdapter` y las dos rutas; Mongo no se entera.

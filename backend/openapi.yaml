@@ -3027,6 +3027,69 @@ paths:
             application/problem+json:
               schema:
                 $ref: "#/components/schemas/ProblemDetail"
+  /api/analitica/reportes/tendencia:
+    get:
+      tags:
+      - Analítica
+      summary: "Reportes por día con media móvil, desde la copia SQL"
+      description: "Los últimos `dias` días con datos (de 1 a 365), de más antiguo\
+        \ a más reciente, sin huecos y sin contar los reportes descartados. La media\
+        \ móvil de 7 días la calcula PostgreSQL con una función de ventana."
+      operationId: tendenciaDeReportesAnalitica
+      parameters:
+      - name: dias
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 30
+      responses:
+        "200":
+          description: Serie calculada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TendenciaReportesAnaliticaRespuesta"
+        "503":
+          description: "La copia analítica está apagada, PostgreSQL no responde o\
+            \ todavía no hubo una primera copia"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+  /api/analitica/reportes/ranking:
+    get:
+      tags:
+      - Analítica
+      summary: "Barrios con más reportes, desde la copia SQL"
+      description: "El ranking de los últimos 30 días con datos (se cuenta hacia atrá\
+        s desde el último día copiado), sin contar los reportes descartados. Lo calcula\
+        \ una vista de PostgreSQL con `RANK()`: los empates comparten posición. `limite`\
+        \ va de 1 a 50."
+      operationId: rankingDeReportesAnalitico
+      parameters:
+      - name: limite
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 10
+      responses:
+        "200":
+          description: Ranking calculado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RankingReportesAnaliticoRespuesta"
+        "503":
+          description: "La copia analítica está apagada, PostgreSQL no responde o\
+            \ todavía no hubo una primera copia"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
   /api/analitica/cumplimiento:
     get:
       tags:
@@ -4258,7 +4321,8 @@ components:
         cantidadCortes:
           type: integer
           format: int32
-      description: Sector con las veces que aparece en avisos de corte de Acuacar aprobados (no son cortes con duración medida)
+      description: Sector con las veces que aparece en avisos de corte de Acuacar
+        aprobados (no son cortes con duración medida)
     EstadisticasRespuesta:
       type: object
       properties:
@@ -4273,7 +4337,7 @@ components:
             format: int32
         duracionPromedioHoras:
           type: number
-          description: "Media en horas de los cortes cerrados; nula si no hay ninguno"
+          description: Media en horas de los cortes cerrados; nula si no hay ninguno
           format: double
           nullable: true
       description: "Estadísticas públicas globales (M7, RF023)"
@@ -4432,6 +4496,79 @@ components:
           format: int32
       description: Cuántos vecinos respaldan un cambio y cuántos hacían falta
       nullable: true
+    Punto:
+      type: object
+      properties:
+        dia:
+          type: string
+          format: date
+        reportes:
+          type: integer
+          format: int64
+        media7Dias:
+          type: number
+          format: double
+        cambioRespectoAlDiaAnterior:
+          type: integer
+          description: Frente al día anterior; nulo en el primer día de la serie
+          format: int64
+          nullable: true
+      description: Un día (hora de Cartagena). Los días sin reportes valen 0; los
+        descartados no cuentan
+    TendenciaReportesAnaliticaRespuesta:
+      type: object
+      properties:
+        copiadoEn:
+          type: string
+          description: Cuándo terminó la última copia que cuadró con MongoDB; nulo
+            si todavía no hay ninguna
+          format: date-time
+          nullable: true
+        puntos:
+          type: array
+          items:
+            $ref: "#/components/schemas/Punto"
+      description: "Reportes por día con su media móvil de 7 días, desde la copia\
+        \ analítica (ADR-112)"
+    Barrio:
+      type: object
+      properties:
+        posicion:
+          type: integer
+          format: int32
+        sectorId:
+          type: string
+        nombre:
+          type: string
+        reportes:
+          type: integer
+          format: int64
+        sinAgua:
+          type: integer
+          format: int64
+        presionBaja:
+          type: integer
+          format: int64
+        porcentajeDeLaCiudad:
+          type: number
+          format: double
+      description: Un barrio del ranking. `posicion` se repite entre empates; los
+        reportes descartados no cuentan
+    RankingReportesAnaliticoRespuesta:
+      type: object
+      properties:
+        copiadoEn:
+          type: string
+          description: Cuándo terminó la última copia que cuadró con MongoDB; nulo
+            si todavía no hay ninguna
+          format: date-time
+          nullable: true
+        barrios:
+          type: array
+          items:
+            $ref: "#/components/schemas/Barrio"
+      description: "Barrios con más reportes en los últimos 30 días con datos, desde\
+        \ la copia analítica (ADR-112)"
     CumplimientoAnaliticoRespuesta:
       type: object
       properties:

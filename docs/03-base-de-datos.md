@@ -117,10 +117,11 @@ Si está apagada o falla, el sistema arranca, está `UP` y responde igual: solo 
 | `corte` | Un corte: `id`, `origen`, `estado`, `causa`, `inicio`, `fin_prometido` (`CHECK fin_prometido > inicio`), `copiado_en` |
 | `corte_sector` | Un par corte-barrio (D14). Claves foráneas a `corte` (`ON DELETE CASCADE`) y `sector`; `cierre_hora`, `cierre_fuente`, `cierre_provisional` son opcionales (un barrio sin cierre no cuenta en el Índice) |
 | `copia` | Una fila por copia: cuándo, resultado (`EN_CURSO`, `OK`, `CON_DIFERENCIAS`, `FALLIDA`) y los conteos de barrios, cortes y pares en Mongo y en PostgreSQL |
+| `reporte_dia` | (ADR-112) Reportes contados por barrio, día de Cartagena, tipo y estado de moderación. Solo el conteo: sin coordenadas, huella, red ni foto. FK a `sector` con borrado en cascada y `CHECK` en el estado |
 
 ### 4.2 Vistas: el Índice en SQL
 
-`v_par_cerrado` (un par con cierre, sin cortes `ANULADO`), `v_cumplimiento_por_sector`, `v_cumplimiento_global` y `v_cumplimiento_mensual` (mes en hora de Cartagena). Misma fórmula que
+`v_par_cerrado` (un par con cierre, sin cortes `ANULADO`), `v_cumplimiento_por_sector`, `v_cumplimiento_global` y `v_cumplimiento_mensual` (mes en hora de Cartagena). Sobre los reportes (ADR-112): `v_reportes_vigentes` (sin descartados), `v_ranking_barrios` (`RANK()` de los últimos 30 días con datos) y `v_tendencia_diaria` (media móvil de 7 días con `AVG() OVER` y cambio con `LAG`, sin huecos). Misma fórmula que
 `CalcularCumplimientoService` (ADR-022): se **suman** duraciones —en milisegundos, truncando a segundos al final, como Mongo y `Duration.toSeconds()`— y el porcentaje es
 `min(100, prometida × 100 / real)`, o 100 si la real es 0. Una prueba de paridad (`ParidadMongoPostgresIT`) compara las dos con los mismos cortes.
 
@@ -133,7 +134,7 @@ de barrios y cortes y quita lo que ya no existe. Repetirla no duplica nada; si a
 
 ### 4.4 Rutas (solo lectura)
 
-`GET /api/analitica/cumplimiento[?sectorId=]` y `GET /api/analitica/cumplimiento/mensual` (públicas) y `GET /api/veedor/analitica/copia` (`VER_PANEL`: últimas copias y sus conteos).
+`GET /api/analitica/cumplimiento[?sectorId=]`, `GET /api/analitica/cumplimiento/mensual`, `GET /api/analitica/reportes/ranking[?limite=]` y `GET /api/analitica/reportes/tendencia[?dias=]` (públicas) y `GET /api/veedor/analitica/copia` (`VER_PANEL`: últimas copias y sus conteos).
 Con la copia apagada, PostgreSQL caído o sin primera copia responden **503** (`servicio-no-disponible`) y nunca suplen la consulta leyendo de Mongo. El estado de la copia **no** está en
 `/actuator/health` a propósito (`management.health.db.enabled: false`).
 

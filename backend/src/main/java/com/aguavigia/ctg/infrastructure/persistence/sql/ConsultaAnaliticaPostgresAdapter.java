@@ -3,6 +3,8 @@ package com.aguavigia.ctg.infrastructure.persistence.sql;
 import com.aguavigia.ctg.domain.AnaliticaNoDisponibleException;
 import com.aguavigia.ctg.domain.ConteosAnaliticos;
 import com.aguavigia.ctg.domain.CumplimientoAnalitico;
+import com.aguavigia.ctg.domain.PuntoTendenciaAnalitico;
+import com.aguavigia.ctg.domain.RankingDeBarrioAnalitico;
 import com.aguavigia.ctg.domain.PuntoMensualAnalitico;
 import com.aguavigia.ctg.domain.RegistroDeCopia;
 import com.aguavigia.ctg.domain.ResultadoDeCopia;
@@ -66,6 +68,35 @@ public class ConsultaAnaliticaPostgresAdapter implements ConsultaAnaliticaPort {
                 """, (rs, fila) -> new PuntoMensualAnalitico(YearMonth.parse(rs.getString("mes")),
                 rs.getLong("pares_cerrados"), rs.getLong("prometida_s"), rs.getLong("real_s"),
                 rs.getDouble("porcentaje_cumplimiento"))));
+    }
+
+    @Override
+    public List<RankingDeBarrioAnalitico> rankingDeBarrios(int limite) {
+        return disponible(() -> jdbc.query("""
+                SELECT posicion, sector_id, nombre, reportes, sin_agua, presion_baja, porcentaje_ciudad
+                  FROM analitica.v_ranking_barrios
+                 ORDER BY posicion, nombre
+                 LIMIT ?
+                """, (rs, fila) -> new RankingDeBarrioAnalitico(rs.getInt("posicion"), rs.getString("sector_id"),
+                rs.getString("nombre"), rs.getLong("reportes"), rs.getLong("sin_agua"), rs.getLong("presion_baja"),
+                rs.getDouble("porcentaje_ciudad")), limite));
+    }
+
+    @Override
+    public List<PuntoTendenciaAnalitico> tendenciaDeReportes(int dias) {
+        // Los últimos `dias` de la serie (con media móvil calculada sobre toda ella, no solo sobre estos), de más antiguo a más reciente.
+        return disponible(() -> jdbc.query("""
+                SELECT dia, reportes, media_7d, cambio_dia
+                  FROM (SELECT dia, reportes, media_7d, cambio_dia FROM analitica.v_tendencia_diaria ORDER BY dia DESC LIMIT ?) ultimos
+                 ORDER BY dia
+                """, (rs, fila) -> {
+            long reportes = rs.getLong("reportes");
+            double media = rs.getDouble("media_7d");
+            long cambio = rs.getLong("cambio_dia");
+            // wasNull() habla de la última columna leída: tiene que preguntarse justo después de leer `cambio_dia`.
+            Long cambioOnulo = rs.wasNull() ? null : cambio;
+            return new PuntoTendenciaAnalitico(rs.getObject("dia", java.time.LocalDate.class), reportes, media, cambioOnulo);
+        }, dias));
     }
 
     @Override

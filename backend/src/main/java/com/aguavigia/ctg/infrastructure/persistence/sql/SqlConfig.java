@@ -75,8 +75,9 @@ public class SqlConfig {
     @Bean
     @ConditionalOnProperty(name = HABILITADO, havingValue = "true")
     public CopiarAnaliticaUseCase copiarAnaliticaService(SectorRepository sectores, CorteAguaRepository cortes,
-                                                         AlmacenAnaliticoPort almacen, RelojPort reloj) {
-        return new CopiarAnaliticaService(sectores, cortes, almacen, reloj);
+                                                         AlmacenAnaliticoPort almacen, RelojPort reloj,
+                                                         com.aguavigia.ctg.domain.port.out.LectorDeReportesAgregadosPort reportes) {
+        return new CopiarAnaliticaService(sectores, cortes, almacen, reloj, reportes);
     }
 
     @Bean

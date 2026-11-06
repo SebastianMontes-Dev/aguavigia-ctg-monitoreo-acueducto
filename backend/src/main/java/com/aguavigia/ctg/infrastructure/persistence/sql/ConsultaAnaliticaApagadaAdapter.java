@@ -2,6 +2,8 @@ package com.aguavigia.ctg.infrastructure.persistence.sql;
 
 import com.aguavigia.ctg.domain.AnaliticaNoDisponibleException;
 import com.aguavigia.ctg.domain.CumplimientoAnalitico;
+import com.aguavigia.ctg.domain.PuntoTendenciaAnalitico;
+import com.aguavigia.ctg.domain.RankingDeBarrioAnalitico;
 import com.aguavigia.ctg.domain.PuntoMensualAnalitico;
 import com.aguavigia.ctg.domain.RegistroDeCopia;
 import com.aguavigia.ctg.domain.port.out.ConsultaAnaliticaPort;
@@ -27,6 +29,16 @@ public class ConsultaAnaliticaApagadaAdapter implements ConsultaAnaliticaPort {
 
     @Override
     public List<PuntoMensualAnalitico> cumplimientoMensual() {
+        throw apagada();
+    }
+
+    @Override
+    public List<RankingDeBarrioAnalitico> rankingDeBarrios(int limite) {
+        throw apagada();
+    }
+
+    @Override
+    public List<PuntoTendenciaAnalitico> tendenciaDeReportes(int dias) {
         throw apagada();
     }
 
