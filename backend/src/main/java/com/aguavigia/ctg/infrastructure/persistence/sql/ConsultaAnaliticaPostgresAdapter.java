@@ -4,6 +4,8 @@ import com.aguavigia.ctg.domain.AnaliticaNoDisponibleException;
 import com.aguavigia.ctg.domain.ConteosAnaliticos;
 import com.aguavigia.ctg.domain.CumplimientoAnalitico;
 import com.aguavigia.ctg.domain.PuntoTendenciaAnalitico;
+import com.aguavigia.ctg.domain.RegistroDeVigilancia;
+import com.aguavigia.ctg.domain.VerificacionDeBitacora;
 import com.aguavigia.ctg.domain.RankingDeBarrioAnalitico;
 import com.aguavigia.ctg.domain.PuntoMensualAnalitico;
 import com.aguavigia.ctg.domain.RegistroDeCopia;
@@ -97,6 +99,27 @@ public class ConsultaAnaliticaPostgresAdapter implements ConsultaAnaliticaPort {
             Long cambioOnulo = rs.wasNull() ? null : cambio;
             return new PuntoTendenciaAnalitico(rs.getObject("dia", java.time.LocalDate.class), reportes, media, cambioOnulo);
         }, dias));
+    }
+
+    @Override
+    public List<RegistroDeVigilancia> ultimasVigilancias(int limite) {
+        return disponible(() -> jdbc.query("""
+                SELECT id, ejecutada_en, resultado, barrios_revisados, diferencias, eventos_en_bitacora, eslabones_rotos, detalle
+                  FROM analitica.vigilancia
+                 ORDER BY id DESC
+                 LIMIT ?
+                """, (rs, fila) -> new RegistroDeVigilancia(rs.getLong("id"), instante(rs, 2), ResultadoDeCopia.valueOf(rs.getString("resultado")),
+                rs.getInt("barrios_revisados"), rs.getInt("diferencias"), rs.getLong("eventos_en_bitacora"),
+                rs.getLong("eslabones_rotos"), rs.getString("detalle")), limite));
+    }
+
+    @Override
+    public VerificacionDeBitacora integridadDeBitacora() {
+        return disponible(() -> jdbc.queryForObject("""
+                SELECT (SELECT COUNT(*) FROM analitica.v_bitacora_cadena),
+                       (SELECT COUNT(*) FROM analitica.v_bitacora_cadena WHERE NOT enlace_ok OR NOT hash_ok),
+                       (SELECT hash FROM analitica.bitacora_inmutable ORDER BY seq DESC LIMIT 1)
+                """, (rs, fila) -> new VerificacionDeBitacora(rs.getLong(1), rs.getLong(2), rs.getString(3))));
     }
 
     @Override

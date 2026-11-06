@@ -76,9 +76,9 @@ class AlmacenAnaliticoPostgresAdapterIT {
                 String.class);
         List<String> vistas = jdbc.queryForList(
                 "SELECT table_name FROM information_schema.views WHERE table_schema = 'analitica'", String.class);
-        assertThat(tablas).contains("sector", "corte", "corte_sector", "copia", "reporte_dia", "flyway_schema_history");
+        assertThat(tablas).contains("sector", "corte", "corte_sector", "copia", "reporte_dia", "vigilancia", "bitacora_inmutable", "flyway_schema_history");
         assertThat(vistas).containsExactlyInAnyOrder("v_par_cerrado", "v_cumplimiento_por_sector", "v_cumplimiento_global",
-                "v_cumplimiento_mensual", "v_reportes_vigentes", "v_ranking_barrios", "v_tendencia_diaria");
+                "v_cumplimiento_mensual", "v_reportes_vigentes", "v_ranking_barrios", "v_tendencia_diaria", "v_bitacora_cadena");
     }
 
     @Test
@@ -89,7 +89,7 @@ class AlmacenAnaliticoPostgresAdapterIT {
                 postgres.getPassword())).registrarInicioDeCopia(COPIA);
 
         assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM analitica.flyway_schema_history WHERE success AND version IS NOT NULL", Integer.class))
-                .isEqualTo(3);
+                .isEqualTo(4);
     }
 
     @Test

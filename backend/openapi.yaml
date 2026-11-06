@@ -2468,6 +2468,53 @@ paths:
                 $ref: "#/components/schemas/ProblemDetail"
       security:
       - bearerAuth: []
+  /api/veedor/analitica/vigilancia:
+    get:
+      tags:
+      - Analítica
+      summary: Últimas revisiones del vigilante de la copia analítica
+      description: "Cada revisión compara Mongo con PostgreSQL barrio por barrio (pares,\
+        \ cierres, segundos de cierre y reportes), cuenta las referencias colgantes\
+        \ y comprueba la cadena de la bitácora inmutable. `detalle` dice qué descuadra.\
+        \ Avisa; no corrige."
+      operationId: ultimasVigilanciasAnaliticas
+      parameters:
+      - name: limite
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          default: 20
+      responses:
+        "200":
+          description: "Las revisiones, de la más reciente a la más antigua"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VigilanciaAnaliticaRespuesta"
+        "503":
+          description: La copia analítica está apagada o PostgreSQL no responde
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "401":
+          description: "Sin sesión, token inválido, caducado o revocado"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+        "403":
+          description: La sesión no tiene el permiso que exige esta operación
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+      security:
+      - bearerAuth: []
   /api/veedor/analitica/copia:
     get:
       tags:
@@ -3140,6 +3187,30 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SerieMensualAnaliticaRespuesta"
+        "503":
+          description: "La copia analítica está apagada, PostgreSQL no responde o\
+            \ todavía no hubo una primera copia"
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ProblemDetail"
+  /api/analitica/bitacora/integridad:
+    get:
+      tags:
+      - Analítica
+      summary: Integridad de la bitácora inmutable (cadena de hashes)
+      description: "La bitácora pública se copia a PostgreSQL en una tabla que solo\
+        \ admite agregar y en la que cada evento guarda el hash del anterior. Esto\
+        \ comprueba la cadena: `cadenaValida` es falso si alguien alteró o borró un\
+        \ evento, aunque haya esquivado el bloqueo."
+      operationId: integridadDeLaBitacora
+      responses:
+        "200":
+          description: Estado de la cadena
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegridadBitacoraRespuesta"
         "503":
           description: "La copia analítica está apagada, PostgreSQL no responde o\
             \ todavía no hubo una primera copia"
@@ -4214,6 +4285,40 @@ components:
           format: date-time
       description: "Asiento de la bitacora de auditoria de cuentas: quien le hizo\
         \ que a quien"
+    VigilanciaAnaliticaRespuesta:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        ejecutadaEn:
+          type: string
+          format: date-time
+        resultado:
+          type: string
+          description: "OK, CON_DIFERENCIAS o FALLIDA"
+        barriosRevisados:
+          type: integer
+          format: int32
+        diferencias:
+          type: integer
+          description: Barrios que descuadran más referencias colgantes
+          format: int32
+        eventosEnBitacora:
+          type: integer
+          format: int64
+        eslabonesRotos:
+          type: integer
+          description: Eslabones de la cadena de hashes que no cuadran; 0 si está
+            sana
+          format: int64
+        detalle:
+          type: string
+          description: Qué descuadra o por qué falló; nulo si todo cuadra
+          nullable: true
+      description: "Una revisión del vigilante de la copia analítica (ADR-113): compara\
+        \ Mongo con PostgreSQL barrio por barrio y comprueba la cadena de la bitá\
+        cora inmutable. Avisa; no corrige"
     ConteosAnaliticosRespuesta:
       type: object
       properties:
@@ -4641,6 +4746,26 @@ components:
             $ref: "#/components/schemas/PuntoMensualAnaliticoRespuesta"
       description: "La serie mensual del Índice según la copia analítica, de más antiguo\
         \ a más reciente"
+    IntegridadBitacoraRespuesta:
+      type: object
+      properties:
+        eventos:
+          type: integer
+          description: Eventos que tiene la bitácora inmutable
+          format: int64
+        eslabonesRotos:
+          type: integer
+          description: Eslabones que no cuadran; 0 en una cadena sana
+          format: int64
+        cadenaValida:
+          type: boolean
+        ultimoHash:
+          type: string
+          description: "Hash del último evento: resume toda la historia hasta ahí\
+            . Nulo si la bitácora está vacía"
+          nullable: true
+      description: "El estado de la cadena de hashes de la bitácora inmutable (ADR-113):\
+        \ cada evento guarda el hash del anterior, así que alterar uno rompe la cadena"
   securitySchemes:
     bearerAuth:
       type: http

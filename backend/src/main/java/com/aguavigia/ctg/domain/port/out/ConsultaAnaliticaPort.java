@@ -2,6 +2,8 @@ package com.aguavigia.ctg.domain.port.out;
 
 import com.aguavigia.ctg.domain.CumplimientoAnalitico;
 import com.aguavigia.ctg.domain.PuntoTendenciaAnalitico;
+import com.aguavigia.ctg.domain.RegistroDeVigilancia;
+import com.aguavigia.ctg.domain.VerificacionDeBitacora;
 import com.aguavigia.ctg.domain.RankingDeBarrioAnalitico;
 import com.aguavigia.ctg.domain.PuntoMensualAnalitico;
 import com.aguavigia.ctg.domain.RegistroDeCopia;
@@ -31,6 +33,12 @@ public interface ConsultaAnaliticaPort {
 
     /** Los reportes por día de los últimos {@code dias} días con datos, con su media móvil de siete días; de más antiguo a más reciente. */
     List<PuntoTendenciaAnalitico> tendenciaDeReportes(int dias);
+
+    /** Las últimas revisiones del vigilante (ADR-113), de la más reciente a la más antigua. */
+    List<RegistroDeVigilancia> ultimasVigilancias(int limite);
+
+    /** El estado de la cadena de hashes de la bitácora inmutable: cuántos eventos tiene y cuántos eslabones no cuadran. */
+    VerificacionDeBitacora integridadDeBitacora();
 
     /** Cuándo terminó la última copia que cuadró con Mongo, o vacío si todavía no hay ninguna. */
     Optional<Instant> ultimaCopiaOk();

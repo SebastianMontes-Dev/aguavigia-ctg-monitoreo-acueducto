@@ -138,7 +138,14 @@ de barrios y cortes y quita lo que ya no existe. Repetirla no duplica nada; si a
 Con la copia apagada, PostgreSQL caído o sin primera copia responden **503** (`servicio-no-disponible`) y nunca suplen la consulta leyendo de Mongo. El estado de la copia **no** está en
 `/actuator/health` a propósito (`management.health.db.enabled: false`).
 
-### 4.5 Qué no se hizo
+### 4.5 Vigilante, bitácora inmutable, respaldo y rol lector (ADR-113)
 
-El vigilante completo de integridad (sumas de control, referencias colgantes), la bitácora inmutable, el respaldo restaurable y las vistas de datos abiertos son las fases 2 y 3 de
-[09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) §10.
+- **`vigilancia`** guarda cada revisión del vigilante (cada 15 min, tras una copia fresca): compara por barrio pares, cierres, segundos de cierre y reportes entre Mongo y PostgreSQL, cuenta las referencias colgantes y comprueba la cadena. **Avisa; no corrige.** `GET /api/veedor/analitica/vigilancia` (`VER_PANEL`).
+- **`bitacora_inmutable`** copia la bitácora pública y **solo admite agregar**: disparadores rechazan `UPDATE`, `DELETE` y `TRUNCATE`. Cada fila guarda el hash SHA-256 de la anterior (lo calcula un disparador `BEFORE INSERT`), de modo que reescribir una fila, aunque se esquive el bloqueo, rompe la cadena que comprueba `v_bitacora_cadena`. `GET /api/analitica/bitacora/integridad` (pública). La auditoría de cuentas **no** se copia: lleva IP e ids de personas.
+- **Respaldo:** `scripts/backup-postgres.sh` (`pg_dump` formato custom), `scripts/restore-postgres.sh` (restaura en una base **nueva**, nunca encima de la original) y `scripts/verificar-respaldo-postgres.sh` (respalda, restaura en una base temporal, compara las filas de cada tabla, comprueba la cadena y la borra).
+- **Rol `aguavigia_lector`** (`NOLOGIN`): solo `SELECT` sobre las vistas públicas. Para usarlo: `CREATE USER lector IN ROLE aguavigia_lector PASSWORD '…'`.
+- **La simulación** tiene su propia base analítica, `aguavigia_sim_analitica` (ADR-112), con las mismas tablas y vigilancia.
+
+### 4.6 Qué no se hizo
+
+Una vista de datos abiertos más allá del rol de solo lectura, y la copia de la auditoría de cuentas (por sus datos personales). Ver [09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) §10.

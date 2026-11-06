@@ -112,6 +112,36 @@ public class AnaliticaController {
                 .map(TendenciaReportesAnaliticaRespuesta.Punto::de).toList());
     }
 
+    @Operation(operationId = "integridadDeLaBitacora", summary = "Integridad de la bitácora inmutable (cadena de hashes)",
+            description = "La bitácora pública se copia a PostgreSQL en una tabla que solo admite agregar y en la que cada evento guarda el hash del "
+                    + "anterior. Esto comprueba la cadena: `cadenaValida` es falso si alguien alteró o borró un evento, aunque haya esquivado el bloqueo.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Estado de la cadena"),
+            @ApiResponse(responseCode = "503", description = "La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia",
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @GetMapping("/analitica/bitacora/integridad")
+    public com.aguavigia.ctg.api.dto.IntegridadBitacoraRespuesta integridadDeLaBitacora() {
+        return com.aguavigia.ctg.api.dto.IntegridadBitacoraRespuesta.de(consulta.integridadDeBitacora());
+    }
+
+    @Operation(operationId = "ultimasVigilanciasAnaliticas", summary = "Últimas revisiones del vigilante de la copia analítica",
+            description = "Cada revisión compara Mongo con PostgreSQL barrio por barrio (pares, cierres, segundos de cierre y reportes), cuenta las "
+                    + "referencias colgantes y comprueba la cadena de la bitácora inmutable. `detalle` dice qué descuadra. Avisa; no corrige.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Las revisiones, de la más reciente a la más antigua"),
+            @ApiResponse(responseCode = "503", description = "La copia analítica está apagada o PostgreSQL no responde",
+                    content = @Content(mediaType = "application/problem+json",
+                            schema = @Schema(implementation = ProblemDetail.class)))
+    })
+    @PreAuthorize("hasAuthority('PERM_VER_PANEL')")
+    @GetMapping("/veedor/analitica/vigilancia")
+    public List<com.aguavigia.ctg.api.dto.VigilanciaAnaliticaRespuesta> ultimasVigilancias(@RequestParam(defaultValue = "20") int limite) {
+        return consulta.ultimasVigilancias(Math.max(1, Math.min(200, limite))).stream()
+                .map(com.aguavigia.ctg.api.dto.VigilanciaAnaliticaRespuesta::de).toList();
+    }
+
     @Operation(operationId = "ultimasCopiasAnaliticas", summary = "Últimas copias de MongoDB a la base analítica",
             description = "Cuándo corrió cada copia, cuánto copió y si los conteos de las dos bases cuadraron. Es donde se ve el estado "
                     + "de la copia: `/actuator/health` no la incluye a propósito.")

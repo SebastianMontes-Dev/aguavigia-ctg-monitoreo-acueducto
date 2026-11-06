@@ -324,3 +324,14 @@ Ahora el campo es **nullable**: `null` sin cortes cerrados. En `exportar.csv` la
 **Qué debe adaptar el frontend (Yordy):**
 1. Regenerar los tipos: `npm run api:sync`.
 2. `npm run api:cobertura` va a pedir que las dos rutas tengan cliente o figuren como excluidas. Son **opcionales**: duplican datos que la interfaz ya saca de Mongo y pueden dar `503`; se pueden excluir como las dos públicas de F7 (`/api/analitica/cumplimiento`), o usarlas en `/estadisticas` para mostrar la tendencia semanal y el ranking de barrios.
+
+### PostgreSQL: vigilante y bitácora inmutable (ADR-113)
+
+**No rompe nada.** Dos rutas más (de 83 a 85), igual que las de F7: pueden responder `503` y no tienen por qué tener pantalla.
+
+| Ruta | Acceso | Qué devuelve |
+|---|---|---|
+| `GET /api/analitica/bitacora/integridad` | Público | `IntegridadBitacoraRespuesta`: `eventos`, `eslabonesRotos`, `cadenaValida` y `ultimoHash` (resume toda la historia hasta ese evento; nulo si está vacía). `cadenaValida: false` quiere decir que alguien alteró o borró un evento de la copia inmutable |
+| `GET /api/veedor/analitica/vigilancia?limite=` | Panel, `VER_PANEL` | Las últimas revisiones del vigilante (`VigilanciaAnaliticaRespuesta`): `resultado` (`OK`, `CON_DIFERENCIAS`, `FALLIDA`), `barriosRevisados`, `diferencias`, `eventosEnBitacora`, `eslabonesRotos` y `detalle` |
+
+**Qué debe adaptar el frontend (Yordy):** `npm run api:sync` y decidir si usa o excluye las rutas en `api:cobertura`. Recomendado: la de `vigilancia` como otro bloque en `/panel/sistema`, junto a «Copia analítica» (mismo permiso, mismo manejo del `503`), y mostrar la de `integridad` como una línea de confianza en `/bitacora` («bitácora verificada: N eventos, cadena íntegra»), siempre sin romper la página si responde `503`.

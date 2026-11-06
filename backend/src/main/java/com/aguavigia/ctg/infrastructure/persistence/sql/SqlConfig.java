@@ -82,6 +82,31 @@ public class SqlConfig {
 
     @Bean
     @ConditionalOnProperty(name = HABILITADO, havingValue = "true")
+    public com.aguavigia.ctg.domain.port.out.IntegridadAnaliticaPort integridadAnalitica(DataSource analiticaDataSource) {
+        return new IntegridadAnaliticaPostgresAdapter(analiticaDataSource);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = HABILITADO, havingValue = "true")
+    public com.aguavigia.ctg.domain.port.in.VigilarAnaliticaUseCase vigilarAnaliticaService(
+            SectorRepository sectores, CorteAguaRepository cortes,
+            com.aguavigia.ctg.domain.port.out.LectorDeReportesAgregadosPort reportes,
+            com.aguavigia.ctg.domain.port.out.LectorDeBitacoraPort bitacora,
+            com.aguavigia.ctg.domain.port.out.IntegridadAnaliticaPort integridad, RelojPort reloj) {
+        return new com.aguavigia.ctg.application.VigilarAnaliticaService(sectores, cortes, reportes, bitacora, integridad, reloj);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = HABILITADO, havingValue = "true")
+    public VigilanciaAnaliticaJob vigilanciaAnaliticaJob(CopiarAnaliticaUseCase copiar,
+                                                         com.aguavigia.ctg.domain.port.in.VigilarAnaliticaUseCase vigilar,
+                                                         EjecucionUnica ejecucionUnica,
+                                                         @Value("${aguavigia.sql.vigilancia-intervalo-ms:900000}") long intervaloMs) {
+        return new VigilanciaAnaliticaJob(copiar, vigilar, ejecucionUnica, intervaloMs);
+    }
+
+    @Bean
+    @ConditionalOnProperty(name = HABILITADO, havingValue = "true")
     public CopiaAnaliticaJob copiaAnaliticaJob(CopiarAnaliticaUseCase copiar, EjecucionUnica ejecucionUnica,
                                                @Value("${aguavigia.sql.copia-intervalo-ms:300000}") long intervaloMs) {
         return new CopiaAnaliticaJob(copiar, ejecucionUnica, intervaloMs);

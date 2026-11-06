@@ -6,7 +6,7 @@
 >
 > Las **guías** de esta carpeta explican el porqué y los flujos; esta página es el catálogo exacto.
 
-**89 operaciones** en 83 rutas, más las páginas HTML de cortesía y el SSE.
+**91 operaciones** en 85 rutas, más las páginas HTML de cortesía y el SSE.
 
 Leyenda de **Acceso**: *Público* no exige token · *Sesión + `PERMISO`* exige `Authorization: Bearer <token>` de una
 cuenta que tenga ese permiso · *Sesión (cualquier cuenta)* exige token pero ningún permiso concreto.
@@ -14,7 +14,7 @@ Todo error sale en RFC 7807: ver [Errores y límites](errores-y-limites.md).
 
 ## Índice
 
-- [Analítica](#anal-tica) (5)
+- [Analítica](#anal-tica) (7)
 - [Bitácora](#bit-cora) (2)
 - [Cuentas](#cuentas) (13)
 - [Cumplimiento](#cumplimiento) (6)
@@ -42,6 +42,19 @@ Todo error sale en RFC 7807: ver [Errores y límites](errores-y-limites.md).
 ## Analítica
 
 Índice de Cumplimiento desde la copia analítica en PostgreSQL (ADR-100)
+
+### `GET /api/analitica/bitacora/integridad`
+
+**Integridad de la bitácora inmutable (cadena de hashes)**
+
+La bitácora pública se copia a PostgreSQL en una tabla que solo admite agregar y en la que cada evento guarda el hash del anterior. Esto comprueba la cadena: `cadenaValida` es falso si alguien alteró o borró un evento, aunque haya esquivado el bloqueo.
+
+| | |
+|---|---|
+| **Acceso** | Público |
+| **Parámetros** | — |
+| **Cuerpo** | — |
+| **Respuestas** | `200` Estado de la cadena → [IntegridadBitacoraRespuesta](#esquema-integridadbitacorarespuesta)<br>`503` La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia → [ProblemDetail](#esquema-problemdetail) |
 
 ### `GET /api/analitica/cumplimiento`
 
@@ -107,6 +120,19 @@ Cuándo corrió cada copia, cuánto copió y si los conteos de las dos bases cua
 | **Parámetros** | `limite` (query) |
 | **Cuerpo** | — |
 | **Respuestas** | `200` Las copias, de la más reciente a la más antigua → lista de [CopiaAnaliticaRespuesta](#esquema-copiaanaliticarespuesta)<br>`401` Sin sesión, token inválido, caducado o revocado → [ProblemDetail](#esquema-problemdetail)<br>`403` La sesión no tiene el permiso que exige esta operación → [ProblemDetail](#esquema-problemdetail)<br>`503` La copia analítica está apagada o PostgreSQL no responde → [ProblemDetail](#esquema-problemdetail) |
+
+### `GET /api/veedor/analitica/vigilancia`
+
+**Últimas revisiones del vigilante de la copia analítica**
+
+Cada revisión compara Mongo con PostgreSQL barrio por barrio (pares, cierres, segundos de cierre y reportes), cuenta las referencias colgantes y comprueba la cadena de la bitácora inmutable. `detalle` dice qué descuadra. Avisa; no corrige.
+
+| | |
+|---|---|
+| **Acceso** | Sesión + `VER_PANEL` |
+| **Parámetros** | `limite` (query) |
+| **Cuerpo** | — |
+| **Respuestas** | `200` Las revisiones, de la más reciente a la más antigua → lista de [VigilanciaAnaliticaRespuesta](#esquema-vigilanciaanaliticarespuesta)<br>`401` Sin sesión, token inválido, caducado o revocado → [ProblemDetail](#esquema-problemdetail)<br>`403` La sesión no tiene el permiso que exige esta operación → [ProblemDetail](#esquema-problemdetail)<br>`503` La copia analítica está apagada o PostgreSQL no responde → [ProblemDetail](#esquema-problemdetail) |
 
 ## Bitácora
 
@@ -1536,6 +1562,19 @@ Evento de la bitácora pública, de solo anexado (RF026-RF028)
 | `cortesSinCierreConfirmado` | integer (int64) |  |  | Cortes cuya ventana prometida ya termino y en los que algun barrio no tiene cierre (incluidos los que expiraron sin confirmacion). No cuentan a favor ni en contra de Acuacar: se declaran. |
 | `cortesAnulados` | integer (int64) |  |  | Cortes publicados por error y retirados: no entran al indice |
 
+<a id="esquema-integridadbitacorarespuesta"></a>
+
+### IntegridadBitacoraRespuesta
+
+El estado de la cadena de hashes de la bitácora inmutable (ADR-113): cada evento guarda el hash del anterior, así que alterar uno rompe la cadena
+
+| Campo | Tipo | Oblig. | Nulo | Descripción |
+|---|---|---|---|---|
+| `eventos` | integer (int64) |  |  | Eventos que tiene la bitácora inmutable |
+| `eslabonesRotos` | integer (int64) |  |  | Eslabones que no cuadran; 0 en una cadena sana |
+| `cadenaValida` | boolean |  |  |  |
+| `ultimoHash` | string |  | sí | Hash del último evento: resume toda la historia hasta ahí. Nulo si la bitácora está vacía |
+
 <a id="esquema-iotcoordenada"></a>
 
 ### IotCoordenada
@@ -2118,4 +2157,21 @@ Desde cuándo y hasta cuándo prometió la fuente oficial la afectación
 |---|---|---|---|---|
 | `inicio` | string (date-time) |  |  |  |
 | `fin` | string (date-time) |  |  |  |
+
+<a id="esquema-vigilanciaanaliticarespuesta"></a>
+
+### VigilanciaAnaliticaRespuesta
+
+Una revisión del vigilante de la copia analítica (ADR-113): compara Mongo con PostgreSQL barrio por barrio y comprueba la cadena de la bitácora inmutable. Avisa; no corrige
+
+| Campo | Tipo | Oblig. | Nulo | Descripción |
+|---|---|---|---|---|
+| `id` | integer (int64) |  |  |  |
+| `ejecutadaEn` | string (date-time) |  |  |  |
+| `resultado` | string |  |  | OK, CON_DIFERENCIAS o FALLIDA |
+| `barriosRevisados` | integer (int32) |  |  |  |
+| `diferencias` | integer (int32) |  |  | Barrios que descuadran más referencias colgantes |
+| `eventosEnBitacora` | integer (int64) |  |  |  |
+| `eslabonesRotos` | integer (int64) |  |  | Eslabones de la cadena de hashes que no cuadran; 0 si está sana |
+| `detalle` | string |  | sí | Qué descuadra o por qué falló; nulo si todo cuadra |
 

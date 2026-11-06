@@ -200,6 +200,54 @@ class AnaliticaControllerTest {
                 .andExpect(status().isServiceUnavailable());
     }
 
+    // --- vigilante y bitácora inmutable (ADR-113) ---
+
+    @Test
+    void laIntegridadDeLaBitacoraEsPublicaYDiceSiLaCadenaEstaSana() throws Exception {
+        given(consulta.integridadDeBitacora()).willReturn(new com.aguavigia.ctg.domain.VerificacionDeBitacora(120, 0, "abc123"));
+
+        mockMvc.perform(get("/api/analitica/bitacora/integridad"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventos").value(120))
+                .andExpect(jsonPath("$.cadenaValida").value(true))
+                .andExpect(jsonPath("$.ultimoHash").value("abc123"));
+    }
+
+    @Test
+    void unaCadenaRotaSeVeEnLaRespuesta() throws Exception {
+        given(consulta.integridadDeBitacora()).willReturn(new com.aguavigia.ctg.domain.VerificacionDeBitacora(120, 3, "abc123"));
+
+        mockMvc.perform(get("/api/analitica/bitacora/integridad"))
+                .andExpect(jsonPath("$.cadenaValida").value(false))
+                .andExpect(jsonPath("$.eslabonesRotos").value(3));
+    }
+
+    @Test
+    void elVigilanteSoloLoVeQuienTieneVerPanel() throws Exception {
+        mockMvc.perform(get("/api/veedor/analitica/vigilancia")).andExpect(status().isUnauthorized());
+
+        autenticarCon(Permiso.VER_PANEL);
+        given(consulta.ultimasVigilancias(20)).willReturn(java.util.List.of(new com.aguavigia.ctg.domain.RegistroDeVigilancia(
+                9, COPIADO, com.aguavigia.ctg.domain.ResultadoDeCopia.CON_DIFERENCIAS, 211, 2, 120, 0, "Hay diferencias: manga")));
+
+        mockMvc.perform(get("/api/veedor/analitica/vigilancia").header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].resultado").value("CON_DIFERENCIAS"))
+                .andExpect(jsonPath("$[0].barriosRevisados").value(211))
+                .andExpect(jsonPath("$[0].detalle").value("Hay diferencias: manga"));
+    }
+
+    @Test
+    void sinCopiaLaIntegridadYElVigilanteDebenResponder503() throws Exception {
+        given(consulta.integridadDeBitacora()).willThrow(new AnaliticaNoDisponibleException("apagada"));
+        autenticarCon(Permiso.VER_PANEL);
+        given(consulta.ultimasVigilancias(any(Integer.class))).willThrow(new AnaliticaNoDisponibleException("apagada"));
+
+        mockMvc.perform(get("/api/analitica/bitacora/integridad")).andExpect(status().isServiceUnavailable());
+        mockMvc.perform(get("/api/veedor/analitica/vigilancia").header("Authorization", "Bearer token"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
     // --- reportes (ADR-112) ---
 
     @Test
