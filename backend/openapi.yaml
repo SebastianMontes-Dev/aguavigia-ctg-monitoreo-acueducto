@@ -4258,7 +4258,7 @@ components:
         cantidadCortes:
           type: integer
           format: int32
-      description: Sector con su cantidad de cortes registrados
+      description: Sector con las veces que aparece en avisos de corte de Acuacar aprobados (no son cortes con duración medida)
     EstadisticasRespuesta:
       type: object
       properties:
@@ -4273,7 +4273,9 @@ components:
             format: int32
         duracionPromedioHoras:
           type: number
+          description: "Media en horas de los cortes cerrados; nula si no hay ninguno"
           format: double
+          nullable: true
       description: "Estadísticas públicas globales (M7, RF023)"
     IndiceCumplimientoRespuesta:
       type: object

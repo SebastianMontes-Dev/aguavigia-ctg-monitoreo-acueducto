@@ -43,6 +43,7 @@ class EstadisticasMongoAdapterIT {
     void limpiar() {
         mongoTemplate.getDb().getCollection("cortes").drop();
         mongoTemplate.getDb().getCollection("sectores").drop();
+        mongoTemplate.getDb().getCollection("propuestas_ingesta").drop();
     }
 
     /**
@@ -143,6 +144,45 @@ class EstadisticasMongoAdapterIT {
 
         EstadisticasGlobales resultado = adaptador.calcularGlobales();
 
-        assertThat(resultado.duracionPromedioHoras()).isEqualTo(0.0);
+        assertThat(resultado.duracionPromedioHoras()).isNull();
+    }
+
+    /** Issue #84: sin ningún corte, la media no existe; un 0,0 se leía como «duran cero horas». */
+    @Test
+    void debeDevolverDuracionNulaSinCortesCerrados() {
+        EstadisticasGlobales resultado = adaptador.calcularGlobales();
+
+        assertThat(resultado.duracionPromedioHoras()).isNull();
+    }
+
+    @Test
+    void debeRedondearLaMediaAUnaDecimalConCortesCerrados() {
+        sembrarSector("manga", "Manga");
+        sembrarCorte("c1", List.of("manga"),
+                Instant.parse("2026-08-01T10:00:00Z"), Instant.parse("2026-08-01T13:00:00Z"));
+        sembrarCorte("c2", List.of("manga"),
+                Instant.parse("2026-08-02T10:00:00Z"), Instant.parse("2026-08-02T14:20:00Z"));
+
+        EstadisticasGlobales resultado = adaptador.calcularGlobales();
+
+        // (3 h + 4 h 20 min) / 2 = 3,666... h
+        assertThat(resultado.duracionPromedioHoras()).isEqualTo(3.7);
+    }
+
+    /** Con empates en la cantidad el top 5 debe salir siempre igual: desempata el slug, de la A a la Z. */
+    @Test
+    void debeDesempatarElTopPorSlugConCantidadesIguales() {
+        for (String slug : List.of("zapote", "albornoz", "manga", "crespo", "bocagrande", "chambacu", "el-bosque")) {
+            sembrarSector(slug, slug);
+            sembrarPropuestaAprobada("p-" + slug, slug);
+        }
+
+        for (int consulta = 0; consulta < 5; consulta++) {
+            EstadisticasGlobales resultado = adaptador.calcularGlobales();
+
+            assertThat(resultado.sectoresMasAfectados())
+                    .extracting(s -> s.sectorId().valor())
+                    .containsExactly("albornoz", "bocagrande", "chambacu", "crespo", "el-bosque");
+        }
     }
 }

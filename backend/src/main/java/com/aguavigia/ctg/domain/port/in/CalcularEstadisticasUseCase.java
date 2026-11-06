@@ -14,6 +14,7 @@ public interface CalcularEstadisticasUseCase {
     record EstadisticasGlobales(
             List<EstadisticaSector> sectoresMasAfectados,
             Map<String, Integer> cortesPorDiaDeSemana,
-            double duracionPromedioHoras
+            /** Media en horas de los cortes cerrados. Nula si no hay ninguno: «sin dato» no es «cero horas» (ADR-036). */
+            Double duracionPromedioHoras
     ) {}
 }

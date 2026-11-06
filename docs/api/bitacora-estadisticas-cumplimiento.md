@@ -156,6 +156,12 @@ evento más viejo, los ids siguen ahí pero el reporte al que apuntan ya no exis
   "duracionPromedioHoras": 9.4 }
 ```
 
+`duracionPromedioHoras` es la media de los cortes **cerrados** y es **`null` si todavía no hay ninguno** (nunca `0.0`): la interfaz
+debe decir «Sin datos». En `exportar.csv` esa celda sale vacía.
+
+`sectoresMasAfectados` (los 5 primeros) cuenta **las veces que el barrio aparece en avisos de corte de Acuacar aprobados**, no cortes con duración medida (esa cifra vive en el
+Índice de Cumplimiento). Se ordena por cantidad descendente y, con empates, por `sectorId` de la A a la Z, así que dos consultas seguidas dan el mismo top.
+
 `cortesPorDiaDeSemana` trae **siempre los 7 días** (con 0 si no hubo cortes), con el nombre **en español y
 con inicial mayúscula** como clave. El día se decide en hora de Cartagena. El orden de las claves del JSON no
 está garantizado: ordénalas tú.

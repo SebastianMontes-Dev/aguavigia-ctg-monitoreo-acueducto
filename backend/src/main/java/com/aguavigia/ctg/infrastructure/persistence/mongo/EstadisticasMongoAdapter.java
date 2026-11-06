@@ -49,7 +49,9 @@ public class EstadisticasMongoAdapter implements EstadisticasRepository {
         Aggregation topSectoresAgg = Aggregation.newAggregation(
                 Aggregation.match(Criteria.where("estadoRevision").is("APROBADA")),
                 Aggregation.group("sectorId").count().as("cantidadCortes"),
-                Aggregation.sort(Sort.Direction.DESC, "cantidadCortes"),
+                // Desempate por el slug (`_id` tras el group): con empates en la cantidad, Mongo devolvia
+                // los barrios en un orden distinto entre consultas y el top 5 cambiaba solo.
+                Aggregation.sort(Sort.by(Sort.Order.desc("cantidadCortes"), Sort.Order.asc("_id"))),
                 Aggregation.limit(5),
                 // Contra `slug`, no contra `_id`: `cortes.sectoresAfectados` guarda el SectorId de
                 // dominio, que es el slug, mientras que `sectores._id` es el ObjectId que genera
@@ -116,7 +118,8 @@ public class EstadisticasMongoAdapter implements EstadisticasRepository {
                 Aggregation.group().avg("duracionHoras").as("duracionPromedio")
         );
         AggregationResults<Map> avgResults = mongoTemplate.aggregate(avgAgg, CorteAguaDocumento.class, Map.class);
-        double duracionPromedioHoras = 0.0;
+        // Nulo mientras no haya un solo corte cerrado: un 0,0 se leia como «los cortes duran cero horas» (ADR-036).
+        Double duracionPromedioHoras = null;
         if (!avgResults.getMappedResults().isEmpty()) {
             Number avg = (Number) avgResults.getMappedResults().get(0).get("duracionPromedio");
             if (avg != null) {
