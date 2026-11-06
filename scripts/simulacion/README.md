@@ -105,3 +105,22 @@ Los minutos cuentan desde las 08:00 del día siguiente (hora de Cartagena).
 
 Para escribir otro guion: copia `guion-completo.yaml`; las acciones y aserciones posibles están en `lib/guion.mjs` (`ACCIONES`, `ASERCIONES`) y el
 simulador valida el archivo antes de tocar nada.
+
+## Datos con volumen (ADR-111)
+
+El guion de ~12 min parte de una base limpia a propósito: mide barrios concretos. Para una demo que se vea llena —un mapa con historia, gráficas con
+meses de datos, una cola de moderación con trabajo— `backend-sim` puede generar al azar reportes, dispositivos, cortes con sus cierres y bitácora:
+
+```bash
+# En el .env (o en la línea de comandos); con 0 no genera nada
+DATOS_SINTETICOS_REPORTES=60000
+DATOS_SINTETICOS_CORTES=400
+docker compose --profile simulacion up -d --build backend-sim
+```
+
+- **Aleatorio pero con sentido:** más reportes en los barrios grandes y en unos pocos "calientes", agrupados alrededor de los cortes, con picos de mañana y de tarde,
+  cada punto dentro de su barrio, y cortes que terminan antes, a tiempo, tarde, vencen o se anulan. `DATOS_SINTETICOS_SEMILLA` repite exactamente la misma corrida;
+  sin ella se sortea una y queda en el log del backend.
+- **Todo declarado:** cada documento lleva `sintetico: true`, los cortes son de origen `SINTETICO` y los eventos de bitácora terminan en "(dato sintético)".
+- **Idempotente:** al reiniciar el contenedor solo completa lo que falta. Todo cae en los últimos `DATOS_SINTETICOS_DIAS` (300 por defecto), dentro del TTL de 365 días de los reportes.
+- **No se mezcla con el guion completo:** corre uno u otro sobre una base limpia (`simulador reiniciar`).

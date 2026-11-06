@@ -94,6 +94,12 @@ public class CorteAguaMongoAdapter implements CorteAguaRepository {
 
     @Override
     public CorteAgua guardar(CorteAgua corte) {
+        repositorio.save(aDocumento(corte));
+        return corte;
+    }
+
+    /** Aparte para que el almacén de datos sintéticos (ADR-111) guarde cortes con el mismo formato que el real. */
+    static CorteAguaDocumento aDocumento(CorteAgua corte) {
         CorteAguaDocumento documento = new CorteAguaDocumento();
         documento.setId(corte.id().valor());
         documento.setSectoresAfectados(corte.sectoresAfectados().stream().map(SectorId::valor).toList());
@@ -108,9 +114,7 @@ public class CorteAguaMongoAdapter implements CorteAguaRepository {
                 .toList());
         documento.setMotivoAnulacion(corte.motivoAnulacion());
         documento.setCaducaEn(corte.caducaEn());
-
-        repositorio.save(documento);
-        return corte;
+        return documento;
     }
 
     /**

@@ -16,7 +16,7 @@ import { MongoClient } from 'mongodb';
 const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/?directConnection=true';
 const DB_NAME = process.env.MONGODB_DB ?? 'aguavigia';
 const SECTORES_ESPERADOS = 211;
-const CUENTAS_SINTETICAS = Number(process.env.VECINOS_SINTETICOS ?? process.env.MINIMO_USUARIOS ?? 30000);
+const CUENTAS_SINTETICAS = Number(process.env.VECINOS_SINTETICOS ?? process.env.MINIMO_USUARIOS ?? 300);
 const fmt = (n) => n.toLocaleString('es-CO');
 
 const cliente = new MongoClient(MONGODB_URI, { serverSelectionTimeoutMS: 5000 });

@@ -43,6 +43,9 @@ public class CorteAguaDocumento {
     /** Solo en el corte del veedor: desde esta hora deja de afirmar nada. */
     private Instant caducaEn;
 
+    /** ADR-111 — generado al azar para la simulación. Nulo (no se escribe) en lo que viene de un boletín o del veedor. */
+    private Boolean sintetico;
+
     /** Lista y no mapa: un id de sector como clave de documento obligaría a escapar puntos y símbolos. */
     @Getter
     @Setter

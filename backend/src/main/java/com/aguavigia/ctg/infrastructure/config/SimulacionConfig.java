@@ -1,6 +1,11 @@
 package com.aguavigia.ctg.infrastructure.config;
 
 import com.aguavigia.ctg.application.ControlarRelojDeSimulacionService;
+import com.aguavigia.ctg.application.GenerarDatosSinteticosService;
+import com.aguavigia.ctg.domain.port.in.GenerarDatosSinteticosUseCase;
+import com.aguavigia.ctg.domain.port.out.AlmacenDeDatosSinteticosPort;
+import com.aguavigia.ctg.domain.port.out.GeometriaSectoresPort;
+import com.aguavigia.ctg.domain.port.out.SectorRepository;
 import com.aguavigia.ctg.application.IniciarSesionDeAdminDeSimulacionService;
 import com.aguavigia.ctg.application.InyectarBoletinSimuladoService;
 import com.aguavigia.ctg.application.ReiniciarSimulacionService;
@@ -43,6 +48,13 @@ public class SimulacionConfig {
     @Bean
     public ControlarRelojDeSimulacionUseCase controlarRelojDeSimulacion(RelojControlablePort reloj) {
         return new ControlarRelojDeSimulacionService(reloj);
+    }
+
+    /** ADR-111: datos aleatorios para llenar la simulación. Solo existe aquí: la instancia real no los genera. */
+    @Bean
+    public GenerarDatosSinteticosUseCase generarDatosSinteticos(SectorRepository sectores, GeometriaSectoresPort geometrias,
+                                                                AlmacenDeDatosSinteticosPort almacen, RelojPort reloj) {
+        return new GenerarDatosSinteticosService(sectores, geometrias, almacen, reloj);
     }
 
     @Bean

@@ -40,4 +40,6 @@ public class EventoBitacoraDocumento {
     /** Vecinos que sostienen el cambio y umbral que hacía falta. Ausentes si el evento no nace de un quórum. */
     private Integer respaldoVecinos;
     private Integer respaldoUmbral;
+    /** ADR-111 — generado al azar para la simulación. Nulo (no se escribe) en los eventos reales. */
+    private Boolean sintetico;
 }

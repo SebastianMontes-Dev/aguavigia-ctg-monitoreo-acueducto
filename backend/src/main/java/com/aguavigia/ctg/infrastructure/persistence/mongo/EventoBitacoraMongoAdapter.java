@@ -36,6 +36,12 @@ public class EventoBitacoraMongoAdapter implements EventoBitacoraRepository {
 
     @Override
     public EventoBitacora guardar(EventoBitacora evento) {
+        repositorio.save(aDocumento(evento));
+        return evento;
+    }
+
+    /** Aparte para que el almacén de datos sintéticos (ADR-111) guarde eventos con el mismo formato que el real. */
+    static EventoBitacoraDocumento aDocumento(EventoBitacora evento) {
         EventoBitacoraDocumento documento = new EventoBitacoraDocumento();
         documento.setId(evento.id() != null ? evento.id().valor() : UUID.randomUUID().toString());
         documento.setTipo(evento.tipo().name());
@@ -50,9 +56,7 @@ public class EventoBitacoraMongoAdapter implements EventoBitacoraRepository {
         documento.setFuente(evento.fuente() != null ? evento.fuente().name() : null);
         documento.setRespaldoVecinos(evento.respaldo() != null ? evento.respaldo().vecinos() : null);
         documento.setRespaldoUmbral(evento.respaldo() != null ? evento.respaldo().umbral() : null);
-
-        repositorio.save(documento);
-        return evento;
+        return documento;
     }
 
     /**

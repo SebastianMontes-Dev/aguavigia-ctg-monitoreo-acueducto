@@ -23,8 +23,8 @@ import java.util.SplittableRandom;
 import java.util.UUID;
 
 /**
- * Las 30 000 cuentas sintéticas (D36). Se dicen sintéticas: «30 000 cuentas sintéticas generadas con las reglas de alta de un
- * vecino», nunca «30 000 personas se registraron».
+ * Las cuentas sintéticas (D36; 300 por defecto desde ADR-111, antes 30 000). Se dicen sintéticas: «cuentas sintéticas generadas con las reglas de alta de un
+ * vecino», nunca «personas que se registraron».
  *
  * Cada una pasa por el mismo camino de dominio que un vecino real —nace INVITADA y se activa con `aceptarInvitacion`— pero
  * sin lo que nadie hizo: ni correo enviado, ni consentimiento, ni barrio verificado. El reparto por barrio es proporcional a

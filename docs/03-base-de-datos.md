@@ -40,8 +40,8 @@ Este documento explica qué guarda cada una y por qué; si algo de aquí contrad
 | `suscripciones_telegram` | Avisos por Telegram | `sectorIds[]`, `creadaEn` | Permanente |
 | `config_sistema` | Secretos que el backend genera y deben sobrevivir a un reinicio | `valor` | Permanente |
 
-Las 30 000 cuentas sintéticas de vecino (ADR-094) viven en `usuarios` con `datosDeDemostracion: true` y ocupan casi todo el volumen de
-la base; nadie conoce su clave. El resto de colecciones es pequeño: decenas o cientos de documentos en uso normal.
+Las 300 cuentas sintéticas de vecino (ADR-094, reducidas desde 30 000 por ADR-111) viven en `usuarios` con `datosDeDemostracion: true`; nadie
+conoce su clave. En la instancia real el resto de colecciones es pequeño: decenas o cientos de documentos en uso normal. En la **simulación** el volumen lo ponen los reportes: `reportes`, `cortes`, `dispositivos` y `eventos_bitacora` llevan `sintetico: true` en lo generado al azar (§1.4b).
 
 ### 1.3 Índices
 

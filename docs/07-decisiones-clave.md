@@ -751,3 +751,30 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Texto grande usable sin hacer nada extra y una página de historia con la misma composición del resto. **Pierde.** Una regla global bajo `22.5em` (elementos que encogen, palabras que se parten) que a 360 px con letra normal también aplica. A 360 px con la letra base al doble, nueve de diez pantallas se salían
   entre 20 y 250 px; se resolvió el mismo día (rejillas `auto-fit` acotadas, filas de Cumplimiento apiladas, barra inferior y alto del mapa del celular) y el detalle está en `FE7-integracion-y-entrega.md` §3.
 - **Se revierte** con `Historial.tsx`/`.module.css`, el cambio de `em` en las hojas de estilos y `datos.ts`, y el `flex-wrap` de `Marco.module.css`.
+
+## 15. Datos aleatorios para la simulación y menos cuentas sintéticas (2026-11-06)
+
+### ADR-111 — La simulación se llena con reportes, cortes y bitácora generados al azar; las cuentas sintéticas bajan de 30 000 a 300
+
+**Estado: aceptada.** Enmienda ADR-094 (las cuentas sintéticas ya no son lo único inventado, pero lo nuevo solo existe en la simulación).
+
+- **Contexto.** Una app de reportes de agua con 30 000 cuentas y casi ningún reporte se ve vacía justo donde está su propuesta. Las cuentas ni siquiera hacen falta para reportar (un
+  reporte lleva la huella de un dispositivo, no de una cuenta). La simulación necesita volumen en lo que el sistema hace: reportes, cortes, cierres y bitácora.
+- **Decisión.**
+  1. **Cuentas sintéticas: 300** por defecto (`VECINOS_SINTETICOS`), las justas para listados y para la nota "cuentas sintéticas". La mecánica de ADR-094 no cambia.
+  2. **Un generador de datos aleatorios dentro del backend** (`GenerarDatosSinteticosService`, caso de uso `GenerarDatosSinteticosUseCase`), que crea reportes, dispositivos, cortes con sus
+     cierres por barrio y eventos de bitácora. Lo sortea todo con una semilla (la misma semilla, el mismo reloj y los mismos barrios dan lo mismo; sin semilla se sortea una y queda en el log):
+     reportes en proporción a la población con "barrios calientes", agrupados alrededor de los cortes y con picos de mañana y de tarde, cada punto dentro del polígono de su barrio, cortes
+     que terminan antes, a tiempo o tarde, o que vencen sin confirmar o se anulan, de modo que el Índice de Cumplimiento tiene barrios al 100 %, al 40 % y sin dato.
+  3. **Solo en la simulación.** El componente y el caso de uso existen únicamente con `aguavigia.sim.habilitada=true`; la instancia real no genera nada más allá de las 300 cuentas, y el mapa
+     real sigue mostrando solo lo que dicen los boletines de Acuacar y los vecinos de verdad. (El plan de cierre contemplaba generar también en la real y que el consenso lo ignorara; se descartó:
+     exigía filtrar lo sintético en cada lectura pública y el riesgo de que algo se colara era mayor que el beneficio.)
+  4. **Todo queda declarado.** Cada documento generado lleva `sintetico: true` (reportes, dispositivos, cortes y eventos), los cortes son de origen nuevo **`SINTETICO`** (nunca `OFICIAL_ACUACAR`:
+     regla 4 de [06](06-etica-de-datos.md)) y la descripción de cada evento termina en "(dato sintético)". Lo que crea una persona no lleva el campo.
+  5. **Dentro de lo que pide el TTL.** Todo cae en el pasado y dentro de 330 días: los reportes caducan a los 365.
+  6. **Idempotente y apagable.** Al arrancar solo completa lo que falta para llegar a la cantidad pedida; `DATOS_SINTETICOS_REPORTES=0` (el valor por defecto) lo apaga. Las cantidades por defecto de la
+     demo son 60 000 reportes, 400 cortes y 9 000 dispositivos. El valor por defecto del compose es 0 porque el guion completo mide el Índice de barrios concretos y espera una base limpia.
+- **Gana.** Una simulación con volumen real de lo que importa, repetible, sin tocar el mapa real, con cada dato rotulado; 29 700 documentos menos de cuentas que nadie usa.
+- **Pierde.** La simulación con volumen no es compatible con el guion completo (que mide barrios concretos): son dos usos distintos de `backend-sim`. La copia analítica de PostgreSQL de la simulación
+  sigue apagada (ADR-100): copiaría el Mongo de simulación sobre la copia real.
+- **Se revierte** quitando `GenerarDatosSinteticosService`, su componente, `OrigenCorte.SINTETICO` y el campo `sintetico`; Mongo ignora los documentos con campos que ya no se leen.

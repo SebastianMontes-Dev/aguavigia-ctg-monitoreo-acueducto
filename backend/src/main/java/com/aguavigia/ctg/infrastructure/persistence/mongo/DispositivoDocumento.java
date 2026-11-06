@@ -16,4 +16,7 @@ public class DispositivoDocumento {
     private String id;
     private Instant creadoEn;
     private Instant ultimoVisto;
+
+    /** ADR-111 — generado al azar para la simulación. Nulo (no se escribe) en los que emite el servidor. */
+    private Boolean sintetico;
 }
