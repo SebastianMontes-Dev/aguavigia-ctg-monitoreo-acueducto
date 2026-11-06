@@ -183,3 +183,29 @@ Los pasos 2 y 3 pueden ir en paralelo (archivos distintos). 4 → 5 → 6 → 7 
 | La fórmula del Índice vuelve a existir en Java y SQL | Ya hay prueba de paridad; se amplía a los datos generados |
 | Cambio de contrato rompe el frontend | Sección F8 antes de fusionar; Yordy adapta en su fase; `api:check` en el CI |
 | Protección de ramas bloquea el release | Probar el flujo `release/*` → `main` con un PR de prueba antes del día de la entrega |
+
+## 9. Estado de ejecución (2026-11-06)
+
+Los pasos 2 a 7 están hechos y verificados, cada uno en su rama local (apiladas en orden), **sin push ni PR todavía**. La suite completa (`./mvnw verify`) cierra en verde: 1 842 pruebas unitarias y 389 de integración (1 omitida de antes).
+
+| Paso | Rama | Commit | Verificación real |
+|---|---|---|---|
+| 2 | `feature/ci-claves-panel` | `2ee95e7d` | YAML válido; extracción de la clave probada con una línea de log. **No visto en GitHub Actions** |
+| 3 | `feature/estadisticas-nulas-y-desempate` | `5cf64432` | IT con Mongo real: duración nula, redondeo y desempate estable |
+| 4 | `feature/generador-datos-sinteticos` | `7930ac1c` | Pruebas del generador y IT con Mongo real; **20 000 reportes y 100 cortes en 1 s sobre `backend-sim`** |
+| 5 | `feature/simulacion-volumen` | `c5dc3c7e` | `POST/GET /api/sim/datos` y `simulador datos generar/contar` probados contra la instancia real de simulación |
+| 6 | `feature/postgresql-reportes` | `15573b0b` | IT con PostgreSQL real; Mongo y SQL suman lo mismo (20 000) y la copia queda `OK` |
+| 7 | `feature/postgresql-vigilante-y-bitacora` | `5e228121` | IT con PostgreSQL real (inmutabilidad, cadena, rol lector); vigilante en la simulación: 211 barrios, 0 diferencias, 513 eventos, cadena válida; respaldo restaurado y comparado |
+
+**Desviaciones respecto al plan de arriba, y por qué**
+- **Datos sintéticos solo en la simulación** (no también en la instancia real con el consenso ignorándolos). Filtrar lo sintético en cada lectura pública era más riesgoso que útil; está en el ADR-111. La instancia real solo conserva las 300 cuentas.
+- **`POST /api/sim/oleada` no se hizo.** El guion completo ya ejercita el flujo vivo de reportes y consenso por HTTP; `datos generar` cubre el volumen. Queda como mejora opcional.
+- **El desempate de las estadísticas es por `sectorId`**, no por nombre: es único y siempre presente.
+- **`sintetico` no se expone en las respuestas de la API**: la simulación entera ya se declara con el modo `SIMULACION` y la franja de la interfaz. `GET /api/sistema/modo` no cambia.
+- **La auditoría de cuentas no se copia a PostgreSQL** (lleva IP e ids de personas).
+
+**Lo que sigue sin hacerse (no es de este repositorio o requiere a una persona)**
+- Adaptar el frontend (Yordy): `npm run api:sync`, y decidir cómo cubrir o excluir las 4 rutas nuevas (`reportes/ranking`, `reportes/tendencia`, `bitacora/integridad`, `veedor/analitica/vigilancia`). Hasta entonces el Frontend CI dará rojo en `api:check` y `api:cobertura`.
+- La prueba de los cinco segundos con otra persona (A5).
+- Los PR, la revisión y el CI en GitHub de cada rama; el paso 9 (auditoría final) y el 10-11 (release `1.0.0` y etiqueta `v1.0.0`).
+- Ver correr en GitHub Actions el cambio del paso 2.
