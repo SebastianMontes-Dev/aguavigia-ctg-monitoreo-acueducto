@@ -55,7 +55,7 @@ lo resume, con los archivos que lo llevan y las decisiones por tomar para el pan
 
 **Actualización del 2026-11-03 (FE7 fusionada: el plan queda construido).** El [PR #131](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/131) llevó FE7 a `develop` con sus 8 checks del CI en verde; con él, **FE0 a FE7 están en `develop`**. Lo que sigue sin comprobarse:
 - **La prueba de los cinco segundos con otra persona** (pasos en [FE7 §8](FE7-integracion-y-entrega.md#8-la-prueba-de-los-cinco-segundos-para-yordy)). Una sesión de Claude no puede hacerla; sin resultado anotado.
-- **Las claves del panel en el CI.** El job «backend real» de `frontend-ci.yml` aún no pasa `PANEL_CORREO` y `PANEL_CLAVE`, así que ahí se omiten las pruebas del panel (propuesta en [FE7 §6](FE7-integracion-y-entrega.md#6-e2e-reales-del-panel-y-flujo-de-invitación); archivo compartido, se avisa a Sebastian).
+- **Las claves del panel en el CI.** El job «backend real» de `frontend-ci.yml` no pasaba `PANEL_CORREO` y `PANEL_CLAVE`, así que ahí se omitían las pruebas del panel. Sebastian aplicó la propuesta de [FE7 §6](FE7-integracion-y-entrega.md#6-e2e-reales-del-panel-y-flujo-de-invitación) el 2026-11-06 (rama `feature/ci-claves-panel`): queda por confirmar que el job las ejecuta en GitHub Actions.
 
 ## Qué no cambia mientras se trabaja
 

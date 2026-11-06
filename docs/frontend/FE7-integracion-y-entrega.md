@@ -127,7 +127,7 @@ Qué pasó en el camino (para no repetirlo):
 - `debeCrearUnCorteCerrarloBarrioPorBarrioYVerloEnLaFichaPublica` tenía una carrera: contaba «Volvió» justo tras el titular, antes de que llegara la lista de cortes. Ahora espera la respuesta de `/cortes`.
 - `cumplimiento.spec.ts` pide historial (≥ 5 cortes): sobre una base solo con `docker compose up` falla; con `sembrar-historico-cortes` pasa. Es lo que ya hace el CI.
 
-**Propuesta para Sebastian (no aplicada; `preparar-env-ci.mjs` y los secretos no se tocaron).** El job «Núcleo ciudadano contra backend real» hoy no pasa `PANEL_CORREO` ni `PANEL_CLAVE`, así que las pruebas del panel se omiten. No hace falta ningún secreto nuevo: el backend ya genera la clave del ADMIN al arrancar y la imprime en el log (ADR-086; `preparar-env-ci.mjs` ya fija `ADMIN_INICIAL_CORREO=admin@example.test` y no define `VEEDOR_PASSWORD_HASH`). Dos cambios en `.github/workflows/frontend-ci.yml`:
+**Propuesta para Sebastian (aplicada el 2026-11-06 en `feature/ci-claves-panel`, sin tocar `preparar-env-ci.mjs` ni los secretos; falta verla correr en GitHub Actions).** El job «Núcleo ciudadano contra backend real» hoy no pasa `PANEL_CORREO` ni `PANEL_CLAVE`, así que las pruebas del panel se omiten. No hace falta ningún secreto nuevo: el backend ya genera la clave del ADMIN al arrancar y la imprime en el log (ADR-086; `preparar-env-ci.mjs` ya fija `ADMIN_INICIAL_CORREO=admin@example.test` y no define `VEEDOR_PASSWORD_HASH`). Dos cambios en `.github/workflows/frontend-ci.yml`:
 
 ```yaml
       - name: Levantar el backend con el límite de peticiones holgado
