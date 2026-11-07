@@ -1258,6 +1258,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/veedor/analitica/vigilancia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Últimas revisiones del vigilante de la copia analítica
+         * @description Cada revisión compara Mongo con PostgreSQL barrio por barrio (pares, cierres, segundos de cierre y reportes), cuenta las referencias colgantes y comprueba la cadena de la bitácora inmutable. `detalle` dice qué descuadra. Avisa; no corrige.
+         */
+        get: operations["ultimasVigilanciasAnaliticas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/veedor/analitica/copia": {
         parameters: {
             query?: never;
@@ -1678,6 +1698,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/analitica/reportes/tendencia": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Reportes por día con media móvil, desde la copia SQL
+         * @description Los últimos `dias` días con datos (de 1 a 365), de más antiguo a más reciente, sin huecos y sin contar los reportes descartados. La media móvil de 7 días la calcula PostgreSQL con una función de ventana.
+         */
+        get: operations["tendenciaDeReportesAnalitica"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analitica/reportes/ranking": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Barrios con más reportes, desde la copia SQL
+         * @description El ranking de los últimos 30 días con datos (se cuenta hacia atrás desde el último día copiado), sin contar los reportes descartados. Lo calcula una vista de PostgreSQL con `RANK()`: los empates comparten posición. `limite` va de 1 a 50.
+         */
+        get: operations["rankingDeReportesAnalitico"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/analitica/cumplimiento": {
         parameters: {
             query?: never;
@@ -1710,6 +1770,26 @@ export interface paths {
          * @description El índice agrupado por mes en hora de Cartagena, de más antiguo a más reciente.
          */
         get: operations["cumplimientoAnaliticoMensual"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/analitica/bitacora/integridad": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Integridad de la bitácora inmutable (cadena de hashes)
+         * @description La bitácora pública se copia a PostgreSQL en una tabla que solo admite agregar y en la que cada evento guarda el hash del anterior. Esto comprueba la cadena: `cadenaValida` es falso si alguien alteró o borró un evento, aunque haya esquivado el bloqueo.
+         */
+        get: operations["integridadDeLaBitacora"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2380,6 +2460,31 @@ export interface components {
             /** Format: date-time */
             ocurrioEn?: string;
         };
+        /** @description Una revisión del vigilante de la copia analítica (ADR-113): compara Mongo con PostgreSQL barrio por barrio y comprueba la cadena de la bitácora inmutable. Avisa; no corrige */
+        VigilanciaAnaliticaRespuesta: {
+            /** Format: int64 */
+            id?: number;
+            /** Format: date-time */
+            ejecutadaEn?: string;
+            /** @description OK, CON_DIFERENCIAS o FALLIDA */
+            resultado?: string;
+            /** Format: int32 */
+            barriosRevisados?: number;
+            /**
+             * Format: int32
+             * @description Barrios que descuadran más referencias colgantes
+             */
+            diferencias?: number;
+            /** Format: int64 */
+            eventosEnBitacora?: number;
+            /**
+             * Format: int64
+             * @description Eslabones de la cadena de hashes que no cuadran; 0 si está sana
+             */
+            eslabonesRotos?: number;
+            /** @description Qué descuadra o por qué falló; nulo si todo cuadra */
+            detalle?: string | null;
+        };
         /** @description Cuántos barrios, cortes y pares corte-barrio hay en una de las dos bases */
         ConteosAnaliticosRespuesta: {
             /** Format: int32 */
@@ -2454,7 +2559,7 @@ export interface components {
              */
             generadoEn?: string;
         };
-        /** @description Sector con su cantidad de cortes registrados */
+        /** @description Sector con las veces que aparece en avisos de corte de Acuacar aprobados (no son cortes con duración medida) */
         EstadisticaSectorRespuesta: {
             sectorId?: string;
             nombre?: string;
@@ -2467,8 +2572,11 @@ export interface components {
             cortesPorDiaDeSemana?: {
                 [key: string]: number;
             };
-            /** Format: double */
-            duracionPromedioHoras?: number;
+            /**
+             * Format: double
+             * @description Media en horas de los cortes cerrados; nula si no hay ninguno
+             */
+            duracionPromedioHoras?: number | null;
         };
         /**
          * @description Índice de Cumplimiento (RF020-RF022): comparación explícita entre duración prometida y
@@ -2602,6 +2710,53 @@ export interface components {
             /** Format: int32 */
             umbral?: number;
         } | null;
+        /** @description Un día (hora de Cartagena). Los días sin reportes valen 0; los descartados no cuentan */
+        Punto: {
+            /** Format: date */
+            dia?: string;
+            /** Format: int64 */
+            reportes?: number;
+            /** Format: double */
+            media7Dias?: number;
+            /**
+             * Format: int64
+             * @description Frente al día anterior; nulo en el primer día de la serie
+             */
+            cambioRespectoAlDiaAnterior?: number | null;
+        };
+        /** @description Reportes por día con su media móvil de 7 días, desde la copia analítica (ADR-112) */
+        TendenciaReportesAnaliticaRespuesta: {
+            /**
+             * Format: date-time
+             * @description Cuándo terminó la última copia que cuadró con MongoDB; nulo si todavía no hay ninguna
+             */
+            copiadoEn?: string | null;
+            puntos?: components["schemas"]["Punto"][];
+        };
+        /** @description Un barrio del ranking. `posicion` se repite entre empates; los reportes descartados no cuentan */
+        Barrio: {
+            /** Format: int32 */
+            posicion?: number;
+            sectorId?: string;
+            nombre?: string;
+            /** Format: int64 */
+            reportes?: number;
+            /** Format: int64 */
+            sinAgua?: number;
+            /** Format: int64 */
+            presionBaja?: number;
+            /** Format: double */
+            porcentajeDeLaCiudad?: number;
+        };
+        /** @description Barrios con más reportes en los últimos 30 días con datos, desde la copia analítica (ADR-112) */
+        RankingReportesAnaliticoRespuesta: {
+            /**
+             * Format: date-time
+             * @description Cuándo terminó la última copia que cuadró con MongoDB; nulo si todavía no hay ninguna
+             */
+            copiadoEn?: string | null;
+            barrios?: components["schemas"]["Barrio"][];
+        };
         /**
          * @description Índice de Cumplimiento calculado por las vistas SQL de la copia analítica (PostgreSQL, ADR-100). Misma fórmula que
          *     GET /api/cumplimiento (ADR-022): se suman duraciones, no se promedian porcentajes. Va hasta 5 minutos por detrás de MongoDB.
@@ -2660,6 +2815,22 @@ export interface components {
              */
             copiadoEn?: string;
             puntos?: components["schemas"]["PuntoMensualAnaliticoRespuesta"][];
+        };
+        /** @description El estado de la cadena de hashes de la bitácora inmutable (ADR-113): cada evento guarda el hash del anterior, así que alterar uno rompe la cadena */
+        IntegridadBitacoraRespuesta: {
+            /**
+             * Format: int64
+             * @description Eventos que tiene la bitácora inmutable
+             */
+            eventos?: number;
+            /**
+             * Format: int64
+             * @description Eslabones que no cuadran; 0 en una cadena sana
+             */
+            eslabonesRotos?: number;
+            cadenaValida?: boolean;
+            /** @description Hash del último evento: resume toda la historia hasta ahí. Nulo si la bitácora está vacía */
+            ultimoHash?: string | null;
         };
     };
     responses: never;
@@ -5439,6 +5610,55 @@ export interface operations {
             };
         };
     };
+    ultimasVigilanciasAnaliticas: {
+        parameters: {
+            query?: {
+                limite?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Las revisiones, de la más reciente a la más antigua */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VigilanciaAnaliticaRespuesta"][];
+                };
+            };
+            /** @description Sin sesión, token inválido, caducado o revocado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La sesión no tiene el permiso que exige esta operación */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+            /** @description La copia analítica está apagada o PostgreSQL no responde */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     ultimasCopiasAnaliticas: {
         parameters: {
             query?: {
@@ -5984,6 +6204,68 @@ export interface operations {
             };
         };
     };
+    tendenciaDeReportesAnalitica: {
+        parameters: {
+            query?: {
+                dias?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Serie calculada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TendenciaReportesAnaliticaRespuesta"];
+                };
+            };
+            /** @description La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    rankingDeReportesAnalitico: {
+        parameters: {
+            query?: {
+                limite?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Ranking calculado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RankingReportesAnaliticoRespuesta"];
+                };
+            };
+            /** @description La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
     cumplimientoAnalitico: {
         parameters: {
             query?: {
@@ -6040,6 +6322,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SerieMensualAnaliticaRespuesta"];
+                };
+            };
+            /** @description La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ProblemDetail"];
+                };
+            };
+        };
+    };
+    integridadDeLaBitacora: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Estado de la cadena */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IntegridadBitacoraRespuesta"];
                 };
             };
             /** @description La copia analítica está apagada, PostgreSQL no responde o todavía no hubo una primera copia */

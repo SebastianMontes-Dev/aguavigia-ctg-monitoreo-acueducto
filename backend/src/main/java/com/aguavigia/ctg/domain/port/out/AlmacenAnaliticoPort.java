@@ -2,6 +2,7 @@ package com.aguavigia.ctg.domain.port.out;
 
 import com.aguavigia.ctg.domain.ConteosAnaliticos;
 import com.aguavigia.ctg.domain.FilaCorteAnalitica;
+import com.aguavigia.ctg.domain.FilaReporteDiaAnalitica;
 import com.aguavigia.ctg.domain.FilaSectorAnalitica;
 import com.aguavigia.ctg.domain.ResultadoDeCopia;
 
@@ -24,6 +25,12 @@ public interface AlmacenAnaliticoPort {
      * transacción; si algo falla, vuelve atrás y queda la copia anterior.
      */
     ConteosAnaliticos reemplazar(List<FilaSectorAnalitica> sectores, List<FilaCorteAnalitica> cortes, Instant copiadoEn);
+
+    /**
+     * Deja los reportes contados por barrio, día, tipo y estado igual que Mongo, en una sola transacción: reemplaza lo que había. Los barrios
+     * ya tienen que estar en la copia ({@link #reemplazar}). Devuelve cuántos reportes suman las filas guardadas, para compararlo con Mongo.
+     */
+    long reemplazarReportes(List<FilaReporteDiaAnalitica> filas, Instant copiadoEn);
 
     /** Cierra la fila de la copia con su resultado; los conteos de Mongo o de PostgreSQL pueden ser nulos si no se tomaron. */
     void cerrarCopia(long id, Instant terminadaEn, ResultadoDeCopia resultado, ConteosAnaliticos enMongo,

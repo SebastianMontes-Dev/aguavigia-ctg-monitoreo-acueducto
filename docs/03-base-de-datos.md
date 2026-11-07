@@ -40,8 +40,8 @@ Este documento explica qué guarda cada una y por qué; si algo de aquí contrad
 | `suscripciones_telegram` | Avisos por Telegram | `sectorIds[]`, `creadaEn` | Permanente |
 | `config_sistema` | Secretos que el backend genera y deben sobrevivir a un reinicio | `valor` | Permanente |
 
-Las 30 000 cuentas sintéticas de vecino (ADR-094) viven en `usuarios` con `datosDeDemostracion: true` y ocupan casi todo el volumen de
-la base; nadie conoce su clave. El resto de colecciones es pequeño: decenas o cientos de documentos en uso normal.
+Las 300 cuentas sintéticas de vecino (ADR-094, reducidas desde 30 000 por ADR-111) viven en `usuarios` con `datosDeDemostracion: true`; nadie
+conoce su clave. En la instancia real el resto de colecciones es pequeño: decenas o cientos de documentos en uso normal. En la **simulación** el volumen lo ponen los reportes: `reportes`, `cortes`, `dispositivos` y `eventos_bitacora` llevan `sintetico: true` en lo generado al azar (§1.4b).
 
 ### 1.3 Índices
 
@@ -117,10 +117,11 @@ Si está apagada o falla, el sistema arranca, está `UP` y responde igual: solo 
 | `corte` | Un corte: `id`, `origen`, `estado`, `causa`, `inicio`, `fin_prometido` (`CHECK fin_prometido > inicio`), `copiado_en` |
 | `corte_sector` | Un par corte-barrio (D14). Claves foráneas a `corte` (`ON DELETE CASCADE`) y `sector`; `cierre_hora`, `cierre_fuente`, `cierre_provisional` son opcionales (un barrio sin cierre no cuenta en el Índice) |
 | `copia` | Una fila por copia: cuándo, resultado (`EN_CURSO`, `OK`, `CON_DIFERENCIAS`, `FALLIDA`) y los conteos de barrios, cortes y pares en Mongo y en PostgreSQL |
+| `reporte_dia` | (ADR-112) Reportes contados por barrio, día de Cartagena, tipo y estado de moderación. Solo el conteo: sin coordenadas, huella, red ni foto. FK a `sector` con borrado en cascada y `CHECK` en el estado |
 
 ### 4.2 Vistas: el Índice en SQL
 
-`v_par_cerrado` (un par con cierre, sin cortes `ANULADO`), `v_cumplimiento_por_sector`, `v_cumplimiento_global` y `v_cumplimiento_mensual` (mes en hora de Cartagena). Misma fórmula que
+`v_par_cerrado` (un par con cierre, sin cortes `ANULADO`), `v_cumplimiento_por_sector`, `v_cumplimiento_global` y `v_cumplimiento_mensual` (mes en hora de Cartagena). Sobre los reportes (ADR-112): `v_reportes_vigentes` (sin descartados), `v_ranking_barrios` (`RANK()` de los últimos 30 días con datos) y `v_tendencia_diaria` (media móvil de 7 días con `AVG() OVER` y cambio con `LAG`, sin huecos). Misma fórmula que
 `CalcularCumplimientoService` (ADR-022): se **suman** duraciones —en milisegundos, truncando a segundos al final, como Mongo y `Duration.toSeconds()`— y el porcentaje es
 `min(100, prometida × 100 / real)`, o 100 si la real es 0. Una prueba de paridad (`ParidadMongoPostgresIT`) compara las dos con los mismos cortes.
 
@@ -133,11 +134,18 @@ de barrios y cortes y quita lo que ya no existe. Repetirla no duplica nada; si a
 
 ### 4.4 Rutas (solo lectura)
 
-`GET /api/analitica/cumplimiento[?sectorId=]` y `GET /api/analitica/cumplimiento/mensual` (públicas) y `GET /api/veedor/analitica/copia` (`VER_PANEL`: últimas copias y sus conteos).
+`GET /api/analitica/cumplimiento[?sectorId=]`, `GET /api/analitica/cumplimiento/mensual`, `GET /api/analitica/reportes/ranking[?limite=]` y `GET /api/analitica/reportes/tendencia[?dias=]` (públicas) y `GET /api/veedor/analitica/copia` (`VER_PANEL`: últimas copias y sus conteos).
 Con la copia apagada, PostgreSQL caído o sin primera copia responden **503** (`servicio-no-disponible`) y nunca suplen la consulta leyendo de Mongo. El estado de la copia **no** está en
 `/actuator/health` a propósito (`management.health.db.enabled: false`).
 
-### 4.5 Qué no se hizo
+### 4.5 Vigilante, bitácora inmutable, respaldo y rol lector (ADR-113)
 
-El vigilante completo de integridad (sumas de control, referencias colgantes), la bitácora inmutable, el respaldo restaurable y las vistas de datos abiertos son las fases 2 y 3 de
-[09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) §10.
+- **`vigilancia`** guarda cada revisión del vigilante (cada 15 min, tras una copia fresca): compara por barrio pares, cierres, segundos de cierre y reportes entre Mongo y PostgreSQL, cuenta las referencias colgantes y comprueba la cadena. **Avisa; no corrige.** `GET /api/veedor/analitica/vigilancia` (`VER_PANEL`).
+- **`bitacora_inmutable`** copia la bitácora pública y **solo admite agregar**: disparadores rechazan `UPDATE`, `DELETE` y `TRUNCATE`. Cada fila guarda el hash SHA-256 de la anterior (lo calcula un disparador `BEFORE INSERT`), de modo que reescribir una fila, aunque se esquive el bloqueo, rompe la cadena que comprueba `v_bitacora_cadena`. `GET /api/analitica/bitacora/integridad` (pública). La auditoría de cuentas **no** se copia: lleva IP e ids de personas.
+- **Respaldo:** `scripts/backup-postgres.sh` (`pg_dump` formato custom), `scripts/restore-postgres.sh` (restaura en una base **nueva**, nunca encima de la original) y `scripts/verificar-respaldo-postgres.sh` (respalda, restaura en una base temporal, compara las filas de cada tabla, comprueba la cadena y la borra).
+- **Rol `aguavigia_lector`** (`NOLOGIN`): solo `SELECT` sobre las vistas públicas. Para usarlo: `CREATE USER lector IN ROLE aguavigia_lector PASSWORD '…'`.
+- **La simulación** tiene su propia base analítica, `aguavigia_sim_analitica` (ADR-112), con las mismas tablas y vigilancia.
+
+### 4.6 Qué no se hizo
+
+Una vista de datos abiertos más allá del rol de solo lectura, y la copia de la auditoría de cuentas (por sus datos personales). Ver [09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) §10.

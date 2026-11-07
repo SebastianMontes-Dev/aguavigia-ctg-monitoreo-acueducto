@@ -290,3 +290,48 @@ una copia en PostgreSQL que un job llena desde Mongo cada 5 minutos. Regenera lo
 3. Nada de esto toca los permisos: `VER_PANEL` ya existe.
 
 Cómo se levanta PostgreSQL en local (`docker compose up -d postgres`, puerto `5433`) y cómo consultarlo: [`01-levantar-a-mano.md`](../01-levantar-a-mano.md) §A3b y el final de la parte D.
+
+## F8 — Cierre del backend (2026-11-06)
+
+Sección en construcción: cada paso del [plan de cierre](../10-plan-de-cierre.md) añade aquí lo suyo **antes** de fusionarse.
+
+### Estadísticas: la duración media puede ser nula (issue #84)
+
+**Cambia el contrato, pero el cliente ya lo tolera.** `GET /api/estadisticas` devolvía `duracionPromedioHoras: 0.0` cuando no había ningún corte cerrado, y nadie podía distinguir «no hay nada que medir» de «duran cero horas».
+Ahora el campo es **nullable**: `null` sin cortes cerrados. En `exportar.csv` la celda `duracion_promedio_horas_ciudad` sale vacía en ese caso.
+
+| Qué | Antes | Ahora |
+|---|---|---|
+| `duracionPromedioHoras` sin cortes cerrados | `0.0` | `null` (`nullable: true` en el contrato) |
+| Celda de duración en `exportar.csv` sin cortes cerrados | `0,0` | vacía |
+| `sectoresMasAfectados` con empates en la cantidad | el orden podía cambiar entre consultas | estable: cantidad descendente y, a igualdad, el `sectorId` de la A a la Z |
+
+`cantidadCortes` **no se renombra** (rompería el contrato): sigue contando las veces que el barrio aparece en avisos de corte de Acuacar aprobados, no cortes con duración medida. La descripción del esquema ya lo dice.
+
+**Qué debe adaptar el frontend (Yordy):**
+1. Regenerar los tipos: `npm run api:sync` en `frontend/` (el campo pasa a `number | null`); si no, `api:check` falla.
+2. Quitar el esquive del `0` en `frontend/src/dominio/estadisticas.ts` (`duracionMedible`): basta con `!= null`. Hoy ya funciona con `null`, así que no es urgente.
+
+### PostgreSQL: los reportes en la copia analítica (ADR-112)
+
+**No rompe nada.** El contrato suma **2 rutas públicas** (de 81 a 83) que leen de la copia en PostgreSQL, igual que las de F7: pueden responder `503` (`servicio-no-disponible`) y van hasta 5 minutos por detrás de Mongo.
+
+| Ruta | Qué devuelve |
+|---|---|
+| `GET /api/analitica/reportes/ranking?limite=` (1 a 50, por defecto 10) | `RankingReportesAnaliticoRespuesta`: `copiadoEn` y `barrios[]` con `posicion` (se repite entre empates), `sectorId`, `nombre`, `reportes`, `sinAgua`, `presionBaja` y `porcentajeDeLaCiudad`. Últimos 30 días **con datos**, sin contar los descartados |
+| `GET /api/analitica/reportes/tendencia?dias=` (1 a 365, por defecto 30) | `TendenciaReportesAnaliticaRespuesta`: `copiadoEn` y `puntos[]` con `dia`, `reportes`, `media7Dias` y `cambioRespectoAlDiaAnterior` (nulo el primer día). Sin huecos: un día sin reportes vale 0 |
+
+**Qué debe adaptar el frontend (Yordy):**
+1. Regenerar los tipos: `npm run api:sync`.
+2. `npm run api:cobertura` va a pedir que las dos rutas tengan cliente o figuren como excluidas. Son **opcionales**: duplican datos que la interfaz ya saca de Mongo y pueden dar `503`; se pueden excluir como las dos públicas de F7 (`/api/analitica/cumplimiento`), o usarlas en `/estadisticas` para mostrar la tendencia semanal y el ranking de barrios.
+
+### PostgreSQL: vigilante y bitácora inmutable (ADR-113)
+
+**No rompe nada.** Dos rutas más (de 83 a 85), igual que las de F7: pueden responder `503` y no tienen por qué tener pantalla.
+
+| Ruta | Acceso | Qué devuelve |
+|---|---|---|
+| `GET /api/analitica/bitacora/integridad` | Público | `IntegridadBitacoraRespuesta`: `eventos`, `eslabonesRotos`, `cadenaValida` y `ultimoHash` (resume toda la historia hasta ese evento; nulo si está vacía). `cadenaValida: false` quiere decir que alguien alteró o borró un evento de la copia inmutable |
+| `GET /api/veedor/analitica/vigilancia?limite=` | Panel, `VER_PANEL` | Las últimas revisiones del vigilante (`VigilanciaAnaliticaRespuesta`): `resultado` (`OK`, `CON_DIFERENCIAS`, `FALLIDA`), `barriosRevisados`, `diferencias`, `eventosEnBitacora`, `eslabonesRotos` y `detalle` |
+
+**Qué debe adaptar el frontend (Yordy):** `npm run api:sync` y decidir si usa o excluye las rutas en `api:cobertura`. Recomendado: la de `vigilancia` como otro bloque en `/panel/sistema`, junto a «Copia analítica» (mismo permiso, mismo manejo del `503`), y mostrar la de `integridad` como una línea de confianza en `/bitacora` («bitácora verificada: N eventos, cadena íntegra»), siempre sin romper la página si responde `503`.

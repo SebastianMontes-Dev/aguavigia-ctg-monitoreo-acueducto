@@ -51,6 +51,12 @@ public class ReporteCiudadanoMongoAdapter implements ReporteCiudadanoRepository 
 
     @Override
     public ReporteCiudadano guardar(ReporteCiudadano reporte) {
+        repositorio.save(aDocumento(reporte));
+        return reporte;
+    }
+
+    /** Aparte para que el almacén de datos sintéticos (ADR-111) guarde reportes con el mismo formato que el real. */
+    static ReporteCiudadanoDocumento aDocumento(ReporteCiudadano reporte) {
         ReporteCiudadanoDocumento documento = new ReporteCiudadanoDocumento();
         documento.setId(reporte.id().valor());
         documento.setSectorId(reporte.sectorId().valor());
@@ -69,9 +75,7 @@ public class ReporteCiudadanoMongoAdapter implements ReporteCiudadanoRepository 
         documento.setRedHash(reporte.redHash());
         documento.setFotoSha256(reporte.fotoSha256());
         documento.setFotoDescartada(reporte.fotoDescartada());
-
-        repositorio.save(documento);
-        return reporte;
+        return documento;
     }
 
     @Override

@@ -24,7 +24,7 @@ const MONGODB_URI = process.env.MONGODB_URI ?? 'mongodb://localhost:27017/?direc
 const DB_NAME = process.env.MONGODB_DB ?? 'aguavigia';
 const SECTORES_ESPERADOS = 211;
 // Cuántas cuentas sintéticas debe haber creado el backend (VECINOS_SINTETICOS en .env; 0 las desactiva).
-const CUENTAS_SINTETICAS = Number(process.env.VECINOS_SINTETICOS ?? 30000);
+const CUENTAS_SINTETICAS = Number(process.env.VECINOS_SINTETICOS ?? 300);
 const ESPERA_DE_CUENTAS_MS = Number(process.env.ESPERA_DE_CUENTAS_MS ?? 5 * 60 * 1000);
 const esperar = (ms) => new Promise((resolver) => setTimeout(resolver, ms));
 

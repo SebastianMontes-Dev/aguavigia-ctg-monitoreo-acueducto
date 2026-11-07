@@ -751,3 +751,65 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Gana.** Texto grande usable sin hacer nada extra y una página de historia con la misma composición del resto. **Pierde.** Una regla global bajo `22.5em` (elementos que encogen, palabras que se parten) que a 360 px con letra normal también aplica. A 360 px con la letra base al doble, nueve de diez pantallas se salían
   entre 20 y 250 px; se resolvió el mismo día (rejillas `auto-fit` acotadas, filas de Cumplimiento apiladas, barra inferior y alto del mapa del celular) y el detalle está en `FE7-integracion-y-entrega.md` §3.
 - **Se revierte** con `Historial.tsx`/`.module.css`, el cambio de `em` en las hojas de estilos y `datos.ts`, y el `flex-wrap` de `Marco.module.css`.
+
+## 15. Datos aleatorios para la simulación y menos cuentas sintéticas (2026-11-06)
+
+### ADR-111 — La simulación se llena con reportes, cortes y bitácora generados al azar; las cuentas sintéticas bajan de 30 000 a 300
+
+**Estado: aceptada.** Enmienda ADR-094 (las cuentas sintéticas ya no son lo único inventado, pero lo nuevo solo existe en la simulación).
+
+- **Contexto.** Una app de reportes de agua con 30 000 cuentas y casi ningún reporte se ve vacía justo donde está su propuesta. Las cuentas ni siquiera hacen falta para reportar (un
+  reporte lleva la huella de un dispositivo, no de una cuenta). La simulación necesita volumen en lo que el sistema hace: reportes, cortes, cierres y bitácora.
+- **Decisión.**
+  1. **Cuentas sintéticas: 300** por defecto (`VECINOS_SINTETICOS`), las justas para listados y para la nota "cuentas sintéticas". La mecánica de ADR-094 no cambia.
+  2. **Un generador de datos aleatorios dentro del backend** (`GenerarDatosSinteticosService`, caso de uso `GenerarDatosSinteticosUseCase`), que crea reportes, dispositivos, cortes con sus
+     cierres por barrio y eventos de bitácora. Lo sortea todo con una semilla (la misma semilla, el mismo reloj y los mismos barrios dan lo mismo; sin semilla se sortea una y queda en el log):
+     reportes en proporción a la población con "barrios calientes", agrupados alrededor de los cortes y con picos de mañana y de tarde, cada punto dentro del polígono de su barrio, cortes
+     que terminan antes, a tiempo o tarde, o que vencen sin confirmar o se anulan, de modo que el Índice de Cumplimiento tiene barrios al 100 %, al 40 % y sin dato.
+  3. **Solo en la simulación.** El componente y el caso de uso existen únicamente con `aguavigia.sim.habilitada=true`; la instancia real no genera nada más allá de las 300 cuentas, y el mapa
+     real sigue mostrando solo lo que dicen los boletines de Acuacar y los vecinos de verdad. (El plan de cierre contemplaba generar también en la real y que el consenso lo ignorara; se descartó:
+     exigía filtrar lo sintético en cada lectura pública y el riesgo de que algo se colara era mayor que el beneficio.)
+  4. **Todo queda declarado.** Cada documento generado lleva `sintetico: true` (reportes, dispositivos, cortes y eventos), los cortes son de origen nuevo **`SINTETICO`** (nunca `OFICIAL_ACUACAR`:
+     regla 4 de [06](06-etica-de-datos.md)) y la descripción de cada evento termina en "(dato sintético)". Lo que crea una persona no lleva el campo.
+  5. **Dentro de lo que pide el TTL.** Todo cae en el pasado y dentro de 330 días: los reportes caducan a los 365.
+  6. **Idempotente y apagable.** Al arrancar solo completa lo que falta para llegar a la cantidad pedida; `DATOS_SINTETICOS_REPORTES=0` (el valor por defecto) lo apaga. Las cantidades por defecto de la
+     demo son 60 000 reportes, 400 cortes y 9 000 dispositivos. El valor por defecto del compose es 0 porque el guion completo mide el Índice de barrios concretos y espera una base limpia.
+- **Gana.** Una simulación con volumen real de lo que importa, repetible, sin tocar el mapa real, con cada dato rotulado; 29 700 documentos menos de cuentas que nadie usa.
+- **Pierde.** La simulación con volumen no es compatible con el guion completo (que mide barrios concretos): son dos usos distintos de `backend-sim`. La copia analítica de PostgreSQL de la simulación
+  sigue apagada (ADR-100): copiaría el Mongo de simulación sobre la copia real.
+- **Se revierte** quitando `GenerarDatosSinteticosService`, su componente, `OrigenCorte.SINTETICO` y el campo `sintetico`; Mongo ignora los documentos con campos que ya no se leen.
+
+## 16. PostgreSQL: los reportes y una base analítica para la simulación (2026-11-06)
+
+### ADR-112 — La copia analítica cuenta también los reportes (sin datos personales) y la simulación tiene su propia base SQL
+
+**Estado: aceptada.** Amplía ADR-100 (sigue siendo una copia derivada: Mongo no cambia ni lee de PostgreSQL). Los pasos siguientes del plan de cierre (vigilante de integridad y bitácora inmutable) añaden sus propias secciones aquí.
+
+- **Contexto.** PostgreSQL solo copiaba el Índice de Cumplimiento. Con los reportes como el grueso de los datos (ADR-111), el modelo relacional tenía poco que mostrar sobre lo que más importa, y la simulación tenía el SQL apagado para no pisar la copia real.
+- **Decisión.**
+  1. **`analitica.reporte_dia`**: un conteo por barrio, día de Cartagena, tipo y estado de moderación. La cuenta la hace Mongo (`ReportesAgregadosMongoAdapter`, una agregación con `allowDiskUse`), no la memoria de Java. **Sin coordenadas, huella de dispositivo, red ni foto**: una prueba comprueba que la tabla no tiene otras columnas que las seis esperadas.
+  2. **Vistas con funciones de ventana** (migración `V3`): `v_reportes_vigentes` (todo menos los descartados), `v_ranking_barrios` (`RANK()` sobre los últimos 30 días con datos, contados hacia atrás desde el último día copiado y no desde hoy) y `v_tendencia_diaria` (sin huecos, con media móvil de 7 días `AVG() OVER (… ROWS BETWEEN 6 PRECEDING AND CURRENT ROW)` y cambio frente al día anterior con `LAG`).
+  3. **Dos rutas públicas de solo lectura**: `GET /api/analitica/reportes/ranking?limite=` y `GET /api/analitica/reportes/tendencia?dias=`. Igual que las de ADR-100: 503 si la copia está apagada o PostgreSQL no responde, y nunca suplen leyendo de Mongo.
+  4. **La copia comprueba los reportes**: compara el total de Mongo con el que quedó en SQL; si no cuadra, la copia queda `CON_DIFERENCIAS` y el detalle dice «reportes N vs M». Un día de un barrio que no existe no se copia (la clave foránea lo rechazaría) y se delata igual.
+  5. **La simulación tiene su propia base analítica**, `aguavigia_sim_analitica`, en el mismo servidor de PostgreSQL, y su SQL pasa a estar encendido. Copiar a la base de la instancia real habría pisado su copia. Se crea con `scripts/postgres-init/` al inicializar un volumen nuevo; en un volumen anterior, una vez: `docker exec aguavigia-postgres createdb -U aguavigia aguavigia_sim_analitica`. Si no existe, solo falla la copia (no el backend).
+- **Verificado de verdad:** con 20 000 reportes generados en la simulación, Mongo y SQL suman lo mismo (20 000), la copia queda `OK` y las dos rutas responden con datos.
+- **Gana.** Un modelo relacional con claves foráneas, restricciones, vistas, `RANK`, `AVG OVER` y `LAG` sobre lo que el proyecto más recoge, probado contra un PostgreSQL real; la simulación puede enseñar SQL sin tocar la copia real.
+- **Pierde.** Un conteo más que mantener en dos sitios (si cambian los estados de moderación hay que tocar el `CHECK`); la simulación necesita su base creada una vez en volúmenes antiguos.
+- **Se revierte** con `V4__quitar_reportes.sql` (borrar las vistas y la tabla), el adaptador `ReportesAgregadosMongoAdapter` y las dos rutas; Mongo no se entera.
+
+## 17. PostgreSQL: vigilante de integridad, bitácora inmutable y rol de solo lectura (2026-11-06)
+
+### ADR-113 — La copia analítica se vigila a sí misma, guarda una bitácora que solo admite agregar y tiene un rol de solo lectura
+
+**Estado: aceptada.** Cierra las fases 2 y 3 de [09](09-postgresql-fase-1.md) §10 (salvo las vistas de datos abiertos más allá del rol, que se dejan como están). Sigue siendo una copia derivada: Mongo no cambia ni lee de PostgreSQL.
+
+- **Contexto.** La copia de la fase 1 solo comparaba totales (barrios, cortes, pares). Un cierre movido de una hora a otra, o un reporte que cambió de barrio, no cambia ningún total y pasaba desapercibido. Y la bitácora pública, cuya razón de ser es que nadie la reescriba, solo estaba protegida por la forma del puerto de Java.
+- **Decisión.**
+  1. **El vigilante** (`VigilarAnaliticaService`, cada 15 minutos, tras una copia fresca): compara por barrio cuatro sumas entre Mongo y PostgreSQL —pares, cierres, **segundos de cierre** (una suma que cambia si un cierre se mueve) y reportes—, cuenta las **referencias colgantes** (pares y reportes que apuntan a un barrio que no existe) y anota cada revisión en `analitica.vigilancia`. **Avisa; no corrige nada.** Se ve en `GET /api/veedor/analitica/vigilancia` (`VER_PANEL`).
+  2. **`analitica.bitacora_inmutable`**: copia de la bitácora pública donde solo se agrega. Disparadores `BEFORE UPDATE OR DELETE` y `BEFORE TRUNCATE` lanzan `restrict_violation`. Cada fila guarda el **hash de la anterior** (SHA-256, calculado por un disparador `BEFORE INSERT` con candado consultivo para que dos copias simultáneas no encadenen a la misma fila), así que alterar o borrar una fila **aunque se esquive el bloqueo** rompe la cadena. `v_bitacora_cadena` comprueba cada eslabón y `GET /api/analitica/bitacora/integridad` (pública) dice si la cadena es válida. Sin datos personales: la bitácora es pública.
+  3. **Respaldo que se restaura de verdad**: `scripts/backup-postgres.sh` (`pg_dump` en formato custom, con el índice del archivo comprobado), `scripts/restore-postgres.sh` (restaura en una base **nueva**, nunca encima de la original) y `scripts/verificar-respaldo-postgres.sh` (respalda, restaura en una base temporal, compara las filas de cada tabla, comprueba la cadena y borra la temporal).
+  4. **`aguavigia_lector`**: rol `NOLOGIN` con `SELECT` solo sobre las vistas públicas (nunca las tablas). Para exportar datos abiertos o enseñar permisos: `CREATE USER x IN ROLE aguavigia_lector PASSWORD '…'`. Si quien migra no puede crear roles, la migración lo omite sin fallar.
+- **Verificado:** `BitacoraInmutableIT` prueba contra un PostgreSQL real que `UPDATE`, `DELETE` y `TRUNCATE` se rechazan, que un superusuario que apaga el disparador y reescribe una fila queda delatado en **esa** fila, que borrar una del medio rompe el enlace siguiente y que el rol lector ve las vistas pero no las tablas ni puede escribir.
+- **Gana.** Integridad demostrable: lo que la bitácora dice hoy es lo que dijo ayer, o la cadena lo grita. Un vigilante que ve lo que los totales no ven. Un respaldo probado.
+- **Pierde.** La cadena depende del orden de copia (no del orden cronológico): un evento antiguo que aparezca después en Mongo entra al final de la cadena; el orden relevante es «cuándo lo vio la copia». El vigilante compara contra una copia hecha segundos antes: un reporte que llegue entre las dos lecturas puede dar un falso aviso que desaparece en la revisión siguiente.
+- **Se revierte** con `V5__quitar_vigilancia.sql` (borrar vistas, tablas, funciones, disparadores y el rol), `VigilanciaAnaliticaJob` y las dos rutas.

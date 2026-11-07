@@ -9,8 +9,9 @@ import java.util.Map;
 public record EstadisticasRespuesta(
         List<EstadisticaSectorRespuesta> sectoresMasAfectados,
         Map<String, Integer> cortesPorDiaDeSemana,
-        double duracionPromedioHoras) {
+        @Schema(nullable = true, description = "Media en horas de los cortes cerrados; nula si no hay ninguno")
+        Double duracionPromedioHoras) {
 
-    @Schema(description = "Sector con su cantidad de cortes registrados")
+    @Schema(description = "Sector con las veces que aparece en avisos de corte de Acuacar aprobados (no son cortes con duración medida)")
     public record EstadisticaSectorRespuesta(String sectorId, String nombre, int cantidadCortes) {}
 }
