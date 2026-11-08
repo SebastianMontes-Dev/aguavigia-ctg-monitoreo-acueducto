@@ -282,7 +282,8 @@ test('debeMostrarAccesoDenegadoEnLaAuditoriaSinElPermisoOSiElServidorLoNiega', a
 test('debeMostrarLasMetricasConSuUnidadYDesdeCuando', async ({ page }) => {
   await simularAdministracion(page)
   await page.goto('/panel/sistema')
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Contadores de este proceso desde hoy a las')
+  // La muestra empieza hace 6 h: entre las 00:00 y las 06:00 de Cartagena cae en el día anterior y la interfaz dice «ayer», no «hoy».
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(/Contadores de este proceso desde (hoy|ayer) a las/)
   const bloque = page.getByRole('region', { name: 'Métricas de calibración' })
   await expect(bloque).toContainText('Un reinicio del servidor los pone a cero')
   await expect(bloque.getByText('Barrios en disputa', { exact: true }).locator('..')).toContainText('3')
