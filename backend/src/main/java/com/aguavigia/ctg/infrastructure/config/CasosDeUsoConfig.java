@@ -81,9 +81,10 @@ import java.time.Duration;
                         + "|RegistrarLecturaDePresion|RegistrarPropuestaIngesta|RegistrarReporte|RegistrarVecino"
                         + "|RevisarPropuestaIngesta|VerificarBarrioVecino"
                         // Los de la simulación los declara SimulacionConfig, solo con aguavigia.sim.habilitada=true.
-                        + "|ControlarRelojDeSimulacion|InyectarBoletinSimulado|IniciarSesionDeAdminDeSimulacion|ReiniciarSimulacion)Service"
+                        + "|ControlarRelojDeSimulacion|InyectarBoletinSimulado|IniciarSesionDeAdminDeSimulacion|ReiniciarSimulacion"
+                        + "|GenerarDatosSinteticos)Service"
                         // La copia analitica la declara SqlConfig, solo con aguavigia.sql.habilitado=true (ADR-100).
-                        + "|com[.]aguavigia[.]ctg[.]application[.]CopiarAnaliticaService"))
+                        + "|com[.]aguavigia[.]ctg[.]application[.](CopiarAnalitica|VigilarAnalitica)Service"))
 public class CasosDeUsoConfig {
 
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(CasosDeUsoConfig.class);

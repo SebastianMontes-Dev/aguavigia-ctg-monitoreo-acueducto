@@ -44,6 +44,12 @@
     white-space: nowrap;
   }
 
+  /* La misma marca del mapa: borde punteado de tinta, sin color nuevo. */
+  .muestraMarca {
+    flex: none;
+    color: var(--tinta);
+  }
+
   .zoom {
     right: var(--espacio-3);
     bottom: var(--espacio-3);
@@ -99,7 +105,7 @@
   }
 
   /* En el celular la leyenda no tapa el mapa: va debajo, en el flujo. */
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .marco {
       display: flex;
       flex-direction: column;
@@ -108,7 +114,7 @@
     .lienzo {
       flex: 1;
       height: auto;
-      min-height: 0;
+      min-height: 11rem;
     }
 
     .leyenda {

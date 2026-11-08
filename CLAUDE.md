@@ -8,7 +8,7 @@ Proyecto académico de dos personas que corre **en local**. Resuelve un vacío d
 
 - **Backend: Sebastian. Frontend: Yordy Pardo (`Jordy-Lv`).** No se crea ni edita nada en `frontend/` salvo que Yordy lo pida.
   Si el backend cambia el contrato (`backend/openapi.yaml`, rutas, correos), se avisa qué debe adaptar el frontend.
-- El frontend sigue su plan por fases en [`docs/frontend/`](docs/frontend/README.md) (FE0–FE7), con una rama por fase. La rama `feat/f5-ingreso-panel` es de Yordy: no se borra ni se toca (se integra en FE2).
+- El frontend sigue su plan por fases en [`docs/frontend/`](docs/frontend/README.md) (FE0–FE7), con una rama `feature/fe<n>-<tema>` por fase desde `develop`. La rama `feat/f5-ingreso-panel` es de Yordy: no se borra ni se toca; su contenido ya se integró en FE2 y se archivó como la etiqueta `archivo/yordy-2026-10-31/f5-ingreso-panel` (la rama ya no existe).
 
 ## Stack
 
@@ -23,7 +23,8 @@ Frontend: React 19 + Vite (contrato: `backend/openapi.yaml`; guía en `docs/api/
 ## Comandos
 
 ```bash
-cd backend && ./mvnw verify            # compila, pruebas unitarias + ArchUnit; las de integración exigen Docker
+cd backend && ./mvnw test              # unitarias *Test + ArchUnit (Surefire), sin Docker
+cd backend && ./mvnw verify            # además las de integración *IT con Testcontainers (Failsafe, exigen Docker) y la cobertura
 docker compose up -d mongo             # servicio por servicio; ver docs/01-levantar-a-mano.md
 docker compose up -d --build backend   # levanta también sus dependencias; API en http://localhost:8081
 node scripts/generar-referencia-api.mjs  # regenera docs/api/referencia-de-rutas.md desde el contrato
@@ -51,8 +52,16 @@ Arquitectura Limpia (puertos y adaptadores), dependencias siempre hacia adentro:
 
 ## Git y autoría
 
-- Todo va **directo a `main`**, sin ramas ni PR. Conventional Commits en español (`tipo(scope): descripción`), un commit por unidad de trabajo.
-- Commit y push solo cuando el dueño lo pide. Verificar en local antes de empujar y revisar el CI después.
+- **Gitflow** (desde 2026-10-20). `main` y `develop` son ramas protegidas: **prohibido el push directo**, no se modifican ni se usan como
+  destino sin autorización. Todo cambio, por pequeño que sea, se hace en su propia rama de trabajo y entra solo por PR, con revisión,
+  aprobación y el CI en verde. La rama se borra al fusionarse.
+  - `main`: lo entregado. Solo recibe `release/*` y `hotfix/*`, y cada fusión lleva su etiqueta `vX.Y.Z`.
+  - `develop`: integración. De aquí salen y aquí vuelven las ramas de trabajo.
+  - `feature/<tema>` desde `develop`, PR a `develop`. Las fases del frontend usan `feature/fe<n>-<tema>`.
+  - `release/X.Y.Z` desde `develop` al preparar una entrega: solo correcciones y versión; se fusiona a `main` y de vuelta a `develop`.
+  - `hotfix/X.Y.Z` desde `main` para un fallo en lo entregado; se fusiona a `main` y a `develop`.
+- Conventional Commits en español (`tipo(scope): descripción`), un commit por unidad de trabajo.
+- Commit, push y PR solo cuando el dueño lo pide. Verificar en local antes de empujar y revisar el CI después.
 - **El agente nunca figura como colaborador**: sin `Co-Authored-By` ni firmas de IA en commits o PR (lo refuerzan `includeCoAuthoredBy: false` y `.github/workflows/autoria.yml`).
 - Fechas en hora de Cartagena (UTC-5). Sin secretos versionados: van en `.env` (ignorado por git); `.env.example` es la plantilla.
 
@@ -61,5 +70,5 @@ Arquitectura Limpia (puertos y adaptadores), dependencias siempre hacia adentro:
 Vive en `docs/`, una guía por tema (índice en `docs/README.md`). `docs/api/` y `docs/diseno/` son referencia para el frontend.
 La documentación anterior sigue en el historial: `git show pre-limpieza-docs:<ruta>`. Un dato vive en un solo archivo.
 Números de ADR: 087–097 son los de `docs/07` §4; el registro histórico reutiliza 087–089 con otro sentido (citarlos como «histórico ADR-0xx»),
-098–099 los consumió la reducción cancelada y el 100 es PostgreSQL (copia analítica) y el siguiente libre es el 101.
+098–099 los consumió la reducción cancelada y el 100 es PostgreSQL (copia analítica), el 101 y el 102 la lectura de la ficha del barrio, el 103 su composición en bloques, el 104 la de las páginas de historia y Avisos, el 105 su grafito y su composición compacta, el 106 el selector de gráficas y el informe impreso de Estadísticas, el 107 el diseño del ingreso, las cuentas y el panel, el 108 la recomposición de Avisos, el 109 el ingreso y el alta del segundo factor a dos columnas, el 110 el Historial en bloques y los puntos de quiebre en `em`, el 111 los datos aleatorios para la simulación y las 300 cuentas sintéticas, el 112 los reportes en la copia analítica y la base SQL de la simulación, el 113 el vigilante, la bitácora inmutable y el rol lector, y el siguiente libre es el 114.
 Verificar antes de afirmar: si se dice que un endpoint funciona, se prueba.

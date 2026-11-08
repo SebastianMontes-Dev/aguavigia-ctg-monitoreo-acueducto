@@ -1,6 +1,7 @@
 import createClient, { type Middleware } from 'openapi-fetch'
 import type { components, paths } from './generado/esquema'
 import { sesion } from './sesion'
+import { sesionVecino } from './sesion-vecino'
 
 export type Problema = components['schemas']['ProblemDetail'] & Record<string, unknown>
 
@@ -18,8 +19,14 @@ export type TipoProblema =
   | 'metodo-no-permitido'
   | 'formato-no-aceptable'
   | 'conflicto-de-estado'
+  | 'ubicacion-fuera-del-barrio'
+  | 'ubicacion-imprecisa'
   | 'tipo-de-contenido-no-soportado'
+  | 'formato-no-permitido'
   | 'archivo-demasiado-grande'
+  | 'dispositivo-invalido'
+  | 'subida-no-autorizada'
+  | 'enlace-invalido'
   | 'cuenta-bloqueada'
   | 'limite-reportes-excedido'
   | 'limite-de-peticiones-excedido'
@@ -42,6 +49,8 @@ const MENSAJE_GENERICO = 'Algo falló de nuestro lado. Inténtalo otra vez en un
 const TIPOS_QUE_NO_CIERRAN_SESION: ReadonlySet<string> = new Set([
   'credencial-invalida',
   'segundo-factor-requerido',
+  // Reportar sin dispositivo válido no dice nada de la sesión: quien también tiene sesión no debe perderla por esto.
+  'dispositivo-invalido',
 ])
 
 function esProblema(cuerpo: unknown): cuerpo is Problema {
@@ -90,23 +99,43 @@ export function normalizarError(respuesta: Response | null, cuerpo: unknown): Er
   }
 }
 
+/** De quién es el token que lleva una ruta: el panel solo manda el suyo a `/api/veedor/**` y el vecino, a `/api/vecino/**` y a los reportes. */
+type Dueno = 'panel' | 'vecino' | null
+
+function duenoDeLaRuta(ruta: string): Dueno {
+  if (ruta.startsWith('/api/veedor/')) return 'panel'
+  // Iniciar sesión no lleva el token de una sesión anterior.
+  if (ruta === '/api/vecino/sesion') return null
+  if (ruta.startsWith('/api/vecino/') || ruta === '/api/reportes' || /^\/api\/reportes\/[^/]+\/confirmar$/.test(ruta)) return 'vecino'
+  return null
+}
+
 export const middlewareSesion: Middleware = {
   onRequest({ request }) {
-    const token = sesion.token()
+    const dueno = duenoDeLaRuta(new URL(request.url).pathname)
+    const token = dueno === 'panel' ? sesion.token() : dueno === 'vecino' ? sesionVecino.token() : null
     if (token) request.headers.set('Authorization', `Bearer ${token}`)
     return request
   },
-  async onResponse({ response }) {
-    if (response.status !== 401 || !sesion.token()) return response
+  async onResponse({ response, request }) {
+    if (response.status !== 401) return response
+    const dueno = duenoDeLaRuta(new URL(request.url).pathname)
+    const almacen = dueno === 'panel' ? sesion : dueno === 'vecino' ? sesionVecino : null
+    if (!almacen?.token()) return response
     const tipo = tipoDeProblema(await response.clone().json().catch(() => null))
-    if (tipo === null || !TIPOS_QUE_NO_CIERRAN_SESION.has(tipo)) sesion.limpiar()
+    if (tipo === null || !TIPOS_QUE_NO_CIERRAN_SESION.has(tipo)) almacen.limpiar()
     return response
   },
 }
 
 // Sin `Accept: application/json` global: GET /api/sectores/geometria responde 404 si se lo mandan.
 export function crearCliente(opciones: { baseUrl?: string; fetch?: typeof fetch } = {}) {
-  const cliente = createClient<paths>({ baseUrl: opciones.baseUrl ?? '', fetch: opciones.fetch })
+  // `openapi-fetch` fija el `fetch` global al crear el cliente; así lo toma de cada petición y las pruebas pueden sustituirlo.
+  // El origen explícito es el mismo del navegador (SPA y API comparten origen) y deja construir la `Request` fuera de él.
+  const cliente = createClient<paths>({
+    baseUrl: opciones.baseUrl ?? (typeof location === 'undefined' ? '' : location.origin),
+    fetch: opciones.fetch ?? ((...argumentos) => globalThis.fetch(...argumentos)),
+  })
   cliente.use(middlewareSesion)
   return cliente
 }

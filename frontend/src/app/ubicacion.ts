@@ -1,7 +1,10 @@
 import type { Coordenada } from '../dominio/ubicacion'
 
+/** La lectura que acompaña el reporte: sin `precisionMetros` el servidor no verifica la ubicación (docs/api/reportes.md). */
+export interface UbicacionCompartida { coordenada: Coordenada; precisionMetros: number }
+
 export type ResultadoUbicacion =
-  | { tipo: 'ubicada'; coordenada: Coordenada }
+  | ({ tipo: 'ubicada' } & UbicacionCompartida)
   | { tipo: 'imprecisa'; metros: number }
   | { tipo: 'denegada' }
   | { tipo: 'no-disponible' }
@@ -22,7 +25,7 @@ export function pedirUbicacion(geolocalizacion: Geolocation | undefined = hayGeo
     geolocalizacion.getCurrentPosition(
       ({ coords }) => resolver(coords.accuracy > PRECISION_MAXIMA_M
         ? { tipo: 'imprecisa', metros: Math.round(coords.accuracy) }
-        : { tipo: 'ubicada', coordenada: { latitud: coords.latitude, longitud: coords.longitude } }),
+        : { tipo: 'ubicada', coordenada: { latitud: coords.latitude, longitud: coords.longitude }, precisionMetros: Math.round(coords.accuracy) }),
       (error) => resolver(
         error.code === error.PERMISSION_DENIED ? { tipo: 'denegada' }
           : error.code === error.TIMEOUT ? { tipo: 'agotada' }
@@ -34,15 +37,17 @@ export function pedirUbicacion(geolocalizacion: Geolocation | undefined = hayGeo
 }
 
 // Solo en memoria y solo para esta visita: nada de la ubicación se guarda en el dispositivo.
-let compartida: { sectorId: string; coordenada: Coordenada } | null = null
+let compartida: ({ sectorId: string } & UbicacionCompartida) | null = null
 
-export function recordarUbicacion(sectorId: string, coordenada: Coordenada): void {
-  compartida = { sectorId, coordenada }
+export function recordarUbicacion(sectorId: string, ubicacion: UbicacionCompartida): void {
+  compartida = { sectorId, ...ubicacion }
 }
 
 /** RF007: la coordenada acompaña el reporte solo si es del barrio en el que se localizó a la persona. */
-export function ubicacionPara(sectorId: string): Coordenada | null {
-  return compartida?.sectorId === sectorId ? compartida.coordenada : null
+export function ubicacionPara(sectorId: string): UbicacionCompartida | null {
+  return compartida?.sectorId === sectorId
+    ? { coordenada: compartida.coordenada, precisionMetros: compartida.precisionMetros }
+    : null
 }
 
 export function olvidarUbicacion(): void {

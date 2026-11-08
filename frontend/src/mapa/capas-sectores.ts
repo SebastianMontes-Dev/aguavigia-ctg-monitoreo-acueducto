@@ -8,6 +8,7 @@ export const FUENTE_SECTORES = 'sectores'
 export const IMAGEN_TRAMA = 'trama-sin-datos'
 export const CAPA_RELLENO = 'sectores-relleno'
 export const CAPA_TRAMA = 'sectores-sin-datos'
+export const CAPA_MARCA = 'sectores-en-revision'
 
 export interface ColoresMapa {
   oscuro: boolean
@@ -21,7 +22,8 @@ export interface ColoresMapa {
   laton: string
 }
 
-export interface PropiedadesSector { id: string; nombre: string; estado: string }
+/** `marcado`: en disputa o con la promesa vencida por confirmar. Se marca aparte porque ninguno de los dos cambia el estado. */
+export interface PropiedadesSector { id: string; nombre: string; estado: string; marcado: boolean }
 
 /** Solo se dibujan los barrios cuyo estado se conoce ya: pintar antes del listado sería inventar un estado. */
 export function unirSectores(
@@ -36,7 +38,10 @@ export function unirSectores(
       type: 'Feature' as const,
       id,
       geometry: feature.geometry,
-      properties: { id, nombre: nombreLegible(sector.nombre ?? feature.properties?.nombre), estado: sector.estado ?? 'SIN_DATOS' },
+      properties: {
+        id, nombre: nombreLegible(sector.nombre ?? feature.properties?.nombre), estado: sector.estado ?? 'SIN_DATOS',
+        marcado: Boolean(sector.enDisputa || sector.restablecimientoPorConfirmar),
+      },
     }]
   })
   return { type: 'FeatureCollection', features }
@@ -69,7 +74,8 @@ function colorPorEstado(colores: ColoresMapa): ExpressionSpecification {
 
 /**
  * identidad.md §4: relleno a baja opacidad (16 % claro, 22 % oscuro; más para sin servicio), borde de 0,8 px del
- * color del estado, trama para sin datos y contorno de latón en el elegido, con los demás atenuados.
+ * color del estado, trama para sin datos y contorno de latón en el elegido, con los demás atenuados. FE1: un borde
+ * punteado de tinta marca los barrios en disputa o por confirmar sin tocar su relleno, que sigue diciendo el estado.
  */
 export function capasSectores(colores: ColoresMapa, seleccionado: string | null): LayerSpecification[] {
   const base = colores.oscuro ? 0.22 : 0.16
@@ -88,6 +94,9 @@ export function capasSectores(colores: ColoresMapa, seleccionado: string | null)
     { id: 'sectores-borde', type: 'line', source: FUENTE_SECTORES,
       paint: { 'line-color': colorPorEstado(colores), 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.6, 15, 1.2],
         'line-opacity': seleccionado ? ['case', elegido, 1, 0.5] : 0.9 } },
+    { id: CAPA_MARCA, type: 'line', source: FUENTE_SECTORES, filter: ['==', ['get', 'marcado'], true],
+      paint: { 'line-color': colores.tinta, 'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.4, 15, 2.4],
+        'line-dasharray': [2, 1.5], 'line-opacity': seleccionado ? ['case', elegido, 1, 0.55] : 0.9 } },
     { id: 'sector-elegido-halo', type: 'line', source: FUENTE_SECTORES, filter: elegido,
       paint: { 'line-color': colores.superficie, 'line-width': 5.5 } },
     { id: 'sector-elegido', type: 'line', source: FUENTE_SECTORES, filter: elegido,

@@ -18,7 +18,12 @@ test('debeAbrirElBarrioDeLaUbicacionYEnviarlaConElReporte', async ({ page, conte
   await expect(page.getByRole('dialog')).toContainText('con la ubicación que compartiste')
   await page.getByRole('button', { name: 'No tengo agua' }).click()
   await expect(page.getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
-  expect(reportes[0]).toMatchObject({ sectorId: 'armenia', coordenada: { latitud: EN_ARMENIA.latitude, longitud: EN_ARMENIA.longitude } })
+  expect(reportes[0]).toMatchObject({
+    sectorId: 'armenia',
+    coordenada: { latitud: EN_ARMENIA.latitude, longitud: EN_ARMENIA.longitude },
+    // Sin la precisión el servidor no verifica la ubicación (docs/api/reportes.md).
+    precisionMetros: 25,
+  })
 })
 
 test('noDebeEnviarLaUbicacionConElReporteDeOtroBarrio', async ({ page, context }) => {
@@ -36,6 +41,7 @@ test('noDebeEnviarLaUbicacionConElReporteDeOtroBarrio', async ({ page, context }
   await expect(page.getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
   expect(reportes[0]).toMatchObject({ sectorId: 'manga' })
   expect(reportes[0]).not.toHaveProperty('coordenada')
+  expect(reportes[0]).not.toHaveProperty('precisionMetros')
 })
 
 test('debeVolverALaBusquedaSiNoHayPermisoDeUbicacion', async ({ page }) => {
@@ -74,7 +80,7 @@ test('debeConfirmarUnReporteSoloAlTocarElBoton', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Confirmación recibida' })).toBeVisible()
   await expect(page.getByText(/El reporte dice que en Armenia no llega agua/)).toBeVisible()
   await expect(page.getByText('Lo confirman 2 vecinos además de quien lo envió.')).toBeVisible()
-  expect(confirmaciones).toEqual([{ id: 'r9', cuerpo: { huella: expect.stringMatching(/^[0-9a-f]{64}$/) } }])
+  expect(confirmaciones).toEqual([{ id: 'r9', dispositivo: 'dispositivo-1' }])
 
   await page.getByRole('link', { name: 'Ver Armenia en el mapa' }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'Armenia' })).toBeVisible()

@@ -97,7 +97,7 @@ Resultado: `{"status":"UP"}`.
 Al arrancar con la colección `usuarios` vacía, el backend crea `admin@aguavigia.local` con una **clave aleatoria que se imprime una sola vez en el log**
 (y un secreto de sesión aleatorio que nadie ve). Esta clave no está en ningún archivo del repositorio.
 
-> Con el perfil `docker`, el backend crea **30 000 cuentas sintéticas** de vecino en segundo plano al arrancar (`VECINOS_SINTETICOS`; con `0` no crea ninguna).
+> Con el perfil `docker`, el backend crea **300 cuentas sintéticas** de vecino en segundo plano al arrancar (`VECINOS_SINTETICOS`; con `0` no crea ninguna).
 > Esperan a que existan el ADMIN inicial y los 211 barrios (hasta 5 minutos, reintentando cada 5 s), así que en esta guía empiezan **después de la Parte C**.
 > Son lo único inventado del sistema: `GET /api/sistema/modo` las cuenta y `node scripts/verificar-datos.mjs` comprueba que son lo que dicen ser. Si
 > no las quieres en tu base de práctica: `VECINOS_SINTETICOS=0` en el `.env` y `docker compose up -d --force-recreate backend`.

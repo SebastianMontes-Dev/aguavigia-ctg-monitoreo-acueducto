@@ -1,0 +1,22 @@
+@layer componentes {
+  /* En tinta invertida, sin colores de estado ni de acción (la del marco público es la misma, pegada a su cabecera: Marco.module.css). */
+  .franja {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-2);
+    min-height: 32px;
+    margin: 0;
+    padding: var(--espacio-1) var(--margen-pagina);
+    background: var(--tinta);
+    color: var(--papel);
+    font-size: var(--texto-xs);
+    text-align: center;
+  }
+
+  .franja strong {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+}

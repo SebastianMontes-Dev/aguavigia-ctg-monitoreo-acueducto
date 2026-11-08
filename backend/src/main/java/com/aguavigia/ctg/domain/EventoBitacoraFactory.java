@@ -42,6 +42,26 @@ public final class EventoBitacoraFactory {
                 .conFuente(OrigenEstado.VEEDOR, null);
     }
 
+    /**
+     * ADR-111: el evento de un corte generado al azar para la simulación. Lleva la fecha del hecho (no la de la corrida) y
+     * una descripción que dice que es sintético, para que nadie lo tome por un aviso de Acuacar.
+     */
+    public static EventoBitacora deCorteSintetico(TipoEvento tipo, CorteAgua corte, SectorId sectorId, Instant cuando,
+                                                  String descripcion, EstadoServicio estado, OrigenEstado fuente) {
+        return new EventoBitacora(
+                new EventoId(UUID.randomUUID().toString()),
+                tipo,
+                sectorId,
+                corte.id(),
+                cuando,
+                descripcion + " (dato sintético)",
+                estado,
+                null,
+                null,
+                List.of())
+                .conFuente(fuente, null);
+    }
+
     /** El corte se anuló: la bitácora no se edita, así que la corrección queda como un evento con su motivo. */
     public static EventoBitacora corteAnulado(CorteAgua corte, SectorId sectorId, Instant ahora) {
         return new EventoBitacora(

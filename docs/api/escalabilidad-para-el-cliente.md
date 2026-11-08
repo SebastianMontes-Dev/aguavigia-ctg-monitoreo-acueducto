@@ -1,7 +1,7 @@
 # Consumir la API a escala
 
 El requisito (`RNF027`) es que el sistema aguante **decenas de miles de personas a la vez**. El servidor hace su parte
-(caché en Redis, SSE liviano, límites: ver [`docs/ingenieria/escalabilidad.md`](../ingenieria/escalabilidad.md)), pero
+(caché en Redis, SSE liviano, límites: ver [`docs/02-arquitectura.md`](../02-arquitectura.md) y [`errores-y-limites.md`](errores-y-limites.md)), pero
 **el frontend decide cuánta carga genera**. Estas reglas no son opcionales: un cliente que las ignore puede tumbar
 un servicio que por lo demás aguanta.
 
@@ -72,7 +72,7 @@ El servicio tiene que ser útil justo cuando falla la red o el agua. Recomendaci
 
 - **Desactiva el botón al enviar** hasta recibir respuesta (evita el doble toque).
 - **Sin red se falla de forma explícita** y se ofrece reintentar a mano al recuperar la conexión.
-  No se guarda ni envía automáticamente ningún reporte pendiente ([ADR-044](../design-decisions.md#adr-044--el-reporte-ciudadano-no-se-encola-offline-por-ahora-falla-explícito-y-pide-reintentar)).
+  No se guarda ni envía automáticamente ningún reporte pendiente (ADR-044, en el registro histórico: `git show pre-limpieza-docs:docs/design-decisions.md`).
 - Recuerda el cupo: 3 reportes por sector cada 30 min por dispositivo. Tras el tercero, muestra un mensaje
   amable en lugar del `429` en crudo, y no vuelvas a intentar.
 
@@ -87,5 +87,5 @@ El servicio tiene que ser útil justo cuando falla la red o el agua. Recomendaci
 
 Estas reglas reducen la carga que **tú** generas. Que el conjunto soporte miles de usuarios simultáneos también
 depende de la máquina donde corre (el proyecto es solo local, `ADR-080`). El estado real de esa verificación,
-con lo que se midió y lo que no, está en
-[`docs/ingenieria/escalabilidad.md`](../ingenieria/escalabilidad.md).
+con lo que se midió y lo que no, está en el ADR-097 §1 de
+[`docs/07-decisiones-clave.md`](../07-decisiones-clave.md) y en [`scripts/carga/README.md`](../../scripts/carga/README.md).

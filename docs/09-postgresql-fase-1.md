@@ -20,7 +20,7 @@ vigente del modelo en [03 · Base de datos](03-base-de-datos.md) §4. El resto d
 | `CasosDeUsoConfig` no se tocaba | Se añade `CopiarAnaliticaService` a su exclusión del escaneo | El escaneo recoge toda clase `*Service` de `application/`; sin excluirla el servicio se creaba aun con SQL apagado |
 | `backend-sim` no se mencionaba | `AGUAVIGIA_SQL_HABILITADO: "false"` en `backend-sim` | Comparte el perfil `docker`; copiaría su Mongo de simulación sobre la copia real |
 | Pruebas `*IT` | Se llaman `*IntegrationTest` | Surefire ejecuta `*Test`; no hay Failsafe, y un `*IT` no correría en `./mvnw verify` |
-| `ArranqueSinPostgresIT` y `ArranqueConSqlDeshabilitadoTest` | `ArranqueSinPostgresIntegrationTest` y `ArranqueConSqlDeshabilitadoTest` | Ídem |
+| `ArranqueSinPostgresIT` y `ArranqueConSqlDeshabilitadoTest` | `ArranqueSinPostgresIntegrationTest` y `ArranqueConSqlDeshabilitadoTest` | Ídem. Desde 2026-10-20 hay Failsafe y las pruebas que exigen Docker se llaman `*IT` |
 | 503: el mensaje trae la causa | El mensaje es genérico; la causa va al log | Es una ruta pública y un error de PostgreSQL revelaría el esquema |
 
 Se añadieron además dos reglas de ArchUnit (`domain/` y `application/` sin JDBC ni Flyway; el paquete `sql` sin escribir en Mongo por los repositorios) y `CopiaAnaliticaJobTest`.
@@ -333,7 +333,7 @@ Siguen el patrón del repo: JUnit 5, nombres en español y Testcontainers para l
 | `VistasDeCumplimientoIT` | La vista da el mismo porcentaje que `CalcularCumplimientoService` en casos de borde: real 0 → 100; real < prometida → 100; real > prometida; anulados fuera; barrio sin cierre fuera |
 | `ParidadMongoPostgresIT` (Mongo y PostgreSQL en Testcontainers) | Con los mismos cortes, `GET /api/cumplimiento` y `GET /api/analitica/cumplimiento` devuelven las mismas duraciones y el mismo porcentaje, global y por barrio |
 | `ArranqueSinPostgresIT` | Con `habilitado=true` y PostgreSQL inalcanzable, el contexto arranca, `/actuator/health/readiness` es `UP`, `/api/cumplimiento` responde y `/api/analitica/cumplimiento` da 503 |
-| `ArranqueConSqlDeshabilitadoTest` | Con `habilitado=false` no existe ningún bean de JDBC ni de Flyway |
+| `ArranqueConSqlDeshabilitadoIT` | Con `habilitado=false` no existe ningún bean de JDBC ni de Flyway |
 | `AnaliticaControllerTest` (MockMvc) | Rutas, 503 con `ProblemDetail`, `VER_PANEL` en `/api/veedor/analitica/copia` |
 | Regla ArchUnit nueva | Ni `domain/` ni `application/` importan `java.sql`, `javax.sql`, `org.springframework.jdbc` ni `org.flywaydb` |
 
@@ -367,8 +367,8 @@ Cada paso termina con su verificación antes de seguir. Un commit por paso, dire
 
 | Fase | Contenido | Por qué no ahora |
 |---|---|---|
-| 2 · Vigilante | Comparar Mongo y PostgreSQL a fondo (sumas de control, referencias colgantes) y avisar | La comparación barata de §4.3 da la primera señal; el vigilante completo duplica trabajo si la fase 1 cambia |
-| 3 · Bitácora inmutable y respaldo | Copia de eventos y auditoría sin `UPDATE`/`DELETE`, y restauración probada | Más datos copiados, más privacidad que revisar |
+| 2 · Vigilante | **Hecha (ADR-113, 2026-11-06):** compara Mongo y PostgreSQL a fondo (sumas por barrio, referencias colgantes) y avisa | — |
+| 3 · Bitácora inmutable y respaldo | **Hecha (ADR-113):** bitácora sin `UPDATE`/`DELETE` con cadena de hashes, respaldo restaurable probado y rol de solo lectura. La auditoría de cuentas **no** se copia (lleva IP e ids de personas) | — |
 | Datos abiertos | Vistas de solo lectura con un usuario de BD propio | Sale casi gratis sobre la fase 1, pero nadie la pide |
 
 ## 11. Decisiones abiertas

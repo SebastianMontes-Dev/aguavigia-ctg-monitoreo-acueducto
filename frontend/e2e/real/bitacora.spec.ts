@@ -14,7 +14,8 @@ test('debeMostrarEventosYFiltrarlosPorTipoConLaApiReal', async ({ page }) => {
   await expect(page.getByRole('button', { name: /^Confirmados por vecinos/ })).toHaveAttribute('aria-pressed', 'true')
   await expect(eventos.first()).toBeVisible()
   for (const evento of await eventos.all()) {
-    await expect(evento.getByText('Confirmado por ciudadanos', { exact: false })).toBeVisible()
+    // ADR-104: lo que confirmaron los vecinos, en sus palabras.
+    await expect(evento).toContainText(/Se quedó sin agua|Volvió el agua|Llega poca agua|Lo confirmaron los vecinos/)
   }
   expect(escrituras).toEqual([])
 })

@@ -8,6 +8,11 @@ interface Props {
   reintentar: () => void
 }
 
+/** El punto de «En vivo»: solo mientras el canal esté conectado. */
+export function EnVivo() {
+  return <span className={estilos.enVivo}><span className={estilos.punto} aria-hidden="true" />En vivo</span>
+}
+
 /**
  * Guía §6.1: la hora del listado, la conectividad y el «En vivo» son relojes distintos. «En vivo» solo mientras el
  * canal esté conectado; una reconexión normal no se presenta como error.
@@ -48,7 +53,7 @@ export function EstadoListado({ lectura, ahora, reintentar }: Props) {
 
   return (
     <p className={estilos.linea}>
-      {estado === 'en-vivo' && <span className={estilos.enVivo}><span className={estilos.punto} aria-hidden="true" />En vivo</span>}
+      {estado === 'en-vivo' && <EnVivo />}
       <span>Listado generado {generado}</span>
     </p>
   )

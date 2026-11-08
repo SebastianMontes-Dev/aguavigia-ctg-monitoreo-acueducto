@@ -2,8 +2,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef, useState } from 'react'
 import { Button } from 'react-aria-components'
 import { useGeometria } from '../app/datos'
-import { hayGeolocalizacion, olvidarUbicacion, pedirUbicacion, recordarUbicacion, type ResultadoUbicacion } from '../app/ubicacion'
-import { sectorEnCoordenada, type Coordenada } from '../dominio/ubicacion'
+import { hayGeolocalizacion, olvidarUbicacion, pedirUbicacion, recordarUbicacion, type ResultadoUbicacion, type UbicacionCompartida } from '../app/ubicacion'
+import { sectorEnCoordenada } from '../dominio/ubicacion'
 import botones from './Botones.module.css'
 import estilos from './UsarUbicacion.module.css'
 
@@ -44,13 +44,15 @@ export function UsarUbicacion() {
 
   if (!hayGeolocalizacion()) return null
 
-  async function localizar(): Promise<Fallo | { sectorId: string; coordenada: Coordenada }> {
+  async function localizar(): Promise<Fallo | { sectorId: string; ubicacion: UbicacionCompartida }> {
     const resultado = await pedirUbicacion()
     if (resultado.tipo !== 'ubicada') return resultado
     const dibujo = geometria.data ?? (await geometria.refetch()).data
     if (!dibujo) return { tipo: 'sin-geometria' }
     const sectorId = sectorEnCoordenada(dibujo, resultado.coordenada)
-    return sectorId ? { sectorId, coordenada: resultado.coordenada } : { tipo: 'fuera' }
+    return sectorId
+      ? { sectorId, ubicacion: { coordenada: resultado.coordenada, precisionMetros: resultado.precisionMetros } }
+      : { tipo: 'fuera' }
   }
 
   async function ubicar() {
@@ -65,7 +67,7 @@ export function UsarUbicacion() {
         setFallo(resultado)
         return
       }
-      recordarUbicacion(resultado.sectorId, resultado.coordenada)
+      recordarUbicacion(resultado.sectorId, resultado.ubicacion)
       void navegar({ to: '/sectores/$id', params: { id: resultado.sectorId } })
     } catch {
       if (vigente.current) setFallo({ tipo: 'no-disponible' })

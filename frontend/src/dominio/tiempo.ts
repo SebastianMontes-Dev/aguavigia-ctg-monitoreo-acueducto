@@ -69,6 +69,35 @@ export function diaRelativo(valor: string | Date, ahora: Date): string {
   return (mismoAnio ? formatoDia : formatoDiaConAnio).format(fecha)
 }
 
+const formatoFechaCorta = new Intl.DateTimeFormat('es-CO', { timeZone: ZONA, weekday: 'long', day: 'numeric', month: 'numeric' })
+// Abreviaturas propias: las de ICU cambian entre versiones («sep» o «sept») y la fecha debe verse igual en todas.
+const MESES = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+/**
+ * «dom 25 oct», con el año solo si no es el de ahora. Es una fecha que no depende de cuándo se lea: «mañana» o «ayer»
+ * dicen poco cuando la persona abre la ficha otro día o el reloj de quien publica no coincide con el suyo.
+ */
+export function fechaCorta(valor: string | Date, ahora: Date): string {
+  const fecha = aFecha(valor)
+  const partes = formatoFechaCorta.formatToParts(fecha)
+  const parte = (tipo: string) => partes.find((p) => p.type === tipo)?.value ?? ''
+  const texto = `${parte('weekday').slice(0, 3)} ${parte('day')} ${MESES[Number(parte('month')) - 1] ?? ''}`
+  return claveDia(fecha).slice(0, 4) === claveDia(ahora).slice(0, 4) ? texto : `${texto} ${claveDia(fecha).slice(0, 4)}`
+}
+
+/**
+ * «Hoy · dom 25 oct», «Ayer · sáb 24 oct» o solo «sáb 18 oct»: el día relativo, siempre acompañado de la fecha real.
+ * Con `pasado` (algo que ya ocurrió: un cierre, un aviso) nunca se dice «mañana»: si el reloj de quien publica va
+ * adelantado respecto al de la persona, la fecha real sola es lo único que no confunde.
+ */
+export function diaConFecha(valor: string | Date, ahora: Date, { pasado = false }: { pasado?: boolean } = {}): string {
+  const relativo = diaRelativo(valor, ahora)
+  const fecha = fechaCorta(valor, ahora)
+  if (relativo !== 'hoy' && relativo !== 'ayer' && relativo !== 'mañana') return fecha
+  if (pasado && relativo === 'mañana') return fecha
+  return `${relativo.charAt(0).toUpperCase()}${relativo.slice(1)} · ${fecha}`
+}
+
 /** «a las 6:10 a. m.» hoy; «ayer a las…»; «el 24 de julio a las…» en otra fecha. */
 export function momento(valor: string | Date, ahora: Date): string {
   const dia = diaRelativo(valor, ahora)
@@ -76,6 +105,11 @@ export function momento(valor: string | Date, ahora: Date): string {
   if (dia === 'hoy') return `a las ${hora}`
   if (dia === 'ayer' || dia === 'mañana') return `${dia} a las ${hora}`
   return `el ${dia} a las ${hora}`
+}
+
+/** «30 de octubre de 2026 a las 3:12 p. m.», para un documento que se lee fuera de la página. */
+export function fechaYHora(valor: string | Date): string {
+  return `${formatoDiaConAnio.format(aFecha(valor))} a las ${formatearHora(valor)}`
 }
 
 export function haceCuanto(valor: string | Date, ahora: Date): string {

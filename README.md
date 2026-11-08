@@ -22,7 +22,8 @@ Cuando se corta el agua en un barrio, la información suele ser incompleta: el a
 - **Índice de Cumplimiento:** duración prometida frente a la real de cada corte, consultable por sector.
 - **Cuentas y roles:** sesión con JWT, roles de usuario y segundo factor (TOTP) para administradores.
 - **Límites de uso:** control de peticiones para evitar el spam en los reportes.
-- **Copia analítica:** el Índice de Cumplimiento se replica en PostgreSQL para análisis (`/api/analitica/**`). Si esa copia no está disponible, el sistema sigue funcionando.
+- **Copia analítica en PostgreSQL:** el Índice de Cumplimiento y los reportes (contados por barrio y día, sin datos personales) se replican para análisis con ranking y tendencia (`/api/analitica/**`). Un vigilante compara ambas bases y una bitácora que solo admite agregar guarda una cadena de hashes. Si esa copia no está disponible, el sistema sigue funcionando.
+- **Simulación con volumen:** una segunda instancia genera al azar decenas de miles de reportes, cortes y bitácora, todo marcado como sintético, para demostrar el sistema sin tocar el mapa real.
 
 ## Arquitectura
 
@@ -60,7 +61,7 @@ Solo hace falta **Docker Desktop**. No se necesita Java, Node ni un `.env`.
 docker compose up -d --build
 ```
 
-Levanta MongoDB, Redis, PostgreSQL, Mailhog y el backend, y un servicio de siembra carga los 211 barrios y datos sintéticos de prueba. La API queda en `http://localhost:8081`.
+Levanta MongoDB, Redis, PostgreSQL, Mailhog y el backend, y un servicio de siembra carga los 211 barrios; el backend crea 300 cuentas sintéticas de vecino (lo único inventado en la instancia real). La API queda en `http://localhost:8081`. La simulación con datos aleatorios en volumen está en [`scripts/simulacion/`](scripts/simulacion/README.md).
 
 Para compilar y correr las pruebas del backend:
 
@@ -97,7 +98,7 @@ Proyecto académico en equipo.
 - **Frontend:** Yordy Pardo, siguiendo el plan por fases de [`docs/frontend/`](docs/frontend/README.md).
 - El resto de colaboradores aparece en la [lista de contribuidores](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/graphs/contributors) del repositorio.
 
-**Estado.** El backend está construido y documentado; el frontend está en curso. Los sensores IoT están construidos pero inactivos, y las fases 2 y 3 de la copia analítica en PostgreSQL ([`docs/09-postgresql-fase-1.md`](docs/09-postgresql-fase-1.md)) están sin hacer.
+**Estado (versión 1.0.0).** El backend y el frontend (fases FE0 a FE7) están construidos y documentados, y la copia analítica en PostgreSQL tiene sus tres fases ([`docs/09-postgresql-fase-1.md`](docs/09-postgresql-fase-1.md)). Los sensores IoT están construidos pero inactivos a propósito. Lo que no se pudo comprobar sin una persona es la prueba de los cinco segundos del frontend ([`docs/frontend/FE7-integracion-y-entrega.md`](docs/frontend/FE7-integracion-y-entrega.md), sección 8). El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md) y el trabajo sigue Gitflow (ver [`CLAUDE.md`](CLAUDE.md)).
 
 ## Licencia
 

@@ -2,9 +2,13 @@ import { api, normalizarError } from './cliente'
 
 export const MENSAJE_NEUTRO = 'Si la dirección es válida, te enviamos un correo. El enlace vence en 48 horas'
 
+/** El contrato admite entre 1 y 211 barrios por solicitud (docs/api/suscripciones.md): son todos los de la ciudad. */
+export const MAXIMO_BARRIOS_POR_AVISO = 211
+
 export type ResultadoAlta =
   | { tipo: 'recibido' }
   | { tipo: 'invalido' }
+  | { tipo: 'demasiados-barrios' }
   | { tipo: 'esperar'; segundos: number | null }
   | { tipo: 'sin-red' }
   | { tipo: 'fallo' }
@@ -33,6 +37,8 @@ export function interpretarEnlace(respuesta: Response | null): ResultadoEnlace {
 }
 
 export async function pedirAvisos(correo: string, sectorIds: string[]): Promise<ResultadoAlta> {
+  // El servidor rechazaría todo con 400: no se gasta una petición del tope de 10 cada 10 minutos en algo que ya se sabe.
+  if (sectorIds.length > MAXIMO_BARRIOS_POR_AVISO) return { tipo: 'demasiados-barrios' }
   try {
     const { response } = await api.POST('/api/suscripciones', { body: { correo, sectorIds } })
     return interpretarAlta(response)

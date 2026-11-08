@@ -199,4 +199,106 @@ class AnaliticaControllerTest {
         mockMvc.perform(get("/api/veedor/analitica/copia").header("Authorization", "Bearer token"))
                 .andExpect(status().isServiceUnavailable());
     }
+
+    // --- vigilante y bitácora inmutable (ADR-113) ---
+
+    @Test
+    void laIntegridadDeLaBitacoraEsPublicaYDiceSiLaCadenaEstaSana() throws Exception {
+        given(consulta.integridadDeBitacora()).willReturn(new com.aguavigia.ctg.domain.VerificacionDeBitacora(120, 0, "abc123"));
+
+        mockMvc.perform(get("/api/analitica/bitacora/integridad"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.eventos").value(120))
+                .andExpect(jsonPath("$.cadenaValida").value(true))
+                .andExpect(jsonPath("$.ultimoHash").value("abc123"));
+    }
+
+    @Test
+    void unaCadenaRotaSeVeEnLaRespuesta() throws Exception {
+        given(consulta.integridadDeBitacora()).willReturn(new com.aguavigia.ctg.domain.VerificacionDeBitacora(120, 3, "abc123"));
+
+        mockMvc.perform(get("/api/analitica/bitacora/integridad"))
+                .andExpect(jsonPath("$.cadenaValida").value(false))
+                .andExpect(jsonPath("$.eslabonesRotos").value(3));
+    }
+
+    @Test
+    void elVigilanteSoloLoVeQuienTieneVerPanel() throws Exception {
+        mockMvc.perform(get("/api/veedor/analitica/vigilancia")).andExpect(status().isUnauthorized());
+
+        autenticarCon(Permiso.VER_PANEL);
+        given(consulta.ultimasVigilancias(20)).willReturn(java.util.List.of(new com.aguavigia.ctg.domain.RegistroDeVigilancia(
+                9, COPIADO, com.aguavigia.ctg.domain.ResultadoDeCopia.CON_DIFERENCIAS, 211, 2, 120, 0, "Hay diferencias: manga")));
+
+        mockMvc.perform(get("/api/veedor/analitica/vigilancia").header("Authorization", "Bearer token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].resultado").value("CON_DIFERENCIAS"))
+                .andExpect(jsonPath("$[0].barriosRevisados").value(211))
+                .andExpect(jsonPath("$[0].detalle").value("Hay diferencias: manga"));
+    }
+
+    @Test
+    void sinCopiaLaIntegridadYElVigilanteDebenResponder503() throws Exception {
+        given(consulta.integridadDeBitacora()).willThrow(new AnaliticaNoDisponibleException("apagada"));
+        autenticarCon(Permiso.VER_PANEL);
+        given(consulta.ultimasVigilancias(any(Integer.class))).willThrow(new AnaliticaNoDisponibleException("apagada"));
+
+        mockMvc.perform(get("/api/analitica/bitacora/integridad")).andExpect(status().isServiceUnavailable());
+        mockMvc.perform(get("/api/veedor/analitica/vigilancia").header("Authorization", "Bearer token"))
+                .andExpect(status().isServiceUnavailable());
+    }
+
+    // --- reportes (ADR-112) ---
+
+    @Test
+    void elRankingDeReportesEsPublicoYTraeLaPosicionYElPorcentaje() throws Exception {
+        given(consulta.rankingDeBarrios(10)).willReturn(java.util.List.of(
+                new com.aguavigia.ctg.domain.RankingDeBarrioAnalitico(1, "manga", "Manga", 8, 6, 2, 50.0),
+                new com.aguavigia.ctg.domain.RankingDeBarrioAnalitico(2, "crespo", "Crespo", 4, 0, 4, 25.0)));
+        given(consulta.ultimaCopiaOk()).willReturn(Optional.of(COPIADO));
+
+        mockMvc.perform(get("/api/analitica/reportes/ranking"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.copiadoEn").value("2026-10-15T15:00:00Z"))
+                .andExpect(jsonPath("$.barrios[0].posicion").value(1))
+                .andExpect(jsonPath("$.barrios[0].sectorId").value("manga"))
+                .andExpect(jsonPath("$.barrios[0].sinAgua").value(6))
+                .andExpect(jsonPath("$.barrios[1].porcentajeDeLaCiudad").value(25.0));
+    }
+
+    @Test
+    void elLimiteDelRankingSeAcotaEntre1Y50() throws Exception {
+        given(consulta.rankingDeBarrios(50)).willReturn(java.util.List.of());
+        given(consulta.rankingDeBarrios(1)).willReturn(java.util.List.of());
+
+        mockMvc.perform(get("/api/analitica/reportes/ranking").param("limite", "9999")).andExpect(status().isOk());
+        mockMvc.perform(get("/api/analitica/reportes/ranking").param("limite", "0")).andExpect(status().isOk());
+        verify(consulta).rankingDeBarrios(50);
+        verify(consulta).rankingDeBarrios(1);
+    }
+
+    @Test
+    void laTendenciaDeReportesTraeLaMediaMovilYElCambioNuloDelPrimerDia() throws Exception {
+        given(consulta.tendenciaDeReportes(30)).willReturn(java.util.List.of(
+                new com.aguavigia.ctg.domain.PuntoTendenciaAnalitico(java.time.LocalDate.of(2026, 11, 1), 7, 7.0, null),
+                new com.aguavigia.ctg.domain.PuntoTendenciaAnalitico(java.time.LocalDate.of(2026, 11, 2), 0, 3.5, -7L)));
+        given(consulta.ultimaCopiaOk()).willReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/analitica/reportes/tendencia"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.puntos[0].dia").value("2026-11-01"))
+                .andExpect(jsonPath("$.puntos[0].cambioRespectoAlDiaAnterior").doesNotExist())
+                .andExpect(jsonPath("$.puntos[1].media7Dias").value(3.5))
+                .andExpect(jsonPath("$.puntos[1].cambioRespectoAlDiaAnterior").value(-7));
+    }
+
+    @Test
+    void sinCopiaLasRutasDeReportesDebenResponder503ConProblemDetail() throws Exception {
+        given(consulta.rankingDeBarrios(10)).willThrow(new AnaliticaNoDisponibleException("apagada"));
+        given(consulta.tendenciaDeReportes(30)).willThrow(new AnaliticaNoDisponibleException("apagada"));
+
+        mockMvc.perform(get("/api/analitica/reportes/ranking")).andExpect(status().isServiceUnavailable())
+                .andExpect(content().contentTypeCompatibleWith("application/problem+json"));
+        mockMvc.perform(get("/api/analitica/reportes/tendencia")).andExpect(status().isServiceUnavailable());
+    }
 }

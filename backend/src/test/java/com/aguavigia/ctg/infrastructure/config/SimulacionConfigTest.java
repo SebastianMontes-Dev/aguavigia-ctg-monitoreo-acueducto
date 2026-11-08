@@ -28,6 +28,10 @@ class SimulacionConfigTest {
         @Bean EmisorDeSesionPort emisor() { return mock(EmisorDeSesionPort.class); }
         @Bean RegistroDeAuditoria auditoria() { return mock(RegistroDeAuditoria.class); }
         @Bean CicloDeIngestaPort ciclo() { return mock(CicloDeIngestaPort.class); }
+        @Bean com.aguavigia.ctg.domain.port.out.SectorRepository sectores() { return mock(com.aguavigia.ctg.domain.port.out.SectorRepository.class); }
+        @Bean com.aguavigia.ctg.domain.port.out.GeometriaSectoresPort geometrias() { return mock(com.aguavigia.ctg.domain.port.out.GeometriaSectoresPort.class); }
+        @Bean com.aguavigia.ctg.domain.port.out.AlmacenDeDatosSinteticosPort almacenSintetico() { return mock(com.aguavigia.ctg.domain.port.out.AlmacenDeDatosSinteticosPort.class); }
+        @Bean com.aguavigia.ctg.domain.port.out.RelojPort reloj() { return mock(com.aguavigia.ctg.domain.port.out.RelojPort.class); }
     }
 
     @Configuration
@@ -51,11 +55,12 @@ class SimulacionConfigTest {
             assertThat(c).doesNotHaveBean(ControlarRelojDeSimulacionUseCase.class);
             assertThat(c).doesNotHaveBean(InyectarBoletinSimuladoUseCase.class);
             assertThat(c).doesNotHaveBean(IniciarSesionDeAdminDeSimulacionUseCase.class);
+            assertThat(c).doesNotHaveBean(com.aguavigia.ctg.domain.port.in.GenerarDatosSinteticosUseCase.class);
         });
     }
 
     @Test
-    void conSimulacionSeCreanLosCuatroCasosDeUso() {
+    void conSimulacionSeCreanLosCincoCasosDeUso() {
         new ApplicationContextRunner().withUserConfiguration(Completa.class)
                 .withPropertyValues("aguavigia.sim.habilitada=true", "aguavigia.sistema.modo=SIMULACION")
                 .run(c -> {
@@ -63,6 +68,7 @@ class SimulacionConfigTest {
                     assertThat(c).hasSingleBean(InyectarBoletinSimuladoUseCase.class);
                     assertThat(c).hasSingleBean(IniciarSesionDeAdminDeSimulacionUseCase.class);
                     assertThat(c).hasSingleBean(ReiniciarSimulacionUseCase.class);
+                    assertThat(c).hasSingleBean(com.aguavigia.ctg.domain.port.in.GenerarDatosSinteticosUseCase.class);
                 });
     }
 

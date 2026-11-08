@@ -9,6 +9,22 @@
     <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0f1214" />
     <meta name="description" content="¿Tengo agua o no, y hasta cuándo? Estado del acueducto de Cartagena por sector." />
     <title>AguaVigía CTG</title>
+    <!-- El orden de las capas se fija aquí, antes de cualquier hoja: en la build, la hoja compartida de GlifoEstado (solo `componentes`) se enlaza antes que index.css, y sin esto `componentes` quedaría debajo de `reset` y `base` (el `color: inherit` de los botones pisaba al principal). Debe ser idéntica a estilos/capas.css. -->
+    <style>@layer reset, tokens, base, componentes, utilidades;</style>
+    <!-- RNF001: en el mapa y en la ficha de un barrio la respuesta es el listado de barrios. Se pide ya, mientras baja el resto de la aplicación,
+         y el canal en vivo lo toma una sola vez (api/canal-en-vivo.ts, entornoNavegador). Con 3G, esto adelanta la respuesta lo que tarda el JavaScript. -->
+    <script>
+      if (/^\/(sectores\/[^/]+)?$/.test(location.pathname)) {
+        window.listadoPrecargado = fetch('/api/sectores').catch(function () { return null })
+      }
+      // Lo mismo para Cumplimiento: su respuesta es el índice global y la serie mensual.
+      if (location.pathname === '/cumplimiento') {
+        window.precargas = {
+          '/api/cumplimiento': fetch('/api/cumplimiento').catch(function () { return null }),
+          '/api/cumplimiento/serie': fetch('/api/cumplimiento/serie').catch(function () { return null }),
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="raiz"></div>

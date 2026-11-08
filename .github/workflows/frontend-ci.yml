@@ -6,7 +6,7 @@ permissions:
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - "frontend/**"
       - "backend/**"
@@ -28,7 +28,8 @@ on:
 jobs:
   build:
     name: Lint, tipos, contrato, pruebas y build
-    runs-on: ubuntu-latest
+    # Playwright 1.56 no soporta ubuntu-latest (26.04): sin esto «Instalar Chromium» falla antes de correr nada.
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: frontend
@@ -53,6 +54,10 @@ jobs:
       # Un cambio en backend/openapi.yaml sin `npm run api:sync` deja al cliente tipado contra un contrato viejo.
       - name: Contrato de la API sin deriva
         run: npm run api:check
+
+      # Cada ruta del contrato la llama algún módulo de src o está excluida a propósito (docs/frontend/README.md).
+      - name: Cobertura del contrato
+        run: npm run api:cobertura
 
       # tokens.test.ts compara tokens.css con DESIGN.md: por eso DESIGN.md dispara este workflow.
       - name: Pruebas unitarias (Vitest)
@@ -79,7 +84,7 @@ jobs:
   # las pruebas E2E siembran su propio conjunto controlado en el paso siguiente.
   integracion:
     name: Núcleo ciudadano contra backend real
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7
@@ -101,6 +106,8 @@ jobs:
         # La siembra pide más de 10 identidades por hora desde una sola IP (el tope real) y recibía un 429.
         env:
           RATE_LIMIT_FACTOR: "100"
+          # El flujo de invitación y el del vecino gastan peticiones de /api/cuentas/**, que RATE_LIMIT_FACTOR no mueve.
+          RATE_LIMIT_FACTOR_CUENTAS: "10"
         run: docker compose up -d --build --wait mongo redis mailhog backend
       - run: npm ci
         working-directory: scripts
@@ -112,6 +119,15 @@ jobs:
           node scripts/sembrar-historico-cortes.mjs --sobre-datos-reales
           node scripts/preparar-pruebas-frontend.mjs --sobre-datos-reales
           docker compose exec -T redis redis-cli EVAL "redis.call('FLUSHDB'); redis.call('SET', 'tarea-unica:ingesta', 'pruebas-f2', 'EX', 3600); return 1" 0
+      # Sin PANEL_CORREO y PANEL_CLAVE las pruebas e2e del panel se omiten. No hace falta ningún secreto: el backend genera la clave del
+      # ADMIN inicial al arrancar y la escribe en su log una sola vez (ADR-086); el correo es el de preparar-env-ci.mjs.
+      - name: Leer la clave del ADMIN inicial del log del backend
+        run: |
+          clave=$(docker compose logs backend | grep -o 'ADMINISTRADOR INICIAL[^"]*' | sed -n 's/.*clave: \([^ ]*\) | .*/\1/p' | head -1)
+          test -n "$clave" || { echo "::error::No se encontró la clave del ADMIN inicial en el log del backend"; exit 1; }
+          echo "::add-mask::$clave"
+          echo "PANEL_CORREO=admin@example.test" >> "$GITHUB_ENV"
+          echo "PANEL_CLAVE=$clave" >> "$GITHUB_ENV"
       - run: npm ci
         working-directory: frontend
       - run: npm run build

@@ -6,10 +6,14 @@ import {
   diferenciaMensualPorCorte,
   duracionAcumulada,
   duracionCorta,
+  faltanteEnPalabras,
   ordenarSerie,
   periodoEnPalabras,
+  posicionEnLinea,
+  respuestaEnPalabras,
   resumirCumplimiento,
   significadoIndice,
+  solidezIndice,
   titularVeredicto,
   veredicto,
 } from './cumplimiento'
@@ -36,7 +40,7 @@ describe('cumplimiento', () => {
     )
     expect(resumen).toMatchObject({ cortes: 120, primerMes: '2026-05', ultimoMes: '2026-07' })
     expect(duracionCorta(resumen!.prometidoPorCorte)).toBe('24 h 21 min')
-    expect(diferenciaEnPalabras(resumen!.diferenciaPorCorte)).toBe('8 min menos')
+    expect(diferenciaEnPalabras(resumen!.diferenciaPorCorte)).toBe('8 min antes')
   })
 
   it('noDebeInventarElPromedioSinSerieNiConteo', () => {
@@ -48,8 +52,9 @@ describe('cumplimiento', () => {
     expect(veredicto(-459)).toBe('antes')
     expect(veredicto(-120)).toBe('a-tiempo')
     expect(veredicto(300)).toBe('despues')
-    expect(titularVeredicto(-459)).toBe('Los cortes terminan antes de lo anunciado')
-    expect(titularVeredicto(1800, 'Manga')).toBe('En Manga, los cortes duran más de lo anunciado')
+    expect(titularVeredicto(-459)).toBe('El agua vuelve antes de la hora anunciada')
+    expect(titularVeredicto(1800, 'Manga')).toBe('En Manga, el agua vuelve más tarde de la hora anunciada')
+    expect(titularVeredicto(120)).toBe('El agua vuelve a la hora anunciada')
   })
 
   it('debeExplicarElIndiceEnLaMismaLinea', () => {
@@ -60,7 +65,8 @@ describe('cumplimiento', () => {
   it('debeCalcularLaDiferenciaMensualPorCorteSinDividirEntreCero', () => {
     expect(diferenciaMensualPorCorte(serieDeEjemplo[0]!)).toBe(-1800)
     expect(diferenciaMensualPorCorte({ periodo: '2026-01', desviacionSegundos: 100, cantidadCortes: 0 })).toBeNull()
-    expect(diferenciaEnPalabras(20)).toBe('Lo anunciado')
+    expect(diferenciaEnPalabras(20)).toBe('A la hora')
+    expect(diferenciaEnPalabras(1980)).toBe('33 min tarde')
   })
 
   it('debeNombrarElPeriodoSinRepetirElAnio', () => {
@@ -72,5 +78,40 @@ describe('cumplimiento', () => {
   it('debeOrdenarLaSerieSinInventarMesesVacios', () => {
     const serie = ordenarSerie([serieDeEjemplo[2]!, serieDeEjemplo[0]!])
     expect(serie.map((punto) => punto.periodo)).toEqual(['2026-04', '2026-06'])
+  })
+
+  it('debeDeclararJuntoAlIndiceSoloLoQueLoDebilitaYEsMayorQueCero', () => {
+    expect(solidezIndice({ porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 })).toEqual([])
+    expect(solidezIndice({})).toEqual([])
+    expect(solidezIndice({ porcentajeProvisional: 25, cortesSinCierreConfirmado: 12, cortesAnulados: 1 })).toEqual([
+      'El 25% de los cierres solo lo reportaron vecinos y aún puede corregirse.',
+      'Quedan fuera 12 cortes vencidos sin cierre confirmado y 1 anulado.',
+    ])
+    expect(solidezIndice({ cortesSinCierreConfirmado: 1 })).toEqual(['Queda fuera 1 corte vencido sin cierre confirmado.'])
+    expect(solidezIndice({ cortesAnulados: 3 })).toEqual(['Quedan fuera 3 cortes anulados.'])
+  })
+
+  it('debeDecirConCifrasQueFaltaCuandoNoHayUnSoloCierre', () => {
+    expect(faltanteEnPalabras(undefined)).toBeNull()
+    expect(faltanteEnPalabras({ cierresMedidos: 0, cierresProvisionales: 0, porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 })).toBeNull()
+    expect(faltanteEnPalabras({ cierresMedidos: 0, cortesSinCierreConfirmado: 12, cortesAnulados: 2 }))
+      .toBe('Hay 12 cortes vencidos sin cierre confirmado: nadie confirmó cuándo volvió el agua. 2 cortes se anularon por error.')
+    expect(faltanteEnPalabras({ cortesSinCierreConfirmado: 1, cortesAnulados: 1 }))
+      .toBe('Hay 1 corte vencido sin cierre confirmado: nadie confirmó cuándo volvió el agua. 1 corte se anuló por error.')
+  })
+
+  it('debeDecirCuandoVuelveElAguaFrenteALaHoraAnunciada', () => {
+    expect(respuestaEnPalabras(-420)).toBe('El agua vuelve 7 minutos antes de la hora anunciada, en promedio.')
+    expect(respuestaEnPalabras(60)).toBe('El agua vuelve 1 minuto más tarde de la hora anunciada, en promedio.')
+    expect(respuestaEnPalabras(5400)).toBe('El agua vuelve 1 hora y 30 minutos más tarde de la hora anunciada, en promedio.')
+    expect(respuestaEnPalabras(10)).toBe('En promedio, el agua vuelve a la hora anunciada.')
+  })
+
+  it('debeUbicarElPuntoEnLaLineaConUnaHoraACadaLadoYRecortarLoQueSePase', () => {
+    expect(posicionEnLinea(0)).toBe(50)
+    expect(posicionEnLinea(-1800)).toBe(25)
+    expect(posicionEnLinea(1980)).toBeCloseTo(77.5)
+    expect(posicionEnLinea(-9000)).toBe(0)
+    expect(posicionEnLinea(9000)).toBe(100)
   })
 })

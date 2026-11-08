@@ -16,6 +16,7 @@ import com.aguavigia.ctg.domain.Sector;
 import com.aguavigia.ctg.domain.SectorId;
 import com.aguavigia.ctg.domain.port.out.AlmacenAnaliticoPort;
 import com.aguavigia.ctg.domain.port.out.CorteAguaRepository;
+import com.aguavigia.ctg.domain.port.out.LectorDeReportesAgregadosPort;
 import com.aguavigia.ctg.domain.port.out.RelojPort;
 import com.aguavigia.ctg.domain.port.out.SectorRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -219,5 +220,73 @@ class CopiarAnaliticaServiceTest {
         verifyNoMoreInteractions(sectores, cortes);
         verify(almacen, never()).reemplazar(any(), any(), any());
         verify(almacen, never()).cerrarCopia(anyLong(), any(), any(), any(), any(), any());
+    }
+
+    // --- los reportes contados por día (ADR-112) ---
+
+    private LectorDeReportesAgregadosPort lector;
+    private CopiarAnaliticaService conReportes;
+
+    private void conLectorDeReportes(List<com.aguavigia.ctg.domain.FilaReporteDiaAnalitica> filas) {
+        lector = mock(LectorDeReportesAgregadosPort.class);
+        when(lector.agregarPorDia()).thenReturn(filas);
+        conReportes = new CopiarAnaliticaService(sectores, cortes, almacen, () -> AHORA, lector);
+        when(sectores.listarTodos()).thenReturn(List.of(barrio("manga", 10), barrio("crespo", 10)));
+        when(cortes.listarTodos()).thenReturn(List.of());
+        when(almacen.reemplazar(any(), any(), any())).thenReturn(new ConteosAnaliticos(2, 0, 0));
+    }
+
+    private static com.aguavigia.ctg.domain.FilaReporteDiaAnalitica reportes(String barrio, int cantidad) {
+        return new com.aguavigia.ctg.domain.FilaReporteDiaAnalitica(barrio, java.time.LocalDate.of(2026, 10, 14), "SIN_AGUA",
+                "APROBADO", cantidad);
+    }
+
+    @Test
+    void debeCopiarLosReportesContadosYCerrarComoOkSiLosTotalesCuadran() {
+        conLectorDeReportes(List.of(reportes("manga", 5), reportes("crespo", 7)));
+        when(almacen.reemplazarReportes(any(), eq(AHORA))).thenReturn(12L);
+
+        ResultadoDeCopia resultado = conReportes.copiar();
+
+        assertThat(resultado).isEqualTo(ResultadoDeCopia.OK);
+        verify(almacen).reemplazarReportes(List.of(reportes("manga", 5), reportes("crespo", 7)), AHORA);
+        verify(almacen).cerrarCopia(eq(7L), eq(AHORA), eq(ResultadoDeCopia.OK), any(), any(), isNull());
+    }
+
+    @Test
+    void noDebeCopiarLosReportesDeUnBarrioInexistenteYDebeDecirloComoDiferencia() {
+        conLectorDeReportes(List.of(reportes("manga", 5), reportes("fantasma", 3)));
+        when(almacen.reemplazarReportes(any(), eq(AHORA))).thenReturn(5L);
+
+        ResultadoDeCopia resultado = conReportes.copiar();
+
+        assertThat(resultado).isEqualTo(ResultadoDeCopia.CON_DIFERENCIAS);
+        verify(almacen).reemplazarReportes(List.of(reportes("manga", 5)), AHORA);
+        ArgumentCaptor<String> detalle = ArgumentCaptor.forClass(String.class);
+        verify(almacen).cerrarCopia(eq(7L), eq(AHORA), eq(ResultadoDeCopia.CON_DIFERENCIAS), any(), any(), detalle.capture());
+        assertThat(detalle.getValue()).contains("reportes 8 vs 5");
+    }
+
+    @Test
+    void sinLectorDeReportesLaCopiaNoTocaLosReportes() {
+        when(sectores.listarTodos()).thenReturn(List.of(barrio("manga", 10)));
+        when(cortes.listarTodos()).thenReturn(List.of());
+        when(almacen.reemplazar(any(), any(), any())).thenReturn(new ConteosAnaliticos(1, 0, 0));
+
+        ResultadoDeCopia resultado = servicio.copiar();
+
+        assertThat(resultado).isEqualTo(ResultadoDeCopia.OK);
+        verify(almacen, never()).reemplazarReportes(any(), any());
+    }
+
+    @Test
+    void siFallaLaCopiaDeReportesLaCopiaQuedaFallida() {
+        conLectorDeReportes(List.of(reportes("manga", 5)));
+        when(almacen.reemplazarReportes(any(), any())).thenThrow(new IllegalStateException("sin PostgreSQL"));
+
+        ResultadoDeCopia resultado = conReportes.copiar();
+
+        assertThat(resultado).isEqualTo(ResultadoDeCopia.FALLIDA);
+        verify(almacen).cerrarCopia(eq(7L), eq(AHORA), eq(ResultadoDeCopia.FALLIDA), any(), isNull(), any());
     }
 }

@@ -1,63 +1,86 @@
-import { compararCorte, origenEnPalabras, type Comparacion, type Corte } from '../dominio/cortes'
-import { diaRelativo } from '../dominio/tiempo'
+import { compararCorte, sinHoraRealEnPalabras, type Corte } from '../dominio/cortes'
+import { diaConFecha, fechaCorta, formatearHora, partirHora } from '../dominio/tiempo'
+import { IndiceCorte } from './IndiceCorte'
 import estilos from './CortesCerrados.module.css'
 
 interface Props {
   cortes: readonly Corte[]
+  /** El barrio de la ficha: cada corte se compara con el cierre de este barrio y no con el de todo el corte. */
+  sectorId?: string
   ahora: Date
 }
 
-function Barras({ comparacion, escala }: { comparacion: Comparacion; escala: number }) {
-  const prometido = comparacion.prometidoMs / escala
-  const real = comparacion.realMs / escala
-  const dentro = Math.min(prometido, real)
+/** La hora grande y su día debajo, como en «Inicio anunciado / Fin prometido» del corte abierto (`ADR-101`). */
+function Marca({ rotulo, valor, ahora, tipo }: { rotulo: string; valor: string; ahora: Date; tipo: 'prometido' | 'real' }) {
+  const { cifra, periodo } = partirHora(valor)
   return (
-    <div className={estilos.barras} aria-hidden="true">
-      <span className={estilos.prometido} style={{ width: `${prometido * 100}%` }} />
-      <span className={estilos.real} style={{ width: `${dentro * 100}%` }} />
-      {real > prometido && (
-        <span className={estilos.exceso} style={{ left: `${prometido * 100}%`, width: `${(real - prometido) * 100}%` }} />
-      )}
+    <div className={estilos.marca}>
+      <dt className={estilos.rotulo}>
+        <span className={`${estilos.punto} ${estilos[tipo]}`} aria-hidden="true" />
+        {rotulo}
+      </dt>
+      <dd>
+        <time dateTime={valor} className={estilos.cifra}>
+          <span className="cifra">{cifra}</span> <span className={estilos.periodo}>{periodo}</span>
+        </time>
+        <span className={estilos.dia}>{diaConFecha(valor, ahora, { pasado: true })}</span>
+      </dd>
     </div>
   )
 }
 
 /**
- * Guía §5.2: comparación por corte con eje desde cero, prometido en contorno, real en relleno y el exceso con trama.
- * No se juzga con rojo ni verde: la diferencia va escrita.
+ * Guía §5.2: cada corte cerrado se cuenta con fechas y horas, no con duraciones que haya que restar. Primero el
+ * dos horas lado a lado, lo que se prometió y cuándo volvió el agua de verdad, y debajo, en pequeño, la diferencia en palabras. Sin color de juicio. La causa
+ * no se muestra: el texto del boletín llega tal cual salió de la fuente y se lee mal.
  */
-export function CortesCerrados({ cortes, ahora }: Props) {
+export function CortesCerrados({ cortes, sectorId, ahora }: Props) {
   const filas = cortes.flatMap((corte) => {
-    const comparacion = compararCorte(corte)
+    const comparacion = compararCorte(corte, sectorId)
     return comparacion ? [{ corte, comparacion }] : []
   })
-  const escala = Math.max(1, ...filas.map(({ comparacion }) => Math.max(comparacion.prometidoMs, comparacion.realMs)))
 
   return (
     <>
-      <p className={estilos.claves} aria-hidden="true">
-        <span><span className={`${estilos.muestra} ${estilos.muestraPrometido}`} /> Prometido</span>
-        <span><span className={`${estilos.muestra} ${estilos.muestraReal}`} /> Real</span>
-        <span><span className={`${estilos.muestra} ${estilos.muestraExceso}`} /> Tiempo de más</span>
-      </p>
       <ol className={estilos.lista}>
         {filas.map(({ corte, comparacion }) => {
-          const origen = origenEnPalabras(corte.origen)
           return (
             <li key={corte.id} className={estilos.fila}>
-              <p className={estilos.cabeza}>
-                <time dateTime={corte.inicio}>{diaRelativo(corte.inicio!, ahora)}</time>
-                <strong>{comparacion.diferencia}</strong>
+              <dl className={estilos.marcas}>
+                <Marca rotulo="Prometieron" valor={comparacion.prometidoEn} ahora={ahora} tipo="prometido" />
+                <Marca rotulo="Volvió" valor={comparacion.realEn} ahora={ahora} tipo="real" />
+              </dl>
+              <p className={estilos.veredicto}>{comparacion.veredicto}</p>
+              <p className={estilos.inicio}>
+                <time dateTime={corte.inicio}>
+                  Empezó el {fechaCorta(corte.inicio!, ahora)} a las {formatearHora(corte.inicio!)}
+                </time>
               </p>
-              <Barras comparacion={comparacion} escala={escala} />
-              <p className={estilos.detalle}>
-                Prometieron {comparacion.prometido} · Fueron {comparacion.real}
-                {origen && <><br />{origen}{corte.causa ? `: ${corte.causa}` : ''}</>}
-              </p>
+              {comparacion.provisional && (
+                <p className={estilos.porConfirmar}>Por confirmar: la hora real todavía puede cambiar.</p>
+              )}
+              <IndiceCorte corte={corte} />
             </li>
           )
         })}
       </ol>
     </>
+  )
+}
+
+/** Cortes que nunca tuvieron hora real (expirados o anulados): se dicen aparte, sin comparación. */
+export function CortesSinHoraReal({ cortes, ahora }: { cortes: readonly Corte[]; ahora: Date }) {
+  return (
+    <ol className={estilos.lista}>
+      {cortes.map((corte) => (
+        <li key={corte.id} className={estilos.fila}>
+          <p className={estilos.inicio}>
+            {corte.inicio && <time dateTime={corte.inicio}>Corte del {fechaCorta(corte.inicio, ahora)}</time>}
+          </p>
+          <p className={estilos.veredicto}>{corte.estado === 'ANULADO' ? 'Corte anulado' : 'Corte sin cierre confirmado'}</p>
+          <p className={estilos.detalle}>{sinHoraRealEnPalabras(corte)}</p>
+        </li>
+      ))}
+    </ol>
   )
 }

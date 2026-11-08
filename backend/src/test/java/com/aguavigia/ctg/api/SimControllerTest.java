@@ -11,6 +11,7 @@ import com.aguavigia.ctg.domain.SesionEmitida;
 import com.aguavigia.ctg.domain.UsuarioId;
 import com.aguavigia.ctg.domain.port.in.ControlarRelojDeSimulacionUseCase;
 import com.aguavigia.ctg.domain.port.in.InyectarBoletinSimuladoUseCase;
+import com.aguavigia.ctg.domain.port.in.GenerarDatosSinteticosUseCase;
 import com.aguavigia.ctg.domain.port.in.ReiniciarSimulacionUseCase;
 import com.aguavigia.ctg.domain.port.in.IniciarSesionDeAdminDeSimulacionUseCase;
 import com.aguavigia.ctg.domain.port.out.RevocacionSesionPort;
@@ -66,6 +67,8 @@ class SimControllerTest {
     private IniciarSesionDeAdminDeSimulacionUseCase sesionAdmin;
     @MockitoBean
     private ReiniciarSimulacionUseCase reinicio;
+    @MockitoBean
+    private GenerarDatosSinteticosUseCase datos;
 
     @Autowired
     private MockMvc mockMvc;
@@ -216,5 +219,59 @@ class SimControllerTest {
                 .andExpect(jsonPath("$.rol").value("ADMIN"))
                 .andExpect(jsonPath("$.alcance").value("COMPLETO"));
         verify(sesionAdmin).iniciar(any());
+    }
+
+    // --- datos sintéticos (ADR-111) ---
+
+    @Test
+    void generarDatosSinClaveResponde401YNoGenera() throws Exception {
+        mockMvc.perform(post("/api/sim/datos").contentType(MediaType.APPLICATION_JSON).content("{\"reportes\":10}"))
+                .andExpect(status().isUnauthorized());
+        verify(datos, never()).generar(any());
+    }
+
+    @Test
+    void generarDatosPasaElPlanYDevuelveLoGeneradoConLaSemilla() throws Exception {
+        given(datos.generar(any())).willReturn(new com.aguavigia.ctg.domain.ResumenDeDatosSinteticos(300, 5000, 40, 220, 42L));
+
+        mockMvc.perform(post("/api/sim/datos").header("X-Sim-Key", CLAVE).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reportes\":5000,\"cortes\":40,\"dispositivos\":300,\"dias\":90,\"semilla\":42}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.reportes").value(5000))
+                .andExpect(jsonPath("$.cortes").value(40))
+                .andExpect(jsonPath("$.dispositivos").value(300))
+                .andExpect(jsonPath("$.eventosBitacora").value(220))
+                .andExpect(jsonPath("$.semilla").value(42));
+        verify(datos).generar(new com.aguavigia.ctg.domain.PlanDeDatosSinteticos(5000, 40, 300, 90, 42L));
+    }
+
+    @Test
+    void generarDatosUsaLosValoresPorDefectoDeLoQueFalta() throws Exception {
+        given(datos.generar(any())).willReturn(new com.aguavigia.ctg.domain.ResumenDeDatosSinteticos(0, 0, 0, 0, 7L));
+
+        mockMvc.perform(post("/api/sim/datos").header("X-Sim-Key", CLAVE).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reportes\":100}"))
+                .andExpect(status().isCreated());
+        verify(datos).generar(new com.aguavigia.ctg.domain.PlanDeDatosSinteticos(100, 0, 9000, 300, null));
+    }
+
+    @Test
+    void generarDatosRechazaCantidadesFueraDeRango() throws Exception {
+        for (String cuerpo : new String[] {"{\"reportes\":-1}", "{\"reportes\":200001}", "{\"cortes\":5001}", "{\"dias\":331}",
+                "{\"dias\":0}", "{\"dispositivos\":0}"}) {
+            mockMvc.perform(post("/api/sim/datos").header("X-Sim-Key", CLAVE).contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+                    .andExpect(status().isBadRequest());
+        }
+        verify(datos, never()).generar(any());
+    }
+
+    @Test
+    void contarDatosDevuelveLosConteosSinSemilla() throws Exception {
+        given(datos.contar()).willReturn(new com.aguavigia.ctg.domain.ResumenDeDatosSinteticos(10, 600, 20, 90, null));
+
+        mockMvc.perform(get("/api/sim/datos").header("X-Sim-Key", CLAVE))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reportes").value(600))
+                .andExpect(jsonPath("$.semilla").doesNotExist());
     }
 }

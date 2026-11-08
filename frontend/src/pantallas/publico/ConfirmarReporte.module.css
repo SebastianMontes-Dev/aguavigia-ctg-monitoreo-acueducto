@@ -35,7 +35,7 @@
     border-top: 1px solid var(--tinta);
   }
 
-  @media (max-width: 599px) {
+  @media (max-width: 37.4375em) {
     .bloque > :first-child {
       justify-self: stretch;
     }

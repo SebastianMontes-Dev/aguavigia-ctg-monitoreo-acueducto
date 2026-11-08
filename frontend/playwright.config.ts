@@ -21,6 +21,9 @@ export default defineConfig({
     command: process.env.CI ? 'npm run preview' : 'npm run build && npm run preview',
     url: `http://localhost:${puerto}`,
     reuseExistingServer: !process.env.CI,
+    // Hermético: lo que una prueba no simula no debe llegar a un backend que haya en el puerto 8081 (en desarrollo suele haber uno): sus 401 cerraban la
+    // sesión del panel a mitad de una prueba y dos o tres fallaban por corrida. Con el puerto 9 esas peticiones fallan al instante y siempre igual.
+    env: { AGUAVIGIA_BACKEND: 'http://127.0.0.1:9' },
     timeout: 120_000,
   },
 })

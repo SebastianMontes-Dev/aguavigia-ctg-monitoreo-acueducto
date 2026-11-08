@@ -1,9 +1,11 @@
 # FE4 · Ingesta
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** que el veedor revise lo que detectó la ingesta automática (boletines de Acuacar y prensa): aprobar, descartar
 o anular cada propuesta, ver los documentos que no se pudieron procesar y saber si cada colector está sano.
 
-Rama: `feat/fe4-ingesta`. Depende de FE2. Esfuerzo: 1–2 sesiones.
+Rama: `feature/fe4-ingesta`. Depende de FE2. Esfuerzo: 1–2 sesiones.
 
 Contrato: [`panel-veedor.md` §Revisión de la ingesta](../api/panel-veedor.md#revisión-de-la-ingesta), F3 de
 [`cambios-para-frontend.md`](../api/cambios-para-frontend.md) (`motivoDeRevision`, varias zonas, histórico).
@@ -40,7 +42,7 @@ La fila ya está en [`guia-frontend.md` §5.4](../diseno/guia-frontend.md#54-pan
 
 ```
 Usa la skill disenar-frontend. Lee docs/frontend/README.md, docs/frontend/FE4-ingesta.md y docs/api/panel-veedor.md.
-En feat/fe4-ingesta desde main construye /panel/ingesta con propuestas, acciones por permiso, fallidos y salud.
+En feature/fe4-ingesta desde develop construye /panel/ingesta con propuestas, acciones por permiso, fallidos y salud.
 Nunca muestres evidencia que la API no devuelva. Corre la puerta completa y muéstrame el resultado.
 Abre el PR, no lo fusiones. Si usas subagentes, usa model sonnet.
 ```

@@ -1,9 +1,11 @@
-import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '@playwright/test'
+import { nuevoDispositivo, puntoDentroDe } from './ayudantes'
 
-function huella(): string {
-  return randomUUID().replaceAll('-', '') + randomUUID().replaceAll('-', '')
-}
+// PNG de 1×1 píxel: el servidor verifica la firma binaria y reescala la imagen, así que no vale un texto cualquiera.
+const PNG_1X1 = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC',
+  'base64',
+)
 
 async function abrirReporte(page: Page, opcion: string) {
   await page.getByRole('button', { name: 'Reportar lo que pasa en mi casa' }).click()
@@ -36,6 +38,10 @@ test('debeAbrirElMapaConLos211BarriosYElCanalEnVivoSinRecursosExternos', async (
 test('debeReportarEnDosToquesYRecibirUn201', async ({ page }) => {
   await page.goto('/sectores/zona-industrial')
   await expect(page.getByRole('heading', { level: 1, name: 'Zona Industrial' })).toBeVisible()
+  // ADR-102: una sola línea de frescura y el punto «En vivo» con el canal real; sin la hora del listado de toda la ciudad.
+  const registro = page.getByRole('region', { name: 'Estado actual' })
+  await expect(registro.getByText('En vivo')).toBeVisible()
+  await expect(page.getByText(/Listado generado/)).toHaveCount(0)
 
   const respuesta = page.waitForResponse((valor) => valor.url().endsWith('/api/reportes') && valor.request().method() === 'POST')
   await abrirReporte(page, 'No tengo agua')
@@ -45,12 +51,14 @@ test('debeReportarEnDosToquesYRecibirUn201', async ({ page }) => {
   await expect(page.getByRole('dialog')).toContainText('Tu reporte cuenta junto con los de tus vecinos')
 })
 
-test('debeMostrarElMensajeDel429EnElCuartoReporteDeLaMismaHuella', async ({ page }) => {
-  const huellas: string[] = []
+test('debeMostrarElMensajeDel429EnElCuartoReporteDelMismoDispositivo', async ({ page }) => {
+  const dispositivos: (string | null)[] = []
+  let tokensPedidos = 0
   page.on('request', (peticion) => {
-    if (peticion.method() === 'POST' && new URL(peticion.url()).pathname === '/api/reportes') {
-      huellas.push((peticion.postDataJSON() as { huella: string }).huella)
-    }
+    const ruta = new URL(peticion.url()).pathname
+    if (peticion.method() !== 'POST') return
+    if (ruta === '/api/dispositivos') tokensPedidos++
+    if (ruta === '/api/reportes') dispositivos.push(peticion.headers()['x-dispositivo'] ?? null)
   })
   await page.goto('/sectores/alameda-la-victoria')
   await expect(page.getByRole('heading', { level: 1, name: 'Alameda la Victoria' })).toBeVisible()
@@ -67,8 +75,11 @@ test('debeMostrarElMensajeDel429EnElCuartoReporteDeLaMismaHuella', async ({ page
       await expect(page.getByRole('dialog').getByRole('alert')).toContainText('Ya enviaste tres reportes de este barrio')
     }
   }
-  expect(huellas).toHaveLength(4)
-  expect(new Set(huellas).size).toBe(1)
+  // El token se pide una sola vez y es el mismo en los cuatro reportes: el cupo es por dispositivo.
+  expect(tokensPedidos).toBe(1)
+  expect(dispositivos).toHaveLength(4)
+  expect(dispositivos[0]).toBeTruthy()
+  expect(new Set(dispositivos).size).toBe(1)
 })
 
 test('debeActualizarElEstadoPorConsensoSSESinRecargarLaPagina', async ({ page, request }) => {
@@ -81,11 +92,15 @@ test('debeActualizarElEstadoPorConsensoSSESinRecargarLaPagina', async ({ page, r
   const tipo = yaSinServicio ? 'SERVICIO_RESTABLECIDO' : 'SIN_AGUA'
   const estadoEsperado = yaSinServicio ? 'Con servicio' : 'Sin servicio'
 
+  // Tres dispositivos distintos, cada uno con la ubicación dentro del barrio: así el sustento queda verificado.
+  const coordenada = await puntoDentroDe(request, 'arroyo-grande')
   for (let vecino = 0; vecino < 3; vecino++) {
     const respuesta = await request.post('/api/reportes', {
-      data: { sectorId: 'arroyo-grande', tipo, huella: huella() },
+      headers: { 'X-Dispositivo': await nuevoDispositivo(request) },
+      data: { sectorId: 'arroyo-grande', tipo, coordenada, precisionMetros: 25 },
     })
     expect(respuesta.status()).toBe(201)
+    expect(((await respuesta.json()) as { verificacion: string }).verificacion).toBe('UBICACION_VERIFICADA')
   }
 
   await expect(ficha.getByText(estadoEsperado, { exact: true })).toBeVisible({ timeout: 30_000 })
@@ -93,7 +108,8 @@ test('debeActualizarElEstadoPorConsensoSSESinRecargarLaPagina', async ({ page, r
 
 test('debeConfirmarSoloAlTocarUnaVezEInformarSiElReporteNoExiste', async ({ page, request }) => {
   const creado = await request.post('/api/reportes', {
-    data: { sectorId: 'manga', tipo: 'PRESION_BAJA', huella: huella() },
+    headers: { 'X-Dispositivo': await nuevoDispositivo(request) },
+    data: { sectorId: 'manga', tipo: 'PRESION_BAJA' },
   })
   expect(creado.status()).toBe(201)
   const reporte = await creado.json() as { id: string }
@@ -120,4 +136,68 @@ test('debeConfirmarSoloAlTocarUnaVezEInformarSiElReporteNoExiste', async ({ page
   await page.getByRole('button', { name: 'Confirmar este reporte' }).click()
   expect((await inexistente).status()).toBe(404)
   await expect(page.getByRole('alert')).toContainText('Este reporte no está disponible')
+})
+
+test('debeSubirLaFotoDeUnReporteYDecirQueQuedaEnRevision', async ({ page }) => {
+  await page.goto('/sectores/zona-industrial')
+  await expect(page.getByRole('heading', { level: 1, name: 'Zona Industrial' })).toBeVisible()
+  await abrirReporte(page, 'No tengo agua')
+  const dialogo = page.getByRole('dialog')
+  await expect(dialogo.getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
+
+  const foto = page.waitForResponse((valor) => /\/api\/reportes\/[^/]+\/foto$/.test(valor.url()) && valor.request().method() === 'POST')
+  await dialogo.locator('input[type=file]').setInputFiles({ name: 'goteo.png', mimeType: 'image/png', buffer: PNG_1X1 })
+
+  const respuesta = await foto
+  expect(respuesta.status()).toBe(200)
+  expect(respuesta.request().headers()['x-subida']).toBeTruthy()
+  expect(((await respuesta.json()) as { fotoEstado: string }).fotoEstado).toBe('EN_REVISION')
+  await expect(dialogo.getByText('Foto recibida. Un moderador la revisa antes de que se publique.')).toBeVisible()
+})
+
+test('debeRechazarUnaFotoWebPSinGastarElPermisoDeSubida', async ({ request }) => {
+  const dispositivo = await nuevoDispositivo(request)
+  const creado = await request.post('/api/reportes', {
+    headers: { 'X-Dispositivo': dispositivo },
+    data: { sectorId: 'manga', tipo: 'SIN_AGUA' },
+  })
+  expect(creado.status()).toBe(201)
+  const { id, subidaToken } = await creado.json() as { id: string; subidaToken: string }
+
+  const webp = await request.post(`/api/reportes/${id}/foto`, {
+    headers: { 'X-Subida': subidaToken },
+    multipart: { foto: { name: 'foto.webp', mimeType: 'image/webp', buffer: Buffer.from('RIFF0000WEBPVP8 ') } },
+  })
+  expect(webp.status()).toBe(415)
+  expect(((await webp.json()) as { type: string }).type).toMatch(/\/formato-no-permitido$/)
+
+  // El archivo se valida antes de gastar el token: con una imagen válida el mismo token todavía sirve.
+  const png = await request.post(`/api/reportes/${id}/foto`, {
+    headers: { 'X-Subida': subidaToken },
+    multipart: { foto: { name: 'foto.png', mimeType: 'image/png', buffer: PNG_1X1 } },
+  })
+  expect(png.status()).toBe(200)
+})
+
+test('debeReportarSinDispositivoYRecibirUn401DispositivoInvalido', async ({ request }) => {
+  const sinIdentidad = await request.post('/api/reportes', { data: { sectorId: 'manga', tipo: 'SIN_AGUA' } })
+  expect(sinIdentidad.status()).toBe(401)
+  expect(((await sinIdentidad.json()) as { type: string }).type).toMatch(/\/dispositivo-invalido$/)
+})
+
+test('debePedirOtroDispositivoYReintentarCuandoElGuardadoYaNoSirve', async ({ page }) => {
+  await page.addInitScript(() => window.localStorage.setItem('aguavigia.dispositivo', 'token-que-este-servidor-no-firmo'))
+  const tokens: number[] = []
+  page.on('request', (peticion) => {
+    if (peticion.method() === 'POST' && new URL(peticion.url()).pathname === '/api/dispositivos') tokens.push(1)
+  })
+  await page.goto('/sectores/zona-industrial')
+  const respuestas: number[] = []
+  page.on('response', (valor) => {
+    if (valor.url().endsWith('/api/reportes') && valor.request().method() === 'POST') respuestas.push(valor.status())
+  })
+  await abrirReporte(page, 'No tengo agua')
+  await expect(page.getByRole('dialog').getByRole('heading', { name: 'Reporte recibido' })).toBeVisible()
+  expect(respuestas).toEqual([401, 201])
+  expect(tokens).toHaveLength(1)
 })

@@ -54,7 +54,9 @@ public class EstadisticasController {
                                 sector.sectorId(),
                                 sector.nombre(),
                                 String.valueOf(sector.cantidadCortes()),
-                                EscritorCsv.numero(estadisticas.duracionPromedioHoras())))
+                                // Sin cortes cerrados no hay media: celda vacía, nunca «0,0».
+                                estadisticas.duracionPromedioHoras() == null
+                                        ? "" : EscritorCsv.numero(estadisticas.duracionPromedioHoras())))
                         .toList());
 
         return ResponseEntity.ok()

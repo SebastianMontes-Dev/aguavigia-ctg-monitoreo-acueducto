@@ -1,12 +1,14 @@
 # FE6 · Cuentas públicas y vecino
 
+> **Diseño:** esta fase hereda el rediseño vigente (ADR-103 a 106). Antes de construir, lee [`rediseno-vigente.md`](rediseno-vigente.md) §4 (reglas) y §5 (qué le toca a esta fase y qué está por decidir).
+
 **Objetivo:** las dos formas de tener cuenta desde la parte pública:
 - **solicitar acceso al panel**, con recuperación de clave
 - **ser vecino registrado**: registrarse con su barrio, entrar, verificar el barrio con la ubicación del momento y gestionar su perfil
 
 Cuando el vecino tiene sesión, sus reportes se envían con ella.
 
-Rama: `feat/fe6-cuentas-y-vecino`. Depende de FE0 y del marco de sesión de FE2. Esfuerzo: 2 sesiones.
+Rama: `feature/fe6-cuentas-y-vecino`. Depende de FE0 y del marco de sesión de FE2. Esfuerzo: 2 sesiones.
 
 Contrato: [`cuentas-y-sesion.md`](../api/cuentas-y-sesion.md) (crear una cuenta, recuperar la clave, reenviar la
 verificación, vecino registrado), F2 de [`cambios-para-frontend.md`](../api/cambios-para-frontend.md) y
@@ -44,7 +46,7 @@ también va en `sessionStorage`.
 ## Pruebas
 
 - e2e simulado: solicitar, olvidé mi clave (mensaje idéntico), registro de vecino, ingreso, perfil, cambio de barrio con aviso, verificación (éxito, fuera del barrio, imprecisa, tercer intento), reportar con sesión.
-- e2e real: registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → reportar → el reporte llega con `CUENTA_VERIFICADA` tras verificar el barrio con una geolocalización simulada por Playwright dentro del polígono.
+- e2e real, con `RATE_LIMIT_FACTOR_CUENTAS=10` (`/api/cuentas/**` admite 10 peticiones cada 10 minutos por IP; sin él la segunda pasada da `429`): registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → reportar → el reporte llega con `CUENTA_VERIFICADA` tras verificar el barrio con una geolocalización simulada por Playwright dentro del polígono.
 
 ## Terminado cuando
 
@@ -55,7 +57,7 @@ también va en `sessionStorage`.
 
 ```
 Usa la skill disenar-frontend. Lee docs/frontend/README.md, docs/frontend/FE6-cuentas-y-vecino.md, docs/api/cuentas-y-sesion.md
-y docs/api/correos-y-enlaces.md. En feat/fe6-cuentas-y-vecino desde main: añade §5.5 «Vecino registrado» a guia-frontend.md
+y docs/api/correos-y-enlaces.md. En feature/fe6-cuentas-y-vecino desde develop: añade §5.5 «Vecino registrado» a guia-frontend.md
 y construye /cuenta/solicitar, /cuenta/olvide, el reenvío, /vecino/registro, /vecino/ingreso, /vecino/perfil con verificación
 de barrio, y el reporte con sesión de vecino. Los enlaces de correo de cuenta siguen en las páginas HTML del backend.
 Corre la puerta completa y muéstrame el resultado. Abre el PR, no lo fusiones. Si usas subagentes, usa model sonnet.

@@ -4,9 +4,10 @@ import { api, normalizarError } from '../api/cliente'
 import { crearCanal, entornoNavegador, type LecturaCanal } from '../api/canal-en-vivo'
 import { almacenIndexedDb, cargarGeometria } from '../api/geometria'
 import { leerPaginacion } from '../api/paginacion'
+import { leerPrecargado } from '../api/precarga'
 import type { Corte } from '../dominio/cortes'
 import type { Sector } from '../dominio/sectores'
-import type { Indice, PuntoSerie } from '../dominio/cumplimiento'
+import type { Calidad, Indice, PuntoSerie } from '../dominio/cumplimiento'
 import type { TipoBitacora } from '../dominio/historia'
 import type { components } from '../api/generado/esquema'
 
@@ -51,6 +52,25 @@ export function useListado(): Listado {
   return { lectura, porId, sectores, reintentar: instancia.actualizar }
 }
 
+/**
+ * F4: el modo se pide una vez al abrir la aplicación (el servidor lo recuerda un minuto). Si falla no se insiste: sin
+ * respuesta no hay banner, y la consulta nunca retrasa la primera respuesta del mapa.
+ */
+export function useModoSistema() {
+  return useQuery({
+    queryKey: ['modo-sistema'],
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/sistema/modo', { signal })
+        .catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return data
+    },
+    retry: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  })
+}
+
 export function useGeometria() {
   return useQuery({
     queryKey: ['geometria'],
@@ -84,6 +104,12 @@ export function useIndiceCumplimiento(sectorId?: string) {
   return useQuery({
     queryKey: ['cumplimiento', sectorId ?? 'global'],
     queryFn: async ({ signal }) => {
+      // RNF001: la primera lectura del índice global ya salió desde index.html; si esa petición falló, se hace la normal.
+      const adelantada = sectorId ? null : await leerPrecargado<Indice>('/api/cumplimiento')
+      if (adelantada) {
+        if (adelantada.respuesta.ok && adelantada.cuerpo) return adelantada.cuerpo
+        throw normalizarError(adelantada.respuesta, adelantada.cuerpo)
+      }
       const resultado = sectorId
         ? await api.GET('/api/cumplimiento/sectores/{sectorId}', { params: { path: { sectorId } }, signal })
           .catch(() => ({ data: undefined, error: undefined, response: null }))
@@ -94,6 +120,37 @@ export function useIndiceCumplimiento(sectorId?: string) {
       return data as Indice
     },
     staleTime: 5_000,
+  })
+}
+
+/** F4: responde siempre, también cuando el índice da 400; solo se pide entonces, porque el índice ya trae su solidez. */
+export function useCalidadCumplimiento(sectorId: string | undefined, habilitado: boolean) {
+  return useQuery({
+    queryKey: ['cumplimiento-calidad', sectorId ?? 'global'],
+    enabled: habilitado,
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/cumplimiento/calidad', { params: { query: { sectorId } }, signal })
+        .catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return data as Calidad
+    },
+    staleTime: 5_000,
+  })
+}
+
+/** El índice de un corte entero; se pide al abrir su detalle. `409` = el corte aún no tiene todos sus barrios cerrados. */
+export function useIndiceCorte(corteId: string, habilitado: boolean) {
+  return useQuery({
+    queryKey: ['cumplimiento-corte', corteId],
+    enabled: habilitado && Boolean(corteId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/cumplimiento/cortes/{corteId}', { params: { path: { corteId } }, signal })
+        .catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return data as Indice
+    },
+    retry: (fallos, error) => fallos < 2 && ![404, 409].includes((error as { estado?: number }).estado ?? 0),
+    staleTime: 60_000,
   })
 }
 
@@ -108,6 +165,12 @@ export function useSerieCumplimiento(filtros: FiltrosSerie, habilitado = true) {
     queryKey: ['cumplimiento-serie', filtros.sectorId, filtros.desde, filtros.hasta],
     enabled: habilitado,
     queryFn: async ({ signal }) => {
+      const sinFiltros = !filtros.sectorId && !filtros.desde && !filtros.hasta
+      const adelantada = sinFiltros ? await leerPrecargado<PuntoSerie[]>('/api/cumplimiento/serie') : null
+      if (adelantada) {
+        if (adelantada.respuesta.ok && adelantada.cuerpo) return adelantada.cuerpo
+        throw normalizarError(adelantada.respuesta, adelantada.cuerpo)
+      }
       const { data, error, response } = await api.GET('/api/cumplimiento/serie', {
         params: { query: { sectorId: filtros.sectorId, desde: filtros.desde, hasta: filtros.hasta } }, signal,
       }).catch(() => ({ data: undefined, error: undefined, response: null }))
@@ -140,7 +203,7 @@ export interface FiltrosBitacora {
 
 // ADR-077: en el celular, un lote que quepa en pantalla y media; en escritorio, uno que llene el primer pliegue.
 function tamanoLoteBitacora(): number {
-  return typeof window !== 'undefined' && window.matchMedia?.('(max-width: 599px)').matches ? 6 : 10
+  return typeof window !== 'undefined' && window.matchMedia?.('(max-width: 37.4375em)').matches ? 6 : 10
 }
 
 export function useBitacora(filtros: FiltrosBitacora) {
@@ -187,6 +250,62 @@ export function useConteosBitacora(filtros: Omit<FiltrosBitacora, 'tipo'>, tipos
   return Object.fromEntries(tipos.map((tipo, indice) => [tipo, consultas[indice]?.data ?? null])) as Record<TipoBitacora, number | null>
 }
 
+/**
+ * Último aviso detectado en un boletín o nota para este barrio. El contrato no enlaza la fuente de un corte concreto
+ * (`CorteRespuesta` no trae URL y estos eventos llegan sin `corteId`), así que se enlaza el aviso más reciente del
+ * barrio con su fecha, sin afirmar que fue el que anunció un corte en particular.
+ */
+export function useUltimoAviso(sectorId: string) {
+  return useQuery({
+    queryKey: ['ultimo-aviso', sectorId],
+    enabled: Boolean(sectorId),
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/bitacora', {
+        params: { query: { sectorId, tipo: 'CORTE_DETECTADO_POR_INGESTA', pagina: 0, tamano: 1 } },
+        signal,
+      }).catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return (data as components['schemas']['EventoBitacoraRespuesta'][])[0] ?? null
+    },
+    staleTime: 60_000,
+  })
+}
+
+/** El último boletín o nota de toda la ciudad, o del barrio filtrado: el lateral de la bitácora (ADR-104). */
+export function useUltimoBoletin(sectorId?: string) {
+  return useQuery({
+    queryKey: ['ultimo-boletin', sectorId ?? 'todos'],
+    queryFn: async ({ signal }) => {
+      const { data, error, response } = await api.GET('/api/bitacora', {
+        params: { query: { sectorId, tipo: 'CORTE_DETECTADO_POR_INGESTA', pagina: 0, tamano: 1 } },
+        signal,
+      }).catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response || !response.ok || !data) throw normalizarError(response ?? null, error)
+      return (data as components['schemas']['EventoBitacoraRespuesta'][])[0] ?? null
+    },
+    staleTime: 60_000,
+  })
+}
+
+/**
+ * La pestaña «Todos»: el total sin filtrar por tipo. No sale de sumar las demás, porque cinco tipos de evento se ven en
+ * la lista pero la API no los deja filtrar (solo acepta cuatro).
+ */
+export function useTotalBitacora(filtros: Omit<FiltrosBitacora, 'tipo'>) {
+  return useQuery({
+    queryKey: ['bitacora-conteo', 'todos', filtros.sector, filtros.desde, filtros.hasta],
+    queryFn: async ({ signal }) => {
+      const { error, response } = await api.GET('/api/bitacora', {
+        params: { query: { pagina: 0, tamano: 1, sectorId: filtros.sector, desde: filtros.desde, hasta: filtros.hasta } },
+        signal,
+      }).catch(() => ({ error: undefined, response: null }))
+      if (!response || !response.ok) throw normalizarError(response ?? null, error)
+      return leerPaginacion(response.headers, 0).total
+    },
+    staleTime: 5_000,
+  })
+}
+
 export function useSustento(id: string, abierto: boolean) {
   return useInfiniteQuery({
     queryKey: ['sustento', id],
@@ -201,6 +320,19 @@ export function useSustento(id: string, abierto: boolean) {
       return { ids: data as string[], paginacion: leerPaginacion(response.headers, pageParam) }
     },
     getNextPageParam: (ultima) => ultima.paginacion.hayMas ? ultima.paginacion.pagina + 1 : undefined,
+    staleTime: 60_000,
+  })
+}
+
+/** Un GET puntual y no `useListado()`: el listado abriría el canal en vivo en una página que no muestra el mapa. */
+export function useBarrios() {
+  return useQuery({
+    queryKey: ['barrios-avisos'],
+    queryFn: async () => {
+      const { data, error, response } = await api.GET('/api/sectores').catch(() => ({ data: undefined, error: undefined, response: null }))
+      if (!response?.ok || !data) throw normalizarError(response ?? null, error)
+      return data.sectores as Sector[]
+    },
     staleTime: 60_000,
   })
 }

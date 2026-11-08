@@ -50,6 +50,16 @@ server:
   # rate limit por IP.
 
 aguavigia:
+  # Datos aleatorios para llenar la SIMULACIÓN (ADR-111). Solo los lee la instancia con aguavigia.sim.habilitada=true; en la real no
+  # existe el componente. 0 (por defecto) no genera nada. Idempotente: al reiniciar solo completa lo que falta. La semilla, si se da,
+  # repite exactamente la misma corrida; si no, se sortea y queda en el log.
+  siembra:
+    datos-sinteticos:
+      reportes: ${DATOS_SINTETICOS_REPORTES:0}
+      cortes: ${DATOS_SINTETICOS_CORTES:0}
+      dispositivos: ${DATOS_SINTETICOS_DISPOSITIVOS:9000}
+      dias: ${DATOS_SINTETICOS_DIAS:300}
+      semilla: ${DATOS_SINTETICOS_SEMILLA:}
   privacidad:
     # Version del aviso de privacidad vigente. Se sella en cada consentimiento que da un vecino (registro y casilla
     # de avisos) para poder saber que texto acepto cada cuenta. "borrador" mientras el texto legal este pendiente (D19):

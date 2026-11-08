@@ -1,5 +1,8 @@
 import { Link, Outlet, useLocation } from '@tanstack/react-router'
 import { Button, Dialog, DialogTrigger, Popover } from 'react-aria-components'
+import { FranjaSimulacion, useEnSimulacion } from '../componentes/FranjaSimulacion'
+import { useHaySesionVecino } from './vecino'
+import { usePaletaGrafito } from './paleta'
 import { SelectorTema } from './SelectorTema'
 import estilos from './Marco.module.css'
 
@@ -19,6 +22,14 @@ const DESTINOS_CELULAR = [
 ] as const
 
 const HISTORIAL = ['/historial', '/bitacora', '/cumplimiento', '/estadisticas']
+
+// ADR-105 y ADR-107 (D1, D5): estas páginas, con la de Historial, y las cuentas públicas y el vecino (FE6), toman el grafito en el tema oscuro. Va en <body> (también lo heredan los menús flotantes, que se montan
+// ahí) y nunca en <html>, de donde el mapa lee sus colores.
+const CON_GRAFITO = ['/historial', '/cumplimiento', '/bitacora', '/estadisticas', '/avisos', '/cuenta', '/vecino']
+
+export function usaGrafito(ruta: string): boolean {
+  return CON_GRAFITO.some((prefijo) => ruta === prefijo || ruta.startsWith(`${prefijo}/`))
+}
 
 // Un barrio abierto (/sectores/…) sigue siendo «Mapa»; en el celular, las tres páginas de historia son «Historial».
 export function destinoActivo(ruta: string, destino: string, celular = false): boolean {
@@ -41,10 +52,20 @@ function EnlacesNavegacion({ clase }: { clase: string | undefined }) {
   ))
 }
 
+/** «Mi cuenta» lleva al perfil si hay sesión de vecino y al ingreso si no; es la cuenta pública, no el panel. */
+function EnlaceCuenta({ clase }: { clase: string | undefined }) {
+  const haySesion = useHaySesionVecino()
+  return <Link to={haySesion ? '/vecino/perfil' : '/vecino/ingreso'} className={clase}>Mi cuenta</Link>
+}
+
 export function Marco() {
   const { pathname } = useLocation()
+  // Una simulación nunca se presenta como real (F4): la franja se queda en todas las pantallas mientras dure.
+  const simulacion = useEnSimulacion()
+  const grafito = usaGrafito(pathname)
+  usePaletaGrafito(grafito)
   return (
-    <div className={estilos.marco}>
+    <div className={estilos.marco} data-simulacion={simulacion || undefined}>
       <a href="#contenido" className={estilos.saltar}>Saltar al contenido</a>
       <header className={estilos.cabecera}>
         <Link to="/" className={estilos.marca} aria-label="AguaVigía, Cartagena: ir al mapa">
@@ -53,7 +74,11 @@ export function Marco() {
         <nav aria-label="Principal" className={estilos.navegacion}>
           <EnlacesNavegacion clase={estilos.destino} />
         </nav>
-        <div className={estilos.temaEscritorio}><SelectorTema /></div>
+        <div className={estilos.temaEscritorio}>
+          <SelectorTema />
+          <EnlaceCuenta clase={estilos.accesoPanel} />
+          <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso al panel</Link>
+        </div>
         <DialogTrigger>
           <Button className={estilos.menu}>Menú</Button>
           <Popover className={estilos.menuPopover} placement="bottom end">
@@ -62,10 +87,13 @@ export function Marco() {
                 <EnlacesNavegacion clase={estilos.menuDestino} />
               </nav>
               <SelectorTema />
+              <EnlaceCuenta clase={estilos.accesoPanel} />
+              <Link to="/panel/ingreso" className={estilos.accesoPanel}>Acceso al panel</Link>
             </Dialog>
           </Popover>
         </DialogTrigger>
       </header>
+      <FranjaSimulacion className={estilos.simulacion} />
       <main id="contenido" className={estilos.principal} tabIndex={-1}>
         <Outlet />
       </main>

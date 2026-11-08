@@ -6,6 +6,34 @@
     min-height: 100dvh;
   }
 
+  .marco[data-simulacion] {
+    --alto-aviso: 32px;
+  }
+
+  /* La franja de la simulación sigue a la cabecera; en tinta invertida, sin colores de estado ni de acción. */
+  .simulacion {
+    position: sticky;
+    top: var(--alto-cabecera);
+    z-index: 9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espacio-2);
+    min-height: var(--alto-aviso);
+    margin: 0;
+    padding: var(--espacio-1) var(--margen-pagina);
+    background: var(--tinta);
+    color: var(--papel);
+    font-size: var(--texto-xs);
+    text-align: center;
+  }
+
+  .simulacion strong {
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
   .saltar {
     position: absolute;
     left: var(--espacio-3);
@@ -26,18 +54,21 @@
     top: 0;
     z-index: 10;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: var(--espacio-5);
+    gap: var(--espacio-1) var(--espacio-5);
     min-height: var(--alto-cabecera);
-    padding: 0 var(--margen-pagina);
+    padding: var(--espacio-1) var(--margen-pagina);
     background: var(--papel);
     border-bottom: 1px solid var(--linea);
   }
 
+  /* Con la letra al doble la marca no cabe junto al «Menú»: baja de línea en vez de salirse de la página. */
   .marca {
     display: inline-flex;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: var(--espacio-2);
+    gap: 0 var(--espacio-2);
     font-family: var(--fuente-marca);
     font-size: 1.5rem;
     font-weight: 500;
@@ -162,6 +193,30 @@
     display: grid;
   }
 
+  /* Guía §4: el acceso al panel queda al final del menú, discreto; no compite con los destinos del vecino. */
+  .accesoPanel {
+    display: flex;
+    align-items: center;
+    min-height: var(--objetivo-tactil);
+    padding-top: var(--espacio-2);
+    border-top: 1px solid var(--linea);
+    font-size: var(--texto-s);
+    color: var(--tinta-2);
+    text-decoration: underline;
+    text-decoration-color: var(--tinta-3);
+    text-underline-offset: 3px;
+  }
+
+  .temaEscritorio .accesoPanel {
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .accesoPanel:hover {
+    color: var(--tinta);
+    text-decoration-color: var(--laton);
+  }
+
   .menuDestino {
     display: flex;
     align-items: center;
@@ -188,7 +243,8 @@
     bottom: 0;
     z-index: 10;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    /* Con la letra al doble, una columna nunca es más angosta que su palabra: «Historial» no se parte. */
+    grid-template-columns: repeat(3, minmax(max-content, 1fr));
     padding-bottom: env(safe-area-inset-bottom);
     background: var(--papel);
     border-top: 1px solid var(--linea);
@@ -202,6 +258,7 @@
     font-weight: 600;
     color: var(--tinta-2);
     text-decoration: none;
+    overflow-wrap: normal;
   }
 
   .destinoInferior[aria-current='page'] {
@@ -218,16 +275,21 @@
     background: var(--laton);
   }
 
-  @media (min-width: 600px) {
+  @media (min-width: 37.5em) {
     .barraInferior {
       display: none;
     }
   }
 
-  @media (min-width: 1100px) {
+  @media (min-width: 68.75em) {
     .navegacion,
     .temaEscritorio {
       display: flex;
+    }
+
+    .temaEscritorio {
+      align-items: center;
+      gap: var(--espacio-4);
     }
 
     .menu {

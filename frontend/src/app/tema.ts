@@ -29,6 +29,26 @@ export function aplicarTema(preferencia: PreferenciaTema): void {
   }
 }
 
+/** El papel es blanco: mientras se imprime rige el tema claro y luego vuelve el que había, sin tocar la preferencia guardada. */
+export function imprimirEnClaro(): () => void {
+  let anterior: string | undefined
+  const antes = () => {
+    anterior = document.documentElement.dataset.theme
+    document.documentElement.dataset.theme = 'light'
+  }
+  const despues = () => {
+    if (anterior) document.documentElement.dataset.theme = anterior
+    else delete document.documentElement.dataset.theme
+  }
+  window.addEventListener('beforeprint', antes)
+  window.addEventListener('afterprint', despues)
+  return () => {
+    window.removeEventListener('beforeprint', antes)
+    window.removeEventListener('afterprint', despues)
+    despues()
+  }
+}
+
 // El tema lo decide el atributo data-theme o, sin él, la preferencia del sistema: se escuchan los dos.
 export function suscribirEsquema(avisar: () => void): () => void {
   const consulta = window.matchMedia?.('(prefers-color-scheme: dark)')

@@ -21,8 +21,11 @@ export function listado(ahora = new Date()) {
   return {
     generadoEn: ahora.toISOString(),
     sectores: [
-      { id: 'armenia', nombre: 'ARMENIA', poblacion: 1061, estado: 'SIN_SERVICIO', actualizadoEn: haceHoras(1), verificadoEn: haceHoras(1) },
-      { id: 'el-bosque', nombre: 'EL BOSQUE', poblacion: 6754, estado: 'CON_SERVICIO', actualizadoEn: haceHoras(52), verificadoEn: haceHoras(30) },
+      { id: 'armenia', nombre: 'ARMENIA', poblacion: 1061, estado: 'SIN_SERVICIO', actualizadoEn: haceHoras(1), verificadoEn: haceHoras(1), origen: 'ACUACAR' },
+      {
+        id: 'el-bosque', nombre: 'EL BOSQUE', poblacion: 6754, estado: 'CON_SERVICIO', actualizadoEn: haceHoras(52), verificadoEn: haceHoras(30),
+        origen: 'VECINOS', respaldo: { vecinos: 12, umbral: 12 }, enDisputa: true, reportesEnContra: 5,
+      },
       { id: 'manga', nombre: 'MANGA', poblacion: null, estado: null, actualizadoEn: null, verificadoEn: null },
     ],
   }
@@ -32,8 +35,13 @@ export function cortes(ahora = new Date()) {
   const desplazar = (horas: number) => new Date(ahora.getTime() + horas * 3_600_000).toISOString()
   return {
     armenia: [
-      { id: 'c1', sectoresAfectados: ['armenia'], inicio: desplazar(-3), finPrometido: desplazar(4), finReal: null, causa: 'Reparación de tubería', origen: 'OFICIAL_ACUACAR', estado: 'CONFIRMADO' },
-      { id: 'c0', sectoresAfectados: ['armenia'], inicio: desplazar(-200), finPrometido: desplazar(-198), finReal: desplazar(-192), causa: 'Mantenimiento', origen: 'VEEDOR', estado: 'RESTABLECIDO' },
+      { id: 'c1', sectoresAfectados: ['armenia'], inicio: desplazar(-3), finPrometido: desplazar(4), cierres: [], causa: 'Reparación de tubería', origen: 'OFICIAL_ACUACAR', estado: 'CONFIRMADO' },
+      {
+        id: 'c0', sectoresAfectados: ['armenia'], inicio: desplazar(-200), finPrometido: desplazar(-198), causa: 'Mantenimiento', origen: 'VEEDOR', estado: 'RESTABLECIDO',
+        cierres: [{ sectorId: 'armenia', hora: desplazar(-192), fuente: 'VEEDOR', provisional: false }],
+      },
+      { id: 'c2', sectoresAfectados: ['armenia'], inicio: desplazar(-400), finPrometido: desplazar(-396), cierres: [], causa: 'Reparación de válvula', origen: 'OFICIAL_ACUACAR', estado: 'EXPIRADO' },
+      { id: 'c3', sectoresAfectados: ['armenia'], inicio: desplazar(-600), finPrometido: desplazar(-590), cierres: [], causa: 'Aviso duplicado', origen: 'INGESTA_IA', estado: 'ANULADO', motivoAnulacion: 'Era el mismo aviso del día anterior' },
     ],
   } as Record<string, unknown[]>
 }
@@ -53,12 +61,22 @@ interface Opciones {
   serie?: (route: Route) => Promise<void>
   bitacora?: (route: Route) => Promise<void>
   sustento?: (route: Route) => Promise<void>
+  modo?: 'REAL' | 'SIMULACION'
+  calidad?: (route: Route) => Promise<void>
+  indiceCorte?: (route: Route) => Promise<void>
 }
 
 /** Simula la API pública para las E2E que corren sin backend (CI). Devuelve los cuerpos de los reportes y confirmaciones. */
 export async function simularApi(page: Page, opciones: Opciones = {}) {
   const reportes: unknown[] = []
-  const confirmaciones: { id: string; cuerpo: unknown }[] = []
+  const confirmaciones: { id: string; dispositivo: string | null }[] = []
+  // Lo que ve el servidor además del cuerpo: la identidad de cada reporte, los tokens pedidos y las subidas de foto.
+  const dispositivos: string[] = []
+  const identidades: (string | null)[] = []
+  const fotos: { id: string; subida: string | null; tipo: string | null }[] = []
+  await page.route('**/api/sistema/modo', (route) => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ modo: opciones.modo ?? 'REAL', cuentasSinteticas: 0 }),
+  }))
   await page.route('**/api/sectores/stream', (route) =>
     route.fulfill({ status: 200, contentType: 'text/event-stream', body: 'retry:60000\nevent:sectores\ndata:{}\n\n' }))
   await page.route('**/api/sectores/geometria', (route) =>
@@ -71,6 +89,15 @@ export async function simularApi(page: Page, opciones: Opciones = {}) {
   })))
   await page.route(/\/api\/cumplimiento(?:\/sectores\/[^/?]+)?(?:\?|$)/, opciones.cumplimiento ?? ((route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(cumplimientoDeEjemplo),
+  })))
+  await page.route(/\/api\/cumplimiento\/calidad(?:\?|$)/, opciones.calidad ?? ((route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ cierresMedidos: 10, cierresProvisionales: 0, porcentajeProvisional: 0, cortesSinCierreConfirmado: 0, cortesAnulados: 0 }),
+  })))
+  await page.route(/\/api\/cumplimiento\/cortes\/[^/?]+$/, opciones.indiceCorte ?? ((route) => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ duracionPrometidaSegundos: 14_400, duracionRealSegundos: 18_000, desviacionSegundos: 3600, porcentajeCumplimiento: 80,
+      porcentajeProvisional: 50, cortesSinCierreConfirmado: 0, cortesAnulados: 0 }),
   })))
   await page.route(/\/api\/bitacora\/[^/]+\/sustento/, opciones.sustento ?? ((route) => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify(['reporte-1', 'reporte-2']),
@@ -102,10 +129,24 @@ export async function simularApi(page: Page, opciones: Opciones = {}) {
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(listado()) })))
   await page.route('**/api/estadisticas', opciones.estadisticas ?? ((route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(estadisticasDeEjemplo) })))
+  await page.route('**/api/dispositivos', (route) => {
+    const token = `dispositivo-${dispositivos.length + 1}`
+    dispositivos.push(token)
+    return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ token }) })
+  })
   await page.route('**/api/reportes', async (route) => {
     reportes.push(route.request().postDataJSON())
+    identidades.push(await route.request().headerValue('X-Dispositivo'))
     if (opciones.reporte) return opciones.reporte(route)
-    return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ id: 'r1', sectorId: 'armenia', tipo: 'SIN_AGUA', confirmaciones: 0 }) })
+    return route.fulfill({
+      status: 201, contentType: 'application/json',
+      body: JSON.stringify({ id: 'r1', sectorId: 'armenia', tipo: 'SIN_AGUA', confirmaciones: 0, fotoEstado: 'SIN_FOTO', verificacion: 'NINGUNA', subidaToken: 'subida-r1' }),
+    })
+  })
+  await page.route(/\/api\/reportes\/[^/]+\/foto$/, async (route) => {
+    const id = new URL(route.request().url()).pathname.split('/')[3] ?? ''
+    fotos.push({ id, subida: await route.request().headerValue('X-Subida'), tipo: await route.request().headerValue('Content-Type') })
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id, sectorId: 'armenia', tipo: 'SIN_AGUA', fotoEstado: 'EN_REVISION', fotoUrl: `/api/fotos/${id}.png` }) })
   })
   await page.route(/\/api\/sectores\/(?!stream$|geometria$)[^/]+$/, (route) => {
     const id = new URL(route.request().url()).pathname.split('/')[3] ?? ''
@@ -116,11 +157,11 @@ export async function simularApi(page: Page, opciones: Opciones = {}) {
   })
   await page.route(/\/api\/reportes\/[^/]+\/confirmar$/, async (route) => {
     const id = new URL(route.request().url()).pathname.split('/')[3] ?? ''
-    confirmaciones.push({ id, cuerpo: route.request().postDataJSON() })
+    confirmaciones.push({ id, dispositivo: await route.request().headerValue('X-Dispositivo') })
     if (opciones.confirmacion) return opciones.confirmacion(route)
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ id, sectorId: 'armenia', tipo: 'SIN_AGUA', confirmaciones: 2 }) })
   })
   // El extracto PMTiles viaja por Git LFS y en CI puede faltar: el mapa base no es parte de estas pruebas.
   await page.route('**/mapa/cartagena.pmtiles', (route) => route.abort())
-  return { reportes, confirmaciones }
+  return { reportes, confirmaciones, dispositivos, identidades, fotos }
 }
