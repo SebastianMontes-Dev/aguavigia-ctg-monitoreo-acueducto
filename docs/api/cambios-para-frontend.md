@@ -335,3 +335,7 @@ Ahora el campo es **nullable**: `null` sin cortes cerrados. En `exportar.csv` la
 | `GET /api/veedor/analitica/vigilancia?limite=` | Panel, `VER_PANEL` | Las últimas revisiones del vigilante (`VigilanciaAnaliticaRespuesta`): `resultado` (`OK`, `CON_DIFERENCIAS`, `FALLIDA`), `barriosRevisados`, `diferencias`, `eventosEnBitacora`, `eslabonesRotos` y `detalle` |
 
 **Qué debe adaptar el frontend (Yordy):** `npm run api:sync` y decidir si usa o excluye las rutas en `api:cobertura`. Recomendado: la de `vigilancia` como otro bloque en `/panel/sistema`, junto a «Copia analítica» (mismo permiso, mismo manejo del `503`), y mostrar la de `integridad` como una línea de confianza en `/bitacora` («bitácora verificada: N eventos, cadena íntegra»), siempre sin romper la página si responde `503`.
+
+### Estado de adopción de F8 (cierre del proyecto, 2026-11-07)
+
+El frontend regeneró `esquema.ts` (`npm run api:sync`) y **excluyó a propósito** de `api:cobertura` las cuatro rutas nuevas de analítica (`reportes/ranking`, `reportes/tendencia`, `bitacora/integridad` y `veedor/analitica/vigilancia`): no tienen pantalla y pueden dar `503`. La lista y los motivos están en `frontend/scripts/cobertura-contrato.mjs` y en «Fuera del frontend» de [`docs/frontend/README.md`](../frontend/README.md). `duracionPromedioHoras` ya se tolera como nulo en `frontend/src/dominio/estadisticas.ts`.
