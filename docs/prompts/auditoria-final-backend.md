@@ -29,15 +29,15 @@ Arquitectura declarada (no negociable): Arquitectura Limpia, dependencias hacia 
 
 1. **El código y lo que ejecutas.** Lo que veas correr manda sobre cualquier documento.
 2. `backend/openapi.yaml` (contrato) y `docs/api/` (guía para el frontend).
-3. `docs/07-decisiones-clave.md`: ADR-001 a ADR-097 y **ADR-100** (PostgreSQL). Cada ADR es una afirmación comprobable contra el código. Lee primero su nota de numeración:
+3. `docs/07-decisiones-clave.md`: ADR-001 a ADR-097 y **ADR-100 a ADR-113** (PostgreSQL, frontend, datos generados, vigilante). Cada ADR es una afirmación comprobable contra el código. Lee primero su nota de numeración:
    087–089 existen también en el registro histórico con otro sentido, y 098–099 los consumió un plan de reducción cancelado y revertido (no existen como decisión vigente).
 4. `docs/02-arquitectura.md`, `docs/03-base-de-datos.md`, `docs/05-seguridad-y-claves.md` y `docs/06-etica-de-datos.md` (revisados el 2026-10-15;
    verifica igual cada punto).
 5. `docs/01-levantar-a-mano.md` (guía reproducible), `CLAUDE.md`. `docs/modelo-nosql-moon-modeler.dmm` es el diagrama de la entrega de BD2 y es
    anterior al modelo actual: no lo uses como fuente.
 6. `docs/09-postgresql-fase-1.md` es el plan de la fase 1 de PostgreSQL, **ejecutada el 2026-10-15** (ADR-100). Donde difiera de su §0 («Lo que cambió al ejecutar»),
-   manda §0. Las fases 2 y 3 (vigilante de integridad completo, bitácora inmutable con respaldo restaurable, vistas de datos abiertos) **no están hechas por decisión**:
-   no son un hallazgo, pero sí debes confirmar que el código no las insinúa como hechas.
+   manda §0. Las fases 2 y 3 (reportes agregados, vigilante de integridad, bitácora inmutable con respaldo restaurable, rol de solo lectura) **se hicieron el 2026-11-06**
+   (ADR-112 y ADR-113): compruébalas como el resto. `docs/10-plan-de-cierre.md` es el plan que las ordenó, y ADR-111 explica los datos aleatorios de la simulación.
 7. Requisitos funcionales **RF001…RF0xx**: ya no están en el árbol de trabajo. Recupéralos del historial:
    `git show pre-limpieza-docs:docs/anexos/anexo-4-historias-de-usuario.md` y `git show pre-limpieza-docs:.claude/agents/analista-requisitos.md`.
    Si no encuentras una lista completa de RF, dilo y reconstruye la trazabilidad desde los RF que cita `openapi.yaml`.
@@ -154,7 +154,7 @@ marcados con (B); un solo "No cumple" en (B) obliga a veredicto negativo.
 1. (B) `./mvnw verify` en verde, sin pruebas omitidas por razones ajenas al entorno, y CI del backend en verde.
 2. (B) Todo RF y todo ADR vigente tiene implementación **y** prueba, o una exclusión explícita y documentada.
 3. (B) Ninguna regla de negocio incumple sus invariantes ante concurrencia, reintentos o caída de Redis/Mongo/correo.
-4. (B) Contrato (`openapi.yaml`), código y `docs/api/` coinciden sin diferencias (81 rutas, incluidas las 3 de `/api/analitica/**`).
+4. (B) Contrato (`openapi.yaml`), código y `docs/api/` coinciden sin diferencias (91 operaciones según `node scripts/generar-referencia-api.mjs`, incluidas las de `/api/analitica/**`).
 5. (B) Sin vulnerabilidad Crítica/Alta sin exención justificada y vigente; sin secretos versionados; autorización verificada en cada endpoint.
 6. (B) La ética de datos se cumple en el código y en la ingesta real.
 7. (B) Índices, TTL y transacciones respaldan las consultas y escrituras críticas; backup y restauración probados. La copia analítica cumple las invariantes de ADR-100 (D3) sin afectar a Mongo.
