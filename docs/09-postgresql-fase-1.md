@@ -367,8 +367,8 @@ Cada paso termina con su verificación antes de seguir. Un commit por paso, dire
 
 | Fase | Contenido | Por qué no ahora |
 |---|---|---|
-| 2 · Vigilante | Comparar Mongo y PostgreSQL a fondo (sumas de control, referencias colgantes) y avisar | La comparación barata de §4.3 da la primera señal; el vigilante completo duplica trabajo si la fase 1 cambia |
-| 3 · Bitácora inmutable y respaldo | Copia de eventos y auditoría sin `UPDATE`/`DELETE`, y restauración probada | Más datos copiados, más privacidad que revisar |
+| 2 · Vigilante | **Hecha (ADR-113, 2026-11-06):** compara Mongo y PostgreSQL a fondo (sumas por barrio, referencias colgantes) y avisa | — |
+| 3 · Bitácora inmutable y respaldo | **Hecha (ADR-113):** bitácora sin `UPDATE`/`DELETE` con cadena de hashes, respaldo restaurable probado y rol de solo lectura. La auditoría de cuentas **no** se copia (lleva IP e ids de personas) | — |
 | Datos abiertos | Vistas de solo lectura con un usuario de BD propio | Sale casi gratis sobre la fase 1, pero nadie la pide |
 
 ## 11. Decisiones abiertas

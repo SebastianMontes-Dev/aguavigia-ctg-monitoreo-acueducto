@@ -24,7 +24,7 @@ y la toma de fuentes ajenas y de vecinos: estas reglas son **no negociables** (`
   vecinos ([03 · Base de datos](03-base-de-datos.md)). Las fotos de evidencia se sirven solo si el reporte fue aprobado (ADR-091); su borrado a los
   180 días (D19) está construido pero **desactivado**, porque borrar evidencia es irreversible (ADR-097 §3).
 - **La red de quien reporta** se guarda como hash (`redHash`), no como IP, y solo para exigir que el sustento venga de redes distintas.
-- **Cuentas sintéticas:** las 30 000 de vecino son datos inventados y se declaran como tales (`datosDeDemostracion`, `GET /api/sistema/modo`); no
+- **Cuentas sintéticas:** las 300 de vecino son datos inventados y se declaran como tales (`datosDeDemostracion`, `GET /api/sistema/modo`); no
   tienen titular ni clave conocida (ADR-094, ADR-095).
 
 ## 3. Pendiente o mejorable

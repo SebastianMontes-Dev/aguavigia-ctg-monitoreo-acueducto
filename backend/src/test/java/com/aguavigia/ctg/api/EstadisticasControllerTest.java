@@ -86,4 +86,31 @@ class EstadisticasControllerTest {
         // salir igual en cualquier maquina y en el contenedor de produccion.
         assertThat(csv).contains("manga;Manga;5;4,5");
     }
+
+    @Test
+    void debeResponderDuracionNulaCuandoNoHayCortesCerrados() throws Exception {
+        given(useCase.calcularGlobales()).willReturn(new EstadisticasGlobales(
+                List.of(new EstadisticaSector(new SectorId("manga"), "Manga", 5)),
+                Map.of("Lunes", 0),
+                null));
+
+        mockMvc.perform(get("/api/estadisticas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.duracionPromedioHoras").value(org.hamcrest.Matchers.nullValue()));
+    }
+
+    @Test
+    void debeDejarVaciaLaCeldaDeDuracionEnElCsvSinCortesCerrados() throws Exception {
+        given(useCase.calcularGlobales()).willReturn(new EstadisticasGlobales(
+                List.of(new EstadisticaSector(new SectorId("manga"), "Manga", 5)),
+                Map.of("Lunes", 0),
+                null));
+
+        String csv = mockMvc.perform(get("/api/estadisticas/exportar.csv"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString(java.nio.charset.StandardCharsets.UTF_8);
+
+        assertThat(csv).contains("manga;Manga;5;");
+        assertThat(csv).doesNotContain("0,0");
+    }
 }

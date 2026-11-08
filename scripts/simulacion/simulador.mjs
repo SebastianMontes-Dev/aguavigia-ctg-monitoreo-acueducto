@@ -3,6 +3,7 @@
 //
 //   node simulacion/simulador.mjs iniciar [--velocidad 60] [--guion archivo] [--reiniciar] [--detener-en-fallo]
 //   node simulacion/simulador.mjs pausar | reanudar | velocidad <x> | saltar <horas> | estado | reiniciar | ayuda
+//   node simulacion/simulador.mjs datos generar [--reportes N] [--cortes N] [--dispositivos N] [--dias N] [--semilla N] | datos contar
 //
 // Con Docker: docker compose --profile simulacion run --rm simulador iniciar --velocidad 300
 
@@ -39,6 +40,10 @@ const AYUDA = `Simulador de AguaVigía (instancia de simulación, nunca la real)
   estado                     Muestra en qué minuto y acto va el guion en marcha.
   reiniciar                  Vacía la base de simulación (deja índices y la cuenta ADMIN), Redis db 1 y los correos de la simulación,
                              devuelve el reloj al real y vuelve a sembrar los sectores.
+  datos generar [--reportes N] [--cortes N] [--dispositivos N] [--dias N] [--semilla N]
+        Genera al azar reportes, cortes y bitácora para llenar la simulación (ADR-111), todo marcado como sintético. La misma
+        semilla repite la misma corrida. No se mezcla con el guion completo: usa una base limpia (reiniciar) para uno u otro.
+  datos contar               Cuántos datos sintéticos hay hoy.
   ayuda                      Esto.
 `;
 
@@ -115,6 +120,28 @@ async function reiniciar(db) {
     console.warn(`  AVISO: no se pudo avisar a la API (${error.message}); si arranca después, usa el reloj real.`);
   }
   await sembrarSectoresYRefrescarCache();
+}
+
+/** `datos contar` y `datos generar` (ADR-111): el volumen lo genera el backend de simulación, no este script, para que pase por el dominio. */
+async function datos(opciones) {
+  exigirClave();
+  const api = sim();
+  await exigirInstanciaDeSimulacion(api);
+  const mostrar = (r) => {
+    console.log(`  reportes: ${r.reportes} · cortes: ${r.cortes} · dispositivos: ${r.dispositivos} · eventos de bitácora: ${r.eventosBitacora}`);
+    if (r.semilla !== null && r.semilla !== undefined) console.log(`  semilla: ${r.semilla} (la misma semilla repite la misma corrida)`);
+  };
+  if (opciones.accion === 'contar') {
+    console.log('Datos sintéticos en la simulación:');
+    mostrar((await api.sim('GET', '/api/sim/datos')).cuerpo);
+    return 0;
+  }
+  console.log(`Generando datos aleatorios (${JSON.stringify(opciones.plan)})… puede tardar con decenas de miles de reportes.`);
+  const inicio = Date.now();
+  const { cuerpo } = await api.sim('POST', '/api/sim/datos', opciones.plan);
+  console.log(`Listo en ${((Date.now() - inicio) / 1000).toFixed(1)} s:`);
+  mostrar(cuerpo);
+  return 0;
 }
 
 async function iniciar(opciones) {
@@ -199,6 +226,8 @@ async function principal() {
     case 'ayuda':
       console.log(AYUDA);
       return 0;
+    case 'datos':
+      return datos(opciones);
     case 'iniciar':
       return iniciar(opciones);
     case 'pausar':

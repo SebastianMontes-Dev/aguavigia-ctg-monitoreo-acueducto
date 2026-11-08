@@ -129,6 +129,7 @@ Desde `frontend/`:
 - `POST /api/iot/presion`: es para sensores, inactivo.
 - `GET /api/v2/requests.json`: Open311, una API para máquinas.
 - `GET /api/analitica/cumplimiento` y `/mensual`: el Índice desde la copia SQL; duplican `/api/cumplimiento` y pueden dar `503` (F7 de `cambios-para-frontend.md`).
+- `GET /api/analitica/reportes/ranking` y `/tendencia`, `GET /api/analitica/bitacora/integridad` y `GET /api/veedor/analitica/vigilancia` (ADR-112 y ADR-113, F8 de `cambios-para-frontend.md`): copia analítica de reportes, cadena de la bitácora inmutable y revisiones del vigilante. Sin pantalla por decisión del cierre del proyecto (2026-11-07); pueden dar `503`. Si más adelante se quieren mostrar, el bloque natural es «Copia analítica» de `/panel/sistema` para el vigilante y una línea «bitácora verificada» en `/bitacora`.
 - Las páginas HTML de `/api/cuentas/enlaces/*`: el backend las sirve y el frontend solo depende de que existan (ver FE6).
 
 ### Orden y dependencias

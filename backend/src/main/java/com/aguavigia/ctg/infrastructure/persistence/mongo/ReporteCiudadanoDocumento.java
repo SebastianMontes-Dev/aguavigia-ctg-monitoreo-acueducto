@@ -49,4 +49,7 @@ public class ReporteCiudadanoDocumento {
     private boolean fotoDescartada;
 
     private java.util.Set<String> huellasConfirmacion = new java.util.HashSet<>();
+
+    /** ADR-111 — generado al azar para la simulación. Nulo (no se escribe) en lo que crea una persona. */
+    private Boolean sintetico;
 }

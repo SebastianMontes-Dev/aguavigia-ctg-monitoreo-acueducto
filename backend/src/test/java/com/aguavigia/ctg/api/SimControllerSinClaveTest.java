@@ -3,6 +3,7 @@ package com.aguavigia.ctg.api;
 import com.aguavigia.ctg.api.error.ManejadorGlobalDeErrores;
 import com.aguavigia.ctg.domain.port.in.ControlarRelojDeSimulacionUseCase;
 import com.aguavigia.ctg.domain.port.in.InyectarBoletinSimuladoUseCase;
+import com.aguavigia.ctg.domain.port.in.GenerarDatosSinteticosUseCase;
 import com.aguavigia.ctg.domain.port.in.ReiniciarSimulacionUseCase;
 import com.aguavigia.ctg.domain.port.in.IniciarSesionDeAdminDeSimulacionUseCase;
 import com.aguavigia.ctg.domain.port.out.RevocacionSesionPort;
@@ -47,6 +48,8 @@ class SimControllerSinClaveTest {
     private IniciarSesionDeAdminDeSimulacionUseCase sesionAdmin;
     @MockitoBean
     private ReiniciarSimulacionUseCase reinicio;
+    @MockitoBean
+    private GenerarDatosSinteticosUseCase datos;
 
     @Autowired
     private MockMvc mockMvc;

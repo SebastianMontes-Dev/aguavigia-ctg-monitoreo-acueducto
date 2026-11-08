@@ -27,6 +27,10 @@ export const EXCLUSIONES = [
   { patron: '/api/fotos/*', motivo: 'sin pantalla que la pida: no hay GET público de reportes y la foto es evidencia, no contenido público (reportes.md); el panel usa /api/veedor/fotos' },
   { patron: '/api/analitica/cumplimiento', motivo: 'duplica /api/cumplimiento y puede dar 503 (F7 de cambios-para-frontend.md)' },
   { patron: '/api/analitica/cumplimiento/mensual', motivo: 'duplica /api/cumplimiento y puede dar 503 (F7 de cambios-para-frontend.md)' },
+  { patron: '/api/analitica/reportes/ranking', motivo: 'duplica lo que Estadísticas ya saca de Mongo y puede dar 503; sin pantalla por decisión del cierre (ADR-112, F8 de cambios-para-frontend.md)' },
+  { patron: '/api/analitica/reportes/tendencia', motivo: 'duplica lo que Estadísticas ya saca de Mongo y puede dar 503; sin pantalla por decisión del cierre (ADR-112, F8 de cambios-para-frontend.md)' },
+  { patron: '/api/analitica/bitacora/integridad', motivo: 'comprobación de la cadena de hashes de la bitácora inmutable; sin pantalla por decisión del cierre, puede dar 503 (ADR-113, F8 de cambios-para-frontend.md)' },
+  { patron: '/api/veedor/analitica/vigilancia', motivo: 'revisiones del vigilante de la copia analítica; sin pantalla por decisión del cierre (ADR-113, F8 de cambios-para-frontend.md)' },
 ]
 
 const normalizar = (ruta) => ruta.replace(/\{[^}]*\}|\$\{[^}]*\}/g, '{}').replace(/\/+$/, '')

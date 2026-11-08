@@ -2,7 +2,7 @@
 # que se imprime una sola vez en el log del backend.
 #
 #   docker compose up -d --build            → Mongo, réplica, Redis, Mailhog, PostgreSQL (copia analítica, ADR-100) y backend, y el `sembrador`, que carga los 211 barrios.
-#                                             El backend crea el ADMIN y, en segundo plano, 30 000 cuentas SINTÉTICAS de vecino
+#                                             El backend crea el ADMIN y, en segundo plano, 300 cuentas SINTÉTICAS de vecino
 #                                             (lo único inventado: se dicen sintéticas y la API lo declara en /api/sistema/modo).
 #                                             No hay reportes, cortes ni estados inventados: el mapa muestra lo que dicen los
 #                                             boletines de Acuacar y los vecinos de verdad. Repetir no duplica datos.
@@ -98,6 +98,8 @@ services:
       - "127.0.0.1:${POSTGRES_PUERTO:-5433}:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      # Crea aguavigia_sim_analitica al inicializar un volumen nuevo (ADR-112).
+      - ./scripts/postgres-init:/docker-entrypoint-initdb.d:ro
     networks:
       - aguavigia
     healthcheck:
@@ -156,7 +158,7 @@ services:
       # inventa uno. en-vivo no tiene respaldo; local no toca la red (ADR-082).
       INGESTA_MODO: ${INGESTA_MODO:-auto}
       # Cuántas cuentas sintéticas de vecino crea el backend al arrancar (0 las desactiva).
-      VECINOS_SINTETICOS: ${VECINOS_SINTETICOS:-30000}
+      VECINOS_SINTETICOS: ${VECINOS_SINTETICOS:-300}
       # Una red distinta por votante es lo que pide el quórum por defecto (2). Con Docker Desktop todos los clientes del equipo
       # llegan al backend con la misma IP, así que con 2 el quórum nunca se cumpliría: en local se baja a 1. Es una concesión
       # del entorno local, no del producto: en una presentación desde una sola red se dice abiertamente (ADR-090).
@@ -206,8 +208,11 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: "8080"
-      # La simulación tiene su propia base de Mongo: si copiara a PostgreSQL pisaría la copia de la instancia real.
-      AGUAVIGIA_SQL_HABILITADO: "false"
+      # La simulación tiene su propia base de Mongo y, desde ADR-112, su propia base analítica en el mismo servidor de PostgreSQL
+      # (aguavigia_sim_analitica): si copiara a la de la instancia real pisaría su copia. Si esa base no existe (volumen anterior a ADR-112),
+      # créala una vez: docker exec aguavigia-postgres createdb -U aguavigia aguavigia_sim_analitica. Sin ella solo falla la copia, no el backend.
+      AGUAVIGIA_SQL_HABILITADO: "true"
+      AGUAVIGIA_SQL_URL: jdbc:postgresql://postgres:5432/aguavigia_sim_analitica
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/aguavigia_sim?replicaSet=rs0
       SPRING_DATA_REDIS_HOST: redis
       SPRING_DATA_REDIS_PORT: "6379"
@@ -232,6 +237,13 @@ services:
       AGUAVIGIA_ESTADO_PUESTA_AL_DIA_MS: "5000"
       # Los vecinos de la simulación se registran por la API real: no hay cuentas sintéticas.
       VECINOS_SINTETICOS: "0"
+      # Datos aleatorios para llenar la simulación (ADR-111). 0 por defecto: el guion completo mide el Índice de barrios concretos y
+      # espera una base limpia. Para una demo con volumen: DATOS_SINTETICOS_REPORTES=60000 DATOS_SINTETICOS_CORTES=400 en el .env.
+      DATOS_SINTETICOS_REPORTES: ${DATOS_SINTETICOS_REPORTES:-0}
+      DATOS_SINTETICOS_CORTES: ${DATOS_SINTETICOS_CORTES:-0}
+      DATOS_SINTETICOS_DISPOSITIVOS: ${DATOS_SINTETICOS_DISPOSITIVOS:-9000}
+      DATOS_SINTETICOS_DIAS: ${DATOS_SINTETICOS_DIAS:-300}
+      DATOS_SINTETICOS_SEMILLA: ${DATOS_SINTETICOS_SEMILLA:-}
       # Un solo equipo registra cientos de vecinos y de dispositivos: sin subir los topes por IP no cabrían. SOLO en esta instancia.
       RATE_LIMIT_FACTOR: ${SIM_RATE_LIMIT_FACTOR:-1000}
       RATE_LIMIT_FACTOR_CUENTAS: ${SIM_RATE_LIMIT_FACTOR:-1000}
@@ -298,7 +310,7 @@ services:
       MONGODB_URI: mongodb://mongo:27017/?directConnection=true
       MONGODB_DB: ${MONGO_INITDB_DATABASE:-aguavigia}
       API_URL: http://backend:8080
-      VECINOS_SINTETICOS: ${VECINOS_SINTETICOS:-30000}
+      VECINOS_SINTETICOS: ${VECINOS_SINTETICOS:-300}
     depends_on:
       backend:
         condition: service_healthy

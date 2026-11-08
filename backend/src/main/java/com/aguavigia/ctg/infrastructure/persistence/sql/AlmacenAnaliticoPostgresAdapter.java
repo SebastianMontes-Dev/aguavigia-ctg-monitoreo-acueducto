@@ -125,6 +125,27 @@ public class AlmacenAnaliticoPostgresAdapter implements AlmacenAnaliticoPort {
     }
 
     @Override
+    public long reemplazarReportes(List<com.aguavigia.ctg.domain.FilaReporteDiaAnalitica> filas, Instant copiadoEn) {
+        return alcanzable(() -> transaccion.execute(estado -> {
+            OffsetDateTime copiado = utc(copiadoEn);
+            jdbc.update("DELETE FROM analitica.reporte_dia");
+            jdbc.batchUpdate("""
+                    INSERT INTO analitica.reporte_dia (sector_id, dia, tipo, estado_moderacion, cantidad, copiado_en)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    """, filas, 2000, (ps, fila) -> {
+                ps.setString(1, fila.sectorId());
+                ps.setObject(2, fila.dia());
+                ps.setString(3, fila.tipo());
+                ps.setString(4, fila.estadoModeracion());
+                ps.setInt(5, fila.cantidad());
+                ps.setObject(6, copiado);
+            });
+            Long total = jdbc.queryForObject("SELECT COALESCE(SUM(cantidad), 0) FROM analitica.reporte_dia", Long.class);
+            return total == null ? 0L : total;
+        }));
+    }
+
+    @Override
     public void cerrarCopia(long id, Instant terminadaEn, ResultadoDeCopia resultado, ConteosAnaliticos enMongo,
                             ConteosAnaliticos enSql, String detalle) {
         alcanzable(() -> jdbc.update("""

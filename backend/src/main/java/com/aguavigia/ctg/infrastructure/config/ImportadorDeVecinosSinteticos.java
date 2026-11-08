@@ -26,7 +26,7 @@ import java.util.HexFormat;
  * Espera, en un hilo aparte para no retrasar el arranque, a que existan el ADMIN inicial —que {@link SembradorAdminInicial}
  * solo crea en un sistema sin ninguna cuenta: si este importador corriera antes, el ADMIN no nacería nunca— y los sectores,
  * que siembra otro proceso. Se activa con \`aguavigia.siembra.vecinos-sinteticos\` (0, por defecto, no hace nada; el perfil
- * \`docker\` lo pone en 30 000).
+ * \`docker\` lo pone en 300).
  *
  * La clave que llevan todas las cuentas se calcula una vez (un solo BCrypt) a partir de una contraseña aleatoria que se
  * descarta: nadie la conoce, así que ninguna cuenta sintética se puede abrir.
