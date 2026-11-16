@@ -6,102 +6,119 @@
 <meta name="color-scheme" content="light dark">
 <meta name="supported-color-schemes" content="light dark">
 <title>{{titulo}}</title>
+<!--
+  Correo de cuenta con un enlace de un solo uso (ADR-114). Paleta de DESIGN.md §3 en claro y del grafito (§3.1) en
+  `prefers-color-scheme: dark`, el mismo oscuro de la página a la que lleva el enlace. Estilos en línea porque la mayoría de los clientes de correo ignora el <style>;
+  el bloque de abajo solo afina el celular y el tema oscuro donde se respeta.
+-->
 <style>
   :root { color-scheme: light dark; supported-color-schemes: light dark; }
 
   @media only screen and (max-width: 620px) {
-    .marco      { width: 100% !important; }
-    .relleno    { padding-left: 24px !important; padding-right: 24px !important; }
-    .titular    { font-size: 26px !important; line-height: 32px !important; }
-    .boton a    { display: block !important; text-align: center !important; }
+    .marco   { width: 100% !important; }
+    .relleno { padding-left: 24px !important; padding-right: 24px !important; }
+    .titular { font-size: 24px !important; line-height: 30px !important; }
+    .boton a { display: block !important; }
   }
 
   @media (prefers-color-scheme: dark) {
-    .fondo      { background-color: #061418 !important; }
-    .superficie { background-color: #0C2027 !important; }
-    .linea      { border-color: #1B3B45 !important; }
-    .tinta      { color: #E4EFEF !important; }
-    .tinta-2    { color: #9DB8BE !important; }
-    .tinta-3    { color: #6B8C94 !important; }
-    .acento     { color: #45BFCB !important; }
-    .boton-bg   { background-color: #45BFCB !important; }
-    .boton-tx   { color: #061418 !important; }
-    .caja       { background-color: #10262E !important; }
+    .fondo    { background-color: #111719 !important; }
+    .tarjeta  { background-color: #1a1f22 !important; border-color: #354044 !important; }
+    .caja     { background-color: #111719 !important; border-color: #354044 !important; }
+    .marca    { color: #8cc8b8 !important; }
+    .tinta    { color: #f1f4f2 !important; }
+    .tinta-2  { color: #b1bbbd !important; }
+    .boton-bg { background-color: #8cc8b8 !important; }
+    .boton-tx { color: #111719 !important; }
   }
 </style>
 </head>
 
-<body class="fondo" style="margin:0; padding:0; background-color:#EEF3F3; -webkit-font-smoothing:antialiased;">
+<body class="fondo" style="margin:0; padding:0; background-color:#f5f5f2; -webkit-font-smoothing:antialiased;">
 
   <div style="display:none; max-height:0; overflow:hidden; opacity:0; mso-hide:all;">
     {{preencabezado}}
   </div>
 
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="fondo" style="background-color:#EEF3F3;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="fondo" style="background-color:#f5f5f2;">
     <tr>
-      <td align="center" style="padding:32px 12px;">
+      <td align="center" style="padding:40px 12px;">
 
-        <table role="presentation" class="marco superficie" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#FFFFFF; border-radius:14px; overflow:hidden;">
+        <table role="presentation" class="marco" width="560" cellpadding="0" cellspacing="0" border="0" style="width:560px; max-width:560px;">
 
           <tr>
-            <td class="relleno" style="padding:32px 40px 8px;">
-              <p class="acento" style="margin:0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:12px; line-height:18px; letter-spacing:0.08em; text-transform:uppercase; font-weight:700; color:#127D8A;">
-                AguaVigía CTG · Panel del veedor
+            <td class="relleno" style="padding:0 40px 20px;">
+              <p class="marca" style="margin:0; font-family:'Newsreader',Georgia,'Times New Roman',serif; font-size:20px; line-height:26px; font-weight:500; color:#2f5f57;">
+                AguaVigía · Cartagena
               </p>
             </td>
           </tr>
 
           <tr>
-            <td class="relleno" style="padding:8px 40px 4px;">
-              <h1 class="titular tinta" style="margin:0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:28px; line-height:34px; font-weight:800; color:#0B2C33;">
-                {{titulo}}
-              </h1>
-            </td>
-          </tr>
+            <td>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="tarjeta" style="background-color:#ffffff; border:1px solid #dddcd6; border-radius:12px;">
 
-          <tr>
-            <td class="relleno" style="padding:16px 40px 0;">
-              <p class="tinta-2" style="margin:0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:15px; line-height:25px; color:#3E585F;">
-                Hola, {{nombre}}.
-              </p>
-              <p class="tinta-2" style="margin:14px 0 0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:15px; line-height:25px; color:#3E585F;">
-                {{mensaje}}
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td class="relleno boton" style="padding:28px 40px 8px;">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td class="boton-bg" style="background-color:#0E7C8B; border-radius:10px;">
-                    <a class="boton-tx" href="{{urlAccion}}" style="display:inline-block; padding:14px 28px; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:15px; font-weight:700; color:#FFFFFF; text-decoration:none;">
-                      {{textoBoton}}
-                    </a>
+                  <td class="relleno" style="padding:40px 40px 0;">
+                    <h1 class="titular tinta" style="margin:0; font-family:'Newsreader',Georgia,'Times New Roman',serif; font-size:26px; line-height:32px; font-weight:400; color:#15191c;">
+                      {{titulo}}
+                    </h1>
                   </td>
                 </tr>
+
+                <tr>
+                  <td class="relleno" style="padding:20px 40px 0;">
+                    <p class="tinta" style="margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:16px; line-height:26px; color:#15191c;">
+                      Hola, {{nombre}}.
+                    </p>
+                    <p class="tinta-2" style="margin:12px 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:16px; line-height:26px; color:#4a5157;">
+                      {{mensaje}}
+                    </p>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="relleno boton" style="padding:28px 40px 0;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td class="boton-bg" style="background-color:#2f5f57; border-radius:999px;">
+                          <a class="boton-tx" href="{{urlAccion}}" style="display:inline-block; padding:14px 28px; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:16px; line-height:22px; font-weight:600; color:#ffffff; text-decoration:none;">
+                            {{textoBoton}} &rarr;
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr>
+                  <td class="relleno" style="padding:28px 40px 40px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="caja" style="background-color:#fbfbf9; border:1px solid #e9e8e3; border-radius:8px;">
+                      <tr>
+                        <td style="padding:16px 18px;">
+                          <p class="tinta-2" style="margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:13px; line-height:20px; color:#4a5157;">
+                            El enlace vence en {{vigencia}} y sirve una sola vez. Si el botón no abre, copia esta dirección en tu navegador:
+                          </p>
+                          <p class="tinta-2" style="margin:8px 0 0; font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace; font-size:11px; line-height:17px; word-break:break-all; color:#4a5157;">
+                            {{urlAccion}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
               </table>
             </td>
           </tr>
 
           <tr>
-            <td class="relleno" style="padding:14px 40px 0;">
-              <p class="tinta-3" style="margin:0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:13px; line-height:21px; color:#6E878D;">
-                Este enlace vence en {{vigencia}} y sirve una sola vez. Si el botón no funciona, copia esta dirección en tu navegador:
+            <td class="relleno" style="padding:20px 40px 0;">
+              <p class="tinta-2" style="margin:0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:12px; line-height:19px; color:#4a5157;">
+                ¿No lo pediste? Ignora este correo: sin abrir el enlace no cambia nada.
               </p>
-              <p class="tinta-3" style="margin:8px 0 0; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12px; line-height:19px; word-break:break-all; color:#6E878D;">
-                {{urlAccion}}
-              </p>
-            </td>
-          </tr>
-
-          <tr>
-            <td class="relleno linea" style="padding:24px 40px 28px; border-top:1px solid #C9D9D8; margin-top:24px;">
-              <p class="tinta-3" style="margin:0 0 10px; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:12px; line-height:19px; color:#6E878D;">
-                Si no esperabas este correo, ignóralo: sin abrir el enlace no se hace ningún cambio en ninguna cuenta.
-              </p>
-              <p class="tinta-3" style="margin:0; font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; font-size:12px; line-height:19px; color:#6E878D;">
-                AguaVigía CTG · Proyecto ciudadano de monitoreo del acueducto · Cartagena de Indias
+              <p class="tinta-2" style="margin:6px 0 0; font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Arial,sans-serif; font-size:12px; line-height:19px; color:#4a5157;">
+                AguaVigía CTG · Monitoreo ciudadano del acueducto de Cartagena de Indias
               </p>
             </td>
           </tr>
