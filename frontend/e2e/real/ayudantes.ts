@@ -70,8 +70,16 @@ export async function correoDe(request: APIRequestContext, correo: string, condi
 
 /** La ruta de la SPA de un enlace del correo, sin el origen que configure el backend. */
 export function rutaEnCorreo(cuerpo: string, patron: string): string {
+  const enlace = new URL(enlaceEnCorreo(cuerpo, patron))
+  return `${enlace.pathname}${enlace.search}`
+}
+
+/**
+ * El enlace del correo tal cual, con su origen. Las páginas de cuenta las sirve el backend: abrirlas por el proxy de Vite,
+ * que borra la cabecera `Origin`, escondió que su formulario respondía 403 «Invalid CORS request» (ADR-114).
+ */
+export function enlaceEnCorreo(cuerpo: string, patron: string): string {
   const coincidencia = cuerpo.match(new RegExp(`https?://[^"'\\s<>]+${patron}\\?token=[^"'\\s<>]+`))
   if (!coincidencia) throw new Error(`Falta el enlace ${patron} en el correo`)
-  const enlace = new URL(coincidencia[0])
-  return `${enlace.pathname}${enlace.search}`
+  return coincidencia[0]
 }

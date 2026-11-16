@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test } from '@playwright/test'
-import { correoDe, rutaEnCorreo } from './ayudantes'
+import { correoDe, enlaceEnCorreo } from './ayudantes'
 import { claveDelPanel, correoDelPanel, entrarAlPanel } from './sesion-panel'
 
 // Sin PANEL_CORREO y PANEL_CLAVE no hay con quién invitar (ver `sesion-panel.ts`): esta prueba se omite.
@@ -37,12 +37,15 @@ test('debeInvitarPorCorreoElegirLaClaveYEntrarComoObservadorSinAcciones', async 
   await otra.getByRole('button', { name: 'Ingresar', exact: true }).click()
   await expect(otra.getByRole('alert').filter({ hasText: /Correo o clave incorrectos/ })).toBeVisible()
 
-  // 3. El enlace del correo abre la página HTML del backend: ahí se elige la clave.
+  // 3. El enlace del correo abre la página HTML del backend, en su propio origen: ahí se elige la clave, escrita dos veces.
+  //    Una cuenta del panel sigue al ingreso del panel.
   const cuerpo = await correoDe(request, correo, (texto) => texto.includes('/enlaces/invitacion?token='))
-  await otra.goto(rutaEnCorreo(cuerpo, '/api/cuentas/enlaces/invitacion'))
-  await otra.locator('#clave').fill(clave)
+  await otra.goto(enlaceEnCorreo(cuerpo, '/api/cuentas/enlaces/invitacion'))
+  await otra.getByLabel('Clave nueva').fill(clave)
+  await otra.getByLabel('Repite la clave').fill(clave)
   await otra.getByRole('button', { name: 'Crear mi clave' }).click()
-  await expect(otra.locator('body')).not.toContainText(/inválido|venci/i)
+  await expect(otra.getByRole('heading', { level: 1, name: 'Tu cuenta quedó activa' })).toBeVisible()
+  await expect(otra.getByRole('link', { name: /Ir al ingreso del panel/ })).toHaveAttribute('href', /\/panel\/ingreso$/)
 
   // 4. Ingresa a la SPA: un observador no tiene segundo factor que dar de alta y cae directo en la cola.
   await otra.goto('/panel/ingreso')
