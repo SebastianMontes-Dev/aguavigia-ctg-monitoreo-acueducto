@@ -21,37 +21,74 @@ class CredencialesDeCuentaTest {
 
     @Test
     void debeAceptarUnaClaveQueCumpleLaPolitica() {
-        assertThat(new ClaveEnClaro("clave-larga-y-variada").valor()).isNotBlank();
+        assertThat(new ClaveEnClaro("Clave-larga-y-variada").valor()).isNotBlank();
     }
 
     @Test
     void debeRechazarUnaClaveMasCortaDeLoExigido() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new ClaveEnClaro("corta1"))
-                .withMessageContaining("12");
+                .isThrownBy(() -> new ClaveEnClaro("Corta-1"))
+                .withMessage("La clave debe tener al menos 9 caracteres");
+    }
+
+    /** ADR-115: nueve caracteres con una mayúscula y un signo bastan; ya no se exige variedad de caracteres. */
+    @Test
+    void debeAceptarUnaClaveDeNueveCaracteresConMayusculaYSigno() {
+        assertThat(new ClaveEnClaro("Cartagena!").valor()).isEqualTo("Cartagena!");
+        assertThat(new ClaveEnClaro("Aaaaaaaa#").valor()).isEqualTo("Aaaaaaaa#");
+    }
+
+    @Test
+    void debeRechazarUnaClaveSinMayuscula() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ClaveEnClaro("cartagena#2026"))
+                .withMessage("Añade al menos una letra mayúscula a la clave");
+    }
+
+    @Test
+    void debeRechazarUnaClaveSinSigno() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ClaveEnClaro("Cartagena2026"))
+                .withMessage("Añade al menos un signo a la clave, como # o !");
+    }
+
+    /** Un espacio en medio no es un signo: la clave sigue necesitando uno. */
+    @Test
+    void unEspacioNoDebeContarComoSigno() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ClaveEnClaro("Mi clave larga"))
+                .withMessageContaining("signo");
+    }
+
+    @Test
+    void lasMayusculasConTildeYLosSignosNoAsciiDebenContar() {
+        assertThat(new ClaveEnClaro("Ñandú¿qué").valor()).isEqualTo("Ñandú¿qué");
     }
 
     /** BCrypt trunca en 72 bytes: sin este tope, dos claves largas distintas serían la misma. */
     @Test
     void debeRechazarUnaClaveQueBcryptTruncaria() {
         assertThatIllegalArgumentException()
-                .isThrownBy(() -> new ClaveEnClaro("a1b2c3d4e5f6".repeat(7)));
+                .isThrownBy(() -> new ClaveEnClaro("A1b2c3d4e5f#".repeat(7)))
+                .withMessageContaining("demasiado larga");
     }
 
     @Test
-    void debeRechazarUnaClaveQueRepiteSiempreLosMismosCaracteres() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ClaveEnClaro("ababababababab"));
+    void debeRechazarMasDeCientoVeintiochoCaracteres() {
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> new ClaveEnClaro("A#" + "a".repeat(127)))
+                .withMessageContaining("128");
     }
 
     @Test
     void debeRechazarUnaClaveConEspaciosAlPrincipioOAlFinal() {
-        assertThatIllegalArgumentException().isThrownBy(() -> new ClaveEnClaro(" clave-con-espacio"));
+        assertThatIllegalArgumentException().isThrownBy(() -> new ClaveEnClaro(" Clave-con-espacio"));
     }
 
     @Test
     void laClaveEnClaroNoDebeAparecerEnSuToString() {
-        assertThat(new ClaveEnClaro("clave-larga-y-variada").toString())
-                .doesNotContain("clave-larga-y-variada");
+        assertThat(new ClaveEnClaro("Clave-larga-y-variada").toString())
+                .doesNotContain("Clave-larga-y-variada");
     }
 
     @Test

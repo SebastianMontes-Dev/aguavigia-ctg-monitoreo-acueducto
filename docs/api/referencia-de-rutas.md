@@ -185,7 +185,7 @@ Cambia la clave y revoca todas las sesiones abiertas de esa cuenta.
 
 **Pantalla del enlace de invitación**
 
-Muestra el formulario para elegir la clave. No consume el token.
+Muestra el formulario para elegir la clave, que se escribe dos veces. No consume el token.
 
 | | |
 |---|---|
@@ -198,7 +198,7 @@ Muestra el formulario para elegir la clave. No consume el token.
 
 **Aceptar la invitación desde el formulario de la pantalla**
 
-Mismo efecto que POST /api/cuentas/invitacion, pero recibe el formulario y responde HTML.
+Mismo efecto que POST /api/cuentas/invitacion, pero recibe el formulario y responde HTML. `confirmacion` repite la clave: si falta o no coincide, la página vuelve con el error y no se consume el token.
 
 | | |
 |---|---|
@@ -211,7 +211,7 @@ Mismo efecto que POST /api/cuentas/invitacion, pero recibe el formulario y respo
 
 **Pantalla del enlace para restablecer la clave**
 
-Muestra el formulario para elegir la clave nueva. No consume el token.
+Muestra el formulario para elegir la clave nueva, que se escribe dos veces. No consume el token.
 
 | | |
 |---|---|
@@ -224,7 +224,7 @@ Muestra el formulario para elegir la clave nueva. No consume el token.
 
 **Restablecer la clave desde el formulario de la pantalla**
 
-Mismo efecto que POST /api/cuentas/clave, pero recibe el formulario y responde HTML.
+Mismo efecto que POST /api/cuentas/clave, pero recibe el formulario y responde HTML. `confirmacion` repite la clave: si falta o no coincide, la página vuelve con el error y no se consume el token.
 
 | | |
 |---|---|
@@ -973,7 +973,7 @@ Exige la clave actual y comparte el contador de intentos fallidos con el inicio 
 | **Acceso** | Sesión + `VER_PANEL` |
 | **Parámetros** | — |
 | **Cuerpo** | [SolicitudCambioClave](#esquema-solicitudcambioclave) (`application/json`) |
-| **Respuestas** | `204` Clave cambiada; todas las sesiones cerradas<br>`400` La clave actual no es correcta, la nueva no cumple la política (12 a 128 caracteres) o es igual a la actual<br>`401` Sin sesión, token inválido, caducado o revocado → [ProblemDetail](#esquema-problemdetail)<br>`403` La sesión no tiene el permiso que exige esta operación → [ProblemDetail](#esquema-problemdetail)<br>`423` Cuenta bloqueada por intentos fallidos |
+| **Respuestas** | `204` Clave cambiada; todas las sesiones cerradas<br>`400` La clave actual no es correcta, la nueva no cumple la política (9 a 128 caracteres, una mayúscula y un signo) o es igua…<br>`401` Sin sesión, token inválido, caducado o revocado → [ProblemDetail](#esquema-problemdetail)<br>`403` La sesión no tiene el permiso que exige esta operación → [ProblemDetail](#esquema-problemdetail)<br>`423` Cuenta bloqueada por intentos fallidos |
 
 ## Veedor - Cuentas
 
@@ -1913,7 +1913,7 @@ Cambiar la propia clave con la sesión iniciada
 | Campo | Tipo | Oblig. | Nulo | Descripción |
 |---|---|---|---|---|
 | `claveActual` | string | sí |  | La clave de hoy. Sin ella un token robado bastaría para cambiarla. |
-| `claveNueva` | string | sí |  | La nueva: de 12 a 128 caracteres y distinta de la actual. |
+| `claveNueva` | string | sí |  | La nueva: de 9 a 128 caracteres, con una mayuscula y un signo, y distinta de la actual. |
 
 <a id="esquema-solicitudcierrecorte"></a>
 
@@ -2017,7 +2017,7 @@ Solicitud de acceso al panel. No concede nada: exige verificar el correo y que u
 |---|---|---|---|---|
 | `correo` | string (email) | sí |  |  |
 | `nombre` | string | sí |  | Nombre con el que apareceras en la auditoria del panel |
-| `clave` | string | sí |  | Minimo 12 caracteres. La politica completa vive en ClaveEnClaro. |
+| `clave` | string | sí |  | Al menos 9 caracteres, con una mayuscula y un signo. La politica completa vive en ClaveEnClaro. |
 | `barrioId` | string |  | sí | Opcional: slug del barrio donde vives (uno de `GET /api/sectores`). 400 si no existe. |
 
 <a id="esquema-solicitudregistrovecino"></a>

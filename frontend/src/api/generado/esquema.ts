@@ -643,13 +643,13 @@ export interface paths {
         };
         /**
          * Pantalla del enlace para restablecer la clave
-         * @description Muestra el formulario para elegir la clave nueva. No consume el token.
+         * @description Muestra el formulario para elegir la clave nueva, que se escribe dos veces. No consume el token.
          */
         get: operations["pantallaRestablecer"];
         put?: never;
         /**
          * Restablecer la clave desde el formulario de la pantalla
-         * @description Mismo efecto que POST /api/cuentas/clave, pero recibe el formulario y responde HTML.
+         * @description Mismo efecto que POST /api/cuentas/clave, pero recibe el formulario y responde HTML. `confirmacion` repite la clave: si falta o no coincide, la página vuelve con el error y no se consume el token.
          */
         post: operations["restablecerClave"];
         delete?: never;
@@ -667,13 +667,13 @@ export interface paths {
         };
         /**
          * Pantalla del enlace de invitación
-         * @description Muestra el formulario para elegir la clave. No consume el token.
+         * @description Muestra el formulario para elegir la clave, que se escribe dos veces. No consume el token.
          */
         get: operations["pantallaInvitacion"];
         put?: never;
         /**
          * Aceptar la invitación desde el formulario de la pantalla
-         * @description Mismo efecto que POST /api/cuentas/invitacion, pero recibe el formulario y responde HTML.
+         * @description Mismo efecto que POST /api/cuentas/invitacion, pero recibe el formulario y responde HTML. `confirmacion` repite la clave: si falta o no coincide, la página vuelve con el error y no se consume el token.
          */
         post: operations["aceptarInvitacion"];
         delete?: never;
@@ -1885,7 +1885,7 @@ export interface components {
         SolicitudCambioClave: {
             /** @description La clave de hoy. Sin ella un token robado bastaría para cambiarla. */
             claveActual: string;
-            /** @description La nueva: de 12 a 128 caracteres y distinta de la actual. */
+            /** @description La nueva: de 9 a 128 caracteres, con una mayuscula y un signo, y distinta de la actual. */
             claveNueva: string;
         };
         /** @description Registro de un corte oficial por el veedor (RF016) */
@@ -2166,7 +2166,7 @@ export interface components {
             correo: string;
             /** @description Nombre con el que apareceras en la auditoria del panel */
             nombre: string;
-            /** @description Minimo 12 caracteres. La politica completa vive en ClaveEnClaro. */
+            /** @description Al menos 9 caracteres, con una mayuscula y un signo. La politica completa vive en ClaveEnClaro. */
             clave: string;
             /**
              * @description Opcional: slug del barrio donde vives (uno de `GET /api/sectores`). 400 si no existe.
@@ -3216,7 +3216,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description La clave actual no es correcta, la nueva no cumple la política (12 a 128 caracteres) o es igual a la actual */
+            /** @description La clave actual no es correcta, la nueva no cumple la política (9 a 128 caracteres, una mayúscula y un signo) o es igual a la actual */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -4155,6 +4155,7 @@ export interface operations {
                 "application/x-www-form-urlencoded": {
                     token: string;
                     clave: string;
+                    confirmacion?: string;
                 };
             };
         };
@@ -4204,6 +4205,7 @@ export interface operations {
                 "application/x-www-form-urlencoded": {
                     token: string;
                     clave: string;
+                    confirmacion?: string;
                 };
             };
         };

@@ -4,7 +4,7 @@ import { conEspera } from './vecino'
 
 const NEUTRO_ACCESO = 'Si la dirección es válida, te enviamos un correo para confirmarla.'
 
-async function llenarSolicitud(page: import('@playwright/test').Page, clave = 'una clave larga y unica') {
+async function llenarSolicitud(page: import('@playwright/test').Page, clave = 'Una-clave-larga-y-unica') {
   await page.getByLabel('Nombre', { exact: true }).fill('Ana Pérez')
   await page.getByLabel('Correo', { exact: true }).fill('ana@example.com')
   await page.getByLabel('Clave', { exact: true }).fill(clave)
@@ -23,7 +23,7 @@ test('debeSolicitarAccesoConMensajeNeutroSinPrometerNada', async ({ page }) => {
   await page.getByRole('button', { name: /Solicitar acceso/ }).click()
   await expect(page.getByRole('status')).toHaveText(NEUTRO_ACCESO)
   await expect(page.getByText(/una persona del equipo tiene que aprobar la cuenta/)).toBeVisible()
-  expect(cuerpos).toEqual([{ correo: 'ana@example.com', nombre: 'Ana Pérez', clave: 'una clave larga y unica' }])
+  expect(cuerpos).toEqual([{ correo: 'ana@example.com', nombre: 'Ana Pérez', clave: 'Una-clave-larga-y-unica' }])
   await expect(page.getByRole('link', { name: /Reenviar el correo/ })).toHaveAttribute('href', '/cuenta/reenviar')
 })
 
@@ -40,7 +40,7 @@ test('debeValidarLaClaveEnElClienteSinPedirNadaYPonerElErrorJuntoAlCampo', async
   const clave = page.getByLabel('Clave', { exact: true })
   await expect(clave).toHaveAttribute('aria-invalid', 'true')
   await expect(clave).toBeFocused()
-  await expect(page.getByText('Usa al menos 12 caracteres.')).toBeVisible()
+  await expect(page.getByText('Usa al menos 9 caracteres.')).toBeVisible()
   expect(peticiones).toBe(0)
   await page.getByLabel('Nombre', { exact: true }).fill('')
   await page.getByRole('button', { name: /Solicitar acceso/ }).click()
@@ -52,12 +52,12 @@ test('debeRepartirElDetalleDelServidorJuntoACadaCampo', async ({ page }) => {
   await simularApi(page)
   await page.route('**/api/cuentas/registro', (route) => route.fulfill({
     ...problema(400, 'peticion-invalida', 'Datos inválidos'),
-    body: JSON.stringify({ type: 'https://aguavigia.example/errores/peticion-invalida', status: 400, detail: 'Datos inválidos', errores: ['clave: La clave repite demasiado los mismos caracteres'] }),
+    body: JSON.stringify({ type: 'https://aguavigia.example/errores/peticion-invalida', status: 400, detail: 'Datos inválidos', errores: ['clave: La clave es demasiado larga para cifrarse de forma segura. Usa menos caracteres.'] }),
   }))
   await page.goto('/cuenta/solicitar')
-  await llenarSolicitud(page, 'aaaaaaaaaaaaaaaa')
+  await llenarSolicitud(page, 'Aaaaaaaaaaaaaaaa#')
   await page.getByRole('button', { name: /Solicitar acceso/ }).click()
-  await expect(page.getByText('La clave repite demasiado los mismos caracteres')).toBeVisible()
+  await expect(page.getByText('La clave es demasiado larga para cifrarse de forma segura. Usa menos caracteres.')).toBeVisible()
   await expect(page.getByLabel('Clave', { exact: true })).toHaveAttribute('aria-invalid', 'true')
   await expect(page.getByText('Revisa los campos marcados.')).toBeVisible()
 })

@@ -693,7 +693,7 @@ if (!ADMIN_CLAVE) {
       exigir(pagina.estado === 200 && pagina.texto.includes('<'), `página de la invitación: ${pagina.estado}`)
       esperarEstado(
         await http('POST', '/api/cuentas/enlaces/invitacion', {
-          formulario: new URLSearchParams({ token: enlace, clave: `Clave-pagina-${SUFIJO}-2026` }),
+          formulario: new URLSearchParams({ token: enlace, clave: `Clave-pagina-${SUFIJO}-2026`, confirmacion: `Clave-pagina-${SUFIJO}-2026` }),
           cabeceras: { Accept: 'text/html' },
         }),
         200,
@@ -730,7 +730,7 @@ await paso('alta del vecino sin clave y activación desde la página del correo'
   exigir(pagina.estado === 200 && pagina.texto.includes('<'), `página de activación: ${pagina.estado}`)
   esperarEstado(
     await http('POST', '/api/cuentas/enlaces/invitacion', {
-      formulario: new URLSearchParams({ token: enlace, clave: claveVecino }),
+      formulario: new URLSearchParams({ token: enlace, clave: claveVecino, confirmacion: claveVecino }),
       cabeceras: { Accept: 'text/html' },
     }),
     200,
@@ -766,7 +766,7 @@ await paso('restablecer la clave: por JSON y desde la página del correo', async
   exigir(pagina.estado === 200 && pagina.texto.includes('<'), `página de restablecimiento: ${pagina.estado}`)
   esperarEstado(
     await http('POST', '/api/cuentas/enlaces/restablecer', {
-      formulario: new URLSearchParams({ token: segundo, clave: `${claveVecino}-dos` }),
+      formulario: new URLSearchParams({ token: segundo, clave: `${claveVecino}-dos`, confirmacion: `${claveVecino}-dos` }),
       cabeceras: { Accept: 'text/html' },
     }),
     200,

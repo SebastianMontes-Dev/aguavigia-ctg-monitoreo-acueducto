@@ -10,7 +10,8 @@ import { fotoSimulada } from './foto.mjs';
 import { ErrorDeApi } from './api.mjs';
 
 export const DOMINIO = 'sim.aguavigia.test';
-const claveAleatoria = () => crypto.randomBytes(18).toString('base64url');
+// ADR-115: la clave pide una mayúscula y un signo. El azar de base64url no siempre los trae; el final `-A` los asegura.
+export const claveAleatoria = () => `${crypto.randomBytes(18).toString('base64url')}-A`;
 
 /** Ejecuta `tarea` sobre cada elemento con como mucho `n` a la vez. Si una falla, las demás ya lanzadas terminan y se relanza el primer error. */
 export async function enParalelo(elementos, n, tarea) {

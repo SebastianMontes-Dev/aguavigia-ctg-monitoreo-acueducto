@@ -127,8 +127,10 @@ test('debeExplicarCadaRechazoDelIngresoSinDecirQueCampoFallo', async ({ page }) 
 
 test('debeVolverAlIngresoConAvisoCuandoLaSesionTermina', async ({ page }) => {
   await simularPanel(page, { yo: (route) => route.fulfill(problema(401, 'sesion-sin-cuenta', 'Sesión revocada')) })
-  await page.goto('/panel/ingreso')
-  await page.evaluate(() => {
+  // Se siembra antes de abrir la página: escribir en sessionStorage estando en /panel/ingreso provoca que un re-render redirija antes de tiempo y limpie el token en carrera con page.goto('/panel').
+  await page.addInitScript(() => {
+    if (window.name === 'sesion-sembrada') return
+    window.name = 'sesion-sembrada'
     sessionStorage.setItem('aguavigia.panel.token', 'revocado')
     sessionStorage.setItem('aguavigia.panel.alcance', 'COMPLETO')
   })
@@ -188,16 +190,16 @@ test('debeCambiarLaClaveAvisandoElCierreDeSesionesYVolverAlIngresoConElMotivo', 
   await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
   await expect(page.getByLabel('Clave nueva', { exact: true })).toBeFocused()
   await expect(page.getByLabel('Clave nueva', { exact: true })).toHaveAttribute('aria-invalid', 'true')
-  await expect(page.getByText('Usa al menos 12 caracteres.')).toBeVisible()
+  await expect(page.getByText('Usa al menos 9 caracteres.')).toBeVisible()
   expect(cambios).toHaveLength(0)
 
   await page.getByRole('button', { name: 'Mostrar clave nueva' }).click()
   await expect(page.getByLabel('Clave nueva', { exact: true })).toHaveAttribute('type', 'text')
-  await page.getByLabel('Clave nueva', { exact: true }).fill('una clave nueva y larga')
+  await page.getByLabel('Clave nueva', { exact: true }).fill('Una-clave-nueva-y-larga')
   await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
   await expect(page).toHaveURL(/\/panel\/ingreso\?motivo=clave$/)
   await expect(page.getByText('Cambiaste tu clave y se cerraron todas las sesiones')).toBeVisible()
-  expect(cambios).toEqual([{ claveActual: 'la clave de hoy', claveNueva: 'una clave nueva y larga' }])
+  expect(cambios).toEqual([{ claveActual: 'la clave de hoy', claveNueva: 'Una-clave-nueva-y-larga' }])
   expect(await page.evaluate(() => sessionStorage.length)).toBe(0)
 })
 
@@ -206,7 +208,7 @@ test('debeMostrarElDetalleDelServidorSiRechazaLaClaveYConservarLaSesion', async 
   await page.route('**/api/veedor/cuenta/clave', (route) => route.fulfill(problema(400, 'peticion-invalida', 'La clave actual no es correcta.')))
   await irASeguridad(page)
   await page.getByLabel('Clave actual', { exact: true }).fill('la clave de hoy')
-  await page.getByLabel('Clave nueva', { exact: true }).fill('una clave nueva y larga')
+  await page.getByLabel('Clave nueva', { exact: true }).fill('Una-clave-nueva-y-larga')
   await page.getByRole('button', { name: /Cambiar clave y cerrar sesiones/ }).click()
   await expect(page.getByRole('alert')).toHaveText('La clave actual no es correcta.')
   await expect(page).toHaveURL(/\/panel\/seguridad$/)

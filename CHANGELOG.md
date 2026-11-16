@@ -2,6 +2,19 @@
 
 Todos los cambios notables de AguaVigía CTG. Las fechas son de Cartagena. El detalle de cada decisión está en [`docs/07-decisiones-clave.md`](docs/07-decisiones-clave.md).
 
+## [1.0.1] — 2026-11-16
+
+Hotfix sobre la 1.0.0 (`hotfix/1.0.1` desde `main`).
+
+### Corregido
+- **Los formularios de los enlaces del correo respondían 403 «Invalid CORS request» (ADR-114).** Activar la cuenta, confirmar el correo, restablecer la clave y confirmar o dar de baja los avisos no llegaban a su caso de uso desde un navegador: la política `no-referrer` hacía que el navegador mandara `Origin: null` en el `POST`, y el CORS lo rechazaba. Esas páginas pasan a `Referrer-Policy: same-origin`, que tampoco manda el token a otro sitio.
+
+### Cambiado
+- **Las páginas de los enlaces del correo se rediseñan (ADR-114)** con la composición del ingreso: presentación con los pasos a la izquierda y la tarea a la derecha, en la paleta del proyecto y sin emojis. Al terminar enlazan al ingreso que corresponde; si el enlace venció, a la pantalla para pedir otro.
+- **Al activar la cuenta o restablecer la clave, la clave se escribe dos veces** (`confirmacion`). Si falta o no coincide, la página vuelve con el error y el token no se gasta.
+- **La clave pide al menos 9 caracteres, una mayúscula y un signo (ADR-115)**, en lugar de 12 caracteres sin repetir demasiado los mismos; siguen el tope de 128 caracteres y 72 bytes y la prohibición de espacios en los extremos. En las páginas de los enlaces del correo, un botón con un ojo dentro de cada campo deja ver la clave; su script va autorizado por hash solo en esas páginas.
+- **Los correos de cuenta se rediseñan (ADR-114):** cabecera «AguaVigía · Cartagena» en serif, tarjeta con la paleta del proyecto (y su oscuro), botón cardenillo con flecha y una caja aparte con la vigencia y la dirección del enlace. Los textos se acortan y la advertencia de seguridad queda una sola vez, al pie. El correo para restablecer la clave ya no habla del panel, porque también lo reciben los vecinos.
+
 ## [1.0.0] — 2026-11-07
 
 Primera entrega completa: backend, frontend y copia analítica. El trabajo sigue Gitflow (`feature/*` → `develop` → `release/*` → `main`).

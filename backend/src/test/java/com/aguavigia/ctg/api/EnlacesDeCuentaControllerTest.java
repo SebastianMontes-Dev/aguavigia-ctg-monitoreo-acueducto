@@ -100,7 +100,8 @@ class EnlacesDeCuentaControllerTest {
                         .param("token", TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("Correo confirmado")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Un administrador revisará")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Un administrador revisará")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"http://localhost:5173/\"")));
 
         verify(verificar).verificar(eq(TOKEN), any(ContextoDeAccion.class));
     }
@@ -135,10 +136,13 @@ class EnlacesDeCuentaControllerTest {
         mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("token", TOKEN)
-                        .param("clave", CLAVE_VALIDA))
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", CLAVE_VALIDA))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Cuenta activada")))
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("ya está activa")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tu cuenta quedó activa")))
+                // Una cuenta de vecino sigue en el ingreso de vecinos.
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"http://localhost:5173/vecino/ingreso\"")));
 
         verify(aceptarInvitacion).aceptar(eq(TOKEN), eq(new ClaveEnClaro(CLAVE_VALIDA)), any(ContextoDeAccion.class));
     }
@@ -173,9 +177,10 @@ class EnlacesDeCuentaControllerTest {
         mockMvc.perform(post("/api/cuentas/enlaces/restablecer")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("token", TOKEN)
-                        .param("clave", CLAVE_VALIDA))
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", CLAVE_VALIDA))
                 .andExpect(status().isOk())
-                .andExpect(content().string(org.hamcrest.Matchers.containsString("Clave cambiada")));
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Tu clave quedó cambiada")));
 
         verify(restablecer).restablecer(eq(TOKEN), eq(new ClaveEnClaro(CLAVE_VALIDA)), any(ContextoDeAccion.class));
     }
@@ -188,7 +193,8 @@ class EnlacesDeCuentaControllerTest {
         mockMvc.perform(post("/api/cuentas/enlaces/restablecer")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("token", "viejo")
-                        .param("clave", CLAVE_VALIDA))
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", CLAVE_VALIDA))
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string(org.hamcrest.Matchers.containsString(
                         "El enlace no es válido o ya venció")));
@@ -203,6 +209,204 @@ class EnlacesDeCuentaControllerTest {
                 .andExpect(content().string(org.hamcrest.Matchers.not(
                         org.hamcrest.Matchers.containsString("<script>alert(1)"))))
                 .andExpect(content().string(org.hamcrest.Matchers.containsString("&lt;script&gt;")));
+    }
+
+    // Hotfix 1.0.1: con `no-referrer` el navegador manda `Origin: null` en el POST del formulario y la cadena de CORS
+    // responde 403 «Invalid CORS request». La cabecera y la etiqueta deben decir lo mismo, y la cadena de seguridad
+    // (importada en este test) no debe pisar la cabecera con su `no-referrer` global.
+    @Test
+    void lasPaginasDeEnlacesDebenUsarLaPoliticaDeReferenciaSameOriginParaQueElFormularioPaseCors() throws Exception {
+        for (String ruta : new String[] {"verificar", "invitacion", "restablecer"}) {
+            mockMvc.perform(get("/api/cuentas/enlaces/" + ruta).param("token", TOKEN))
+                    .andExpect(status().isOk())
+                    .andExpect(header().string("Referrer-Policy", "same-origin"))
+                    .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                            "<meta name=\"referrer\" content=\"same-origin\">")))
+                    .andExpect(content().string(org.hamcrest.Matchers.not(
+                            org.hamcrest.Matchers.containsString("no-referrer"))));
+        }
+    }
+
+    // ADR-115: el ojo necesita un script. La CSP final (con la cadena de seguridad importada) debe autorizar ese script
+    // exacto por su hash, sin `unsafe-inline` para scripts, y conservar el resto de directivas cerradas.
+    @Test
+    void lasPaginasQuePidenClaveDebenAutorizarSoloElScriptDelOjoPorSuHash() throws Exception {
+        String hash = PaginaDeCortesia.hashCsp(PaginaDeCortesia.SCRIPT_VER_CLAVE);
+        for (String ruta : new String[] {"invitacion", "restablecer"}) {
+            String html = mockMvc.perform(get("/api/cuentas/enlaces/" + ruta).param("token", TOKEN))
+                    .andExpect(status().isOk())
+                    .andExpect(header().stringValues("Content-Security-Policy",
+                            "default-src 'none'; style-src 'unsafe-inline'; script-src '" + hash + "'; "
+                                    + "form-action 'self'; base-uri 'none'; frame-ancestors 'none'"))
+                    .andReturn().getResponse().getContentAsString();
+
+            // El hash se calcula sobre el texto que de verdad va entre <script> y </script>.
+            java.util.regex.Matcher script = java.util.regex.Pattern.compile("<script>(.*?)</script>",
+                    java.util.regex.Pattern.DOTALL).matcher(html);
+            org.assertj.core.api.Assertions.assertThat(script.find()).isTrue();
+            org.assertj.core.api.Assertions.assertThat(PaginaDeCortesia.hashCsp(script.group(1))).isEqualTo(hash);
+            org.assertj.core.api.Assertions.assertThat(script.find()).as("un solo script").isFalse();
+        }
+    }
+
+    @Test
+    void elOjoDebeIrDentroDeCadaCampoDeClaveYSalirOcultoHastaQueCorraElScript() throws Exception {
+        String html = mockMvc.perform(get("/api/cuentas/enlaces/invitacion").param("token", TOKEN))
+                .andReturn().getResponse().getContentAsString();
+
+        for (String campo : new String[] {"clave", "confirmacion"}) {
+            org.assertj.core.api.Assertions.assertThat(html).contains(
+                    "<button class=\"ver\" type=\"button\" aria-controls=\"" + campo + "\" aria-pressed=\"false\""
+                            + " aria-label=\"Mostrar la clave\" hidden>");
+        }
+        org.assertj.core.api.Assertions.assertThat(html).contains("minlength=\"9\"");
+    }
+
+    @Test
+    void lasPaginasSinCampoDeClaveNoDebenLlevarScriptNiCambiarLaCspDeLaApi() throws Exception {
+        mockMvc.perform(get("/api/cuentas/enlaces/verificar").param("token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("script-src"))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("<script"))));
+    }
+
+    @Test
+    void unaClaveSinMayusculaDebeVolverAlFormularioConElMotivo() throws Exception {
+        mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", "cartagena#1")
+                        .param("confirmacion", "cartagena#1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "Añade al menos una letra mayúscula a la clave")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<div class=\"caja\" data-invalido>")));
+
+        verifyNoInteractions(aceptarInvitacion);
+    }
+
+    @Test
+    void elFormularioDeInvitacionDebePedirLaClaveDosVeces() throws Exception {
+        mockMvc.perform(get("/api/cuentas/enlaces/invitacion").param("token", TOKEN))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("id=\"clave\" name=\"clave\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "id=\"confirmacion\" name=\"confirmacion\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("Repite la clave")));
+    }
+
+    @Test
+    void dosClavesDistintasEnLaInvitacionDebenVolverAlFormularioSinConsumirElToken() throws Exception {
+        mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", "OtraClaveSegura456#"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        EnlacesDeCuentaController.CLAVES_DISTINTAS)))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("aria-invalid=\"true\"")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "name=\"token\" value=\"" + TOKEN + "\"")))
+                // Las claves nunca vuelven escritas en la página.
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(CLAVE_VALIDA))))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("OtraClaveSegura456#"))));
+
+        verifyNoInteractions(aceptarInvitacion);
+    }
+
+    @Test
+    void laTareaEntraAnimadaAlAbrirElEnlacePeroNoAlVolverConUnError() throws Exception {
+        mockMvc.perform(get("/api/cuentas/enlaces/invitacion").param("token", TOKEN))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<main class=\"pantalla\" data-entrada>")));
+
+        mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", "distinta-de-la-clave"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("<main class=\"pantalla\">")));
+    }
+
+    @Test
+    void unaInvitacionSinConfirmacionDebePedirQueSeRepitaLaClave() throws Exception {
+        mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", CLAVE_VALIDA))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        EnlacesDeCuentaController.FALTA_CONFIRMACION)));
+
+        verifyNoInteractions(aceptarInvitacion);
+    }
+
+    @Test
+    void unaCuentaDelPanelActivadaDebeIrAlIngresoDelPanel() throws Exception {
+        given(aceptarInvitacion.aceptar(eq(TOKEN), any(ClaveEnClaro.class), any(ContextoDeAccion.class)))
+                .willReturn(cuentaDelPanelVerificada());
+
+        mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", CLAVE_VALIDA))
+                .andExpect(status().isOk())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"http://localhost:5173/panel/ingreso\"")));
+    }
+
+    @Test
+    void unEnlaceDeInvitacionVencidoDebeExplicarComoPedirOtro() throws Exception {
+        willThrow(new IllegalArgumentException("El enlace no es válido"))
+                .given(aceptarInvitacion).aceptar(eq("viejo"), any(ClaveEnClaro.class), any(ContextoDeAccion.class));
+
+        mockMvc.perform(post("/api/cuentas/enlaces/invitacion")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", "viejo")
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", CLAVE_VALIDA))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("El enlace no es válido")))
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        "href=\"http://localhost:5173/cuenta/reenviar\"")))
+                // Con un enlace que ya no sirve no hay nada que reintentar: la página no vuelve a pedir la clave.
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString("type=\"password\""))));
+    }
+
+    @Test
+    void dosClavesDistintasEnElRestablecimientoNoDebenCambiarLaClave() throws Exception {
+        mockMvc.perform(post("/api/cuentas/enlaces/restablecer")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", CLAVE_VALIDA)
+                        .param("confirmacion", CLAVE_VALIDA + "x"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                        EnlacesDeCuentaController.CLAVES_DISTINTAS)));
+
+        verifyNoInteractions(restablecer);
+    }
+
+    @Test
+    void unaClaveDebilDebeMarcarseEnElPrimerCampoAntesQueLaConfirmacion() throws Exception {
+        mockMvc.perform(post("/api/cuentas/enlaces/restablecer")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("token", TOKEN)
+                        .param("clave", "corta")
+                        .param("confirmacion", "otra"))
+                .andExpect(status().isBadRequest())
+                .andExpect(content().string(org.hamcrest.Matchers.containsString("al menos 9 caracteres")))
+                .andExpect(content().string(org.hamcrest.Matchers.not(
+                        org.hamcrest.Matchers.containsString(EnlacesDeCuentaController.CLAVES_DISTINTAS))));
+
+        verifyNoInteractions(restablecer);
     }
 
     @Test
