@@ -57,7 +57,8 @@ test('debeFiltrarPorEstadoYDecirSiNingunaCuentaCoincide', async ({ page }) => {
   await tabla(page).getByLabel('Estado').selectOption('RECHAZADA')
   await expect(tabla(page).getByText('Ninguna cuenta coincide con esos filtros.')).toBeVisible()
   await tabla(page).getByLabel('Barrio donde vive').selectOption('manga')
-  expect(visto.listas.some((busqueda) => busqueda.includes('barrioId=manga'))).toBe(true)
+  await expect.poll(() => visto.listas.some((busqueda) => busqueda.includes('barrioId=manga'))).toBe(true)
+  await expect(tabla(page).getByText('Ninguna cuenta coincide con esos filtros.')).toBeVisible()
 })
 
 test('debeInvitarYExplicarUnCorreoYaRegistradoJuntoAlCampo', async ({ page }) => {
