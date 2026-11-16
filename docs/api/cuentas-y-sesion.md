@@ -102,8 +102,9 @@ invitación:        INVITADA ─(la persona fija su clave)───────�
 **Vigencia de los enlaces:** verificación 48 h · invitación 7 días · restablecer clave 30 min. Son de un solo
 uso, y pedir uno nuevo **invalida los anteriores**.
 
-**Política de clave:** entre **12 y 128 caracteres**, sin repetir demasiado los mismos caracteres, y no más
-de 72 bytes en UTF-8. La interfaz debe validarlo en el cliente y mostrar el `detail` del `400` si falla.
+**Política de clave (ADR-115):** al menos **9 caracteres**, con **una mayúscula** y **un signo** (lo que no es letra, cifra
+ni espacio: `#`, `!`, `-`, `*`…). Además, límites técnicos: hasta 128 caracteres, no más de 72 bytes en UTF-8 y sin
+espacios al principio o al final. La interfaz debe validarlo en el cliente y mostrar el `detail` del `400` si falla.
 
 ### Recuperar la clave
 
@@ -124,7 +125,7 @@ cuenta** y el enlace anterior deja de servir. No pidas al usuario que se registr
 ### Cambiar la propia clave con la sesión iniciada
 
 `POST /api/veedor/cuenta/clave` `{ claveActual, claveNueva }` → `204`. Exige la clave actual (un token robado no
-debe bastar). La nueva tiene de 12 a 128 caracteres y debe ser distinta. **Cierra todas las sesiones, la actual
+debe bastar). La nueva cumple la misma política (9 caracteres o más, una mayúscula y un signo) y debe ser distinta. **Cierra todas las sesiones, la actual
 incluida**: tras el `204` el cliente debe llevar al usuario a iniciar sesión con la clave nueva. Se avisa por correo.
 
 | Código | Cuándo |
