@@ -5,7 +5,7 @@ import { solicitarAcceso, type ResultadoSolicitud } from '../../api/cuentas'
 import { Campo } from '../../componentes/Campo'
 import { MarcaRecibido } from '../../componentes/MarcaRecibido'
 import botones from '../../componentes/Botones.module.css'
-import { validarClaveNueva } from '../../dominio/clave'
+import { AYUDA_CLAVE, validarClaveNueva } from '../../dominio/clave'
 import { mensajeSolicitud, NEUTRO } from '../../dominio/mensajes-cuenta'
 import avisos from '../publico/Avisos.module.css'
 import { PaginaCuenta, type Paso } from './PaginaCuenta'
@@ -13,7 +13,7 @@ import { errorDeCorreo } from './formularios'
 import estilos from './Cuenta.module.css'
 
 const PASOS: readonly Paso[] = [
-  { icono: 'documento', titulo: 'Pides acceso', detalle: 'Con tu nombre, tu correo y una clave de 12 caracteres o más.' },
+  { icono: 'documento', titulo: 'Pides acceso', detalle: 'Con tu nombre, tu correo y una clave de 9 caracteres o más, con una mayúscula y un signo.' },
   { icono: 'correo', titulo: 'Confirmas tu correo', detalle: 'Abres el enlace que te enviamos y pulsas el botón de esa página. Vence en 48 horas.' },
   { icono: 'personas', titulo: 'Una persona del equipo lo aprueba', detalle: 'Hasta entonces no puedes entrar al panel: pedir acceso no lo concede.' },
 ]
@@ -102,7 +102,7 @@ export function SolicitarAcceso() {
             value={clave}
             onChange={(evento) => setClave(evento.target.value)}
             error={errores.clave}
-            ayuda="De 12 a 128 caracteres. Puedes pegarla desde tu gestor de contraseñas."
+            ayuda={`${AYUDA_CLAVE} Puedes pegarla desde tu gestor de contraseñas.`}
             ref={campoClave}
           />
           {mensaje && <p className={avisos.alerta} role="alert">{mensaje}</p>}

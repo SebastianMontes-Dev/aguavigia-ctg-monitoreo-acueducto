@@ -1,15 +1,30 @@
 import { validarClaveNueva } from './clave'
 
 describe('validarClaveNueva', () => {
-  it('debePedirAlMenosDoceCaracteres', () => {
-    expect(validarClaveNueva('corta')).toMatch(/12 caracteres/)
-    expect(validarClaveNueva('doce-letras!')).toBeNull()
+  it('debePedirAlMenosNueveCaracteres', () => {
+    expect(validarClaveNueva('Corta-1')).toMatch(/9 caracteres/)
+    expect(validarClaveNueva('Cartagena!')).toBeNull()
+    expect(validarClaveNueva('Aaaaaaaa#')).toBeNull()
+  })
+
+  it('debePedirUnaMayuscula', () => {
+    expect(validarClaveNueva('cartagena#2026')).toMatch(/mayúscula/)
+    expect(validarClaveNueva('Ñandú¿qué')).toBeNull()
+  })
+
+  it('debePedirUnSignoQueNoSeaUnEspacio', () => {
+    expect(validarClaveNueva('Cartagena2026')).toMatch(/signo/)
+    expect(validarClaveNueva('Mi clave larga')).toMatch(/signo/)
+  })
+
+  it('debeRechazarEspaciosAlPrincipioOAlFinal', () => {
+    expect(validarClaveNueva(' Cartagena#1')).toMatch(/espacios/)
   })
 
   it('debeRechazarMasDeSetentaYDosBytesAunqueTengaMenosDeCientoVeinteOchoCaracteres', () => {
-    expect(validarClaveNueva('a'.repeat(72))).toBeNull()
-    expect(validarClaveNueva('a'.repeat(73))).toMatch(/demasiado larga/)
-    expect(validarClaveNueva('ñ'.repeat(37))).toMatch(/demasiado larga/)
+    expect(validarClaveNueva('A#' + 'a'.repeat(70))).toBeNull()
+    expect(validarClaveNueva('A#' + 'a'.repeat(71))).toMatch(/demasiado larga/)
+    expect(validarClaveNueva('A#' + 'ñ'.repeat(36))).toMatch(/demasiado larga/)
   })
 
   it('debeRechazarMasDeCientoVeinteOchoCaracteres', () => {
@@ -17,7 +32,7 @@ describe('validarClaveNueva', () => {
   })
 
   it('debeExigirUnaClaveDistintaDeLaActual', () => {
-    expect(validarClaveNueva('la misma clave larga', 'la misma clave larga')).toMatch(/distinta/)
-    expect(validarClaveNueva('otra clave bien larga', 'la misma clave larga')).toBeNull()
+    expect(validarClaveNueva('La-misma-clave', 'La-misma-clave')).toMatch(/distinta/)
+    expect(validarClaveNueva('Otra-clave-nueva', 'La-misma-clave')).toBeNull()
   })
 })

@@ -7,7 +7,7 @@ import { Campo } from '../../componentes/Campo'
 import campos from '../../componentes/Campo.module.css'
 import bloques from '../../componentes/Bloques.module.css'
 import botones from '../../componentes/Botones.module.css'
-import { validarClaveNueva } from '../../dominio/clave'
+import { AYUDA_CLAVE, validarClaveNueva } from '../../dominio/clave'
 import { mensajeCuenta } from '../../dominio/mensajes-panel'
 import pagina from '../publico/Pagina.module.css'
 import estilos from './Formulario.module.css'
@@ -63,7 +63,7 @@ function CambiarClave() {
         value={nueva}
         onChange={(evento) => setNueva(evento.target.value)}
         error={errores.nueva}
-        ayuda="De 12 a 128 caracteres y distinta de la actual."
+        ayuda={`${AYUDA_CLAVE} Distinta de la actual.`}
         ref={campoNueva}
       />
       <p className={estilos.nota}>Al cambiarla se cierran <strong>todas tus sesiones</strong>, también esta. Ingresarás de nuevo con la clave nueva.</p>

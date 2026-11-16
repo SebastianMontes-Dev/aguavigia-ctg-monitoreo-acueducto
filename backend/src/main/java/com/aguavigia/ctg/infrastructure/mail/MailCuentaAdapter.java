@@ -58,11 +58,10 @@ public class MailCuentaAdapter implements NotificacionCuentaPort {
     public void enviarVerificacionDeCorreo(Usuario usuario, String tokenEnClaro) {
         String html = plantillaConEnlace.renderizar(Map.of(
                 "titulo", "Confirma tu correo",
-                "preencabezado", "Falta un paso para que tu solicitud de acceso llegue a un administrador.",
+                "preencabezado", "Un paso más para que tu solicitud de acceso llegue a revisión.",
                 "nombre", escapar(usuario.nombre()),
-                "mensaje", "Recibimos tu solicitud de acceso al panel del veedor de AguaVigía. "
-                        + "Confirma que esta dirección es tuya y un administrador revisará tu solicitud. "
-                        + "Te avisaremos por correo cuando decida.",
+                "mensaje", "Confirma que esta dirección es tuya. Después, un administrador revisa tu solicitud de "
+                        + "acceso al panel y te avisamos por correo.",
                 "textoBoton", "Confirmar mi correo",
                 "urlAccion", enlace("verificar", tokenEnClaro),
                 "vigencia", vigenciaLegible(TipoTokenCuenta.VERIFICACION_CORREO)));
@@ -80,12 +79,10 @@ public class MailCuentaAdapter implements NotificacionCuentaPort {
     public void enviarActivacionDeVecino(Usuario vecino, String tokenEnClaro) {
         String html = plantillaConEnlace.renderizar(Map.of(
                 "titulo", "Activa tu cuenta",
-                "preencabezado", "Elige tu clave para activar tu cuenta de AguaVigía.",
+                "preencabezado", "Crea tu clave y tu cuenta queda activa.",
                 "nombre", escapar(vecino.nombre()),
-                "mensaje", "Recibimos tu registro en AguaVigía, el monitoreo ciudadano del agua en "
-                        + "Cartagena. Elige la clave con la que entrarás y tu cuenta quedará activa. "
-                        + "Si no fuiste tú, ignora este correo: sin tu clave nadie puede entrar.",
-                "textoBoton", "Elegir mi clave",
+                "mensaje", "Crea tu clave de acceso para activar tu cuenta y comenzar a monitorear los avisos de tu sector.",
+                "textoBoton", "Crear mi clave",
                 "urlAccion", enlace("invitacion", tokenEnClaro),
                 "vigencia", vigenciaLegible(TipoTokenCuenta.INVITACION)));
 
@@ -98,9 +95,8 @@ public class MailCuentaAdapter implements NotificacionCuentaPort {
                 "titulo", "Te invitaron al panel del veedor",
                 "preencabezado", "Crea tu clave y entra al panel de AguaVigía.",
                 "nombre", escapar(invitado.nombre()),
-                "mensaje", escapar(autorDeLaInvitacion.nombre()) + " te dio acceso al panel del veedor "
-                        + "de AguaVigía con el rol " + invitado.permisos().rol() + ". "
-                        + "Elige tu clave y podrás entrar de inmediato.",
+                "mensaje", escapar(autorDeLaInvitacion.nombre()) + " te dio acceso al panel con el rol "
+                        + invitado.permisos().rol() + ". Crea tu clave y entra de inmediato.",
                 "textoBoton", "Crear mi clave y entrar",
                 "urlAccion", enlace("invitacion", tokenEnClaro),
                 "vigencia", vigenciaLegible(TipoTokenCuenta.INVITACION)));
@@ -121,11 +117,10 @@ public class MailCuentaAdapter implements NotificacionCuentaPort {
     public void enviarEnlaceDeRestablecimiento(Usuario usuario, String tokenEnClaro) {
         String html = plantillaConEnlace.renderizar(Map.of(
                 "titulo", "Restablece tu clave",
-                "preencabezado", "Un enlace de 30 minutos para volver a entrar al panel.",
+                "preencabezado", "Elige una clave nueva para volver a entrar.",
                 "nombre", escapar(usuario.nombre()),
-                "mensaje", "Alguien pidió restablecer la clave de tu cuenta del panel del veedor. "
-                        + "Si fuiste tú, elige una clave nueva con el botón de abajo. "
-                        + "Al cambiarla se cerrarán todas las sesiones abiertas de tu cuenta.",
+                "mensaje", "Recibimos un pedido para cambiar la clave de tu cuenta. Al guardar la nueva se cierran "
+                        + "todas las sesiones abiertas.",
                 "textoBoton", "Elegir una clave nueva",
                 "urlAccion", enlace("restablecer", tokenEnClaro),
                 "vigencia", vigenciaLegible(TipoTokenCuenta.RESTABLECER_CLAVE)));

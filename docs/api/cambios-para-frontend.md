@@ -101,7 +101,7 @@ reporte (`verificacion`) y el quórum de un barrio exige que parte del sustento 
     no cumple.
   - **Elegir la clave y activar la cuenta:** el correo trae un enlace que abre la misma pantalla de las invitaciones
     (`GET /api/cuentas/enlaces/invitacion?token=…`, formulario de clave). Al enviarla (`POST /api/cuentas/invitacion`
-    `{token, clave}` o el formulario HTML) la cuenta queda **ACTIVA sin aprobación de nadie**, con clave de 12 caracteres o más.
+    `{token, clave}` o el formulario HTML) la cuenta queda **ACTIVA sin aprobación de nadie**, con clave de 9 caracteres o más, una mayúscula y un signo (ADR-115).
     Así nadie puede registrar el correo de otra persona con una clave suya. Quien perdió el correo lo pide de nuevo con
     `POST /api/cuentas/verificacion/reenvio` `{correo}` (cada 2 minutos como mucho). Mientras la cuenta no tenga clave,
     `POST /api/vecino/sesion` responde `401`, igual que con una clave mala.

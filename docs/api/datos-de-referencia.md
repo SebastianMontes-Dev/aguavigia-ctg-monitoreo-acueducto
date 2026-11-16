@@ -97,7 +97,7 @@ el token solo sirve para configurarlo).
 | Foto | JPEG o PNG · máx. **10 MB** · lado máx. **1600 px** · sin EXIF |
 | Vigencia de sesión del panel | **8 h**, sin renovación |
 | Vigencia de enlaces | verificar cuenta 48 h · invitación 7 d · restablecer clave 30 min · confirmar suscripción 48 h |
-| Clave de una cuenta | 12 a 128 caracteres |
+| Clave de una cuenta | 9 a 128 caracteres, con una mayúscula y un signo (ADR-115) |
 | Bloqueo de cuenta | 5 fallos en 15 min → bloqueada 15 min |
 | Retención de fotos | **Desactivada por defecto** (`aguavigia.mantenimiento.retencion-evidencia.habilitada: false`, `application.yml:132`; `ADR-027`, `ADR-085`). Si se activa, borra el binario de las fotos de más de 365 días, no el reporte |
 | Retención de reportes | **12 meses**: Mongo los borra solos (`ADR-058`). Los eventos de la bitácora son permanentes |

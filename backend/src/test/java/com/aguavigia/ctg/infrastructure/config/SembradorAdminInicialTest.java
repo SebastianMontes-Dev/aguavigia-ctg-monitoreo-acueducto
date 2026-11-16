@@ -133,7 +133,11 @@ class SembradorAdminInicialTest {
         ArgumentCaptor<Usuario> guardado = ArgumentCaptor.forClass(Usuario.class);
         verify(usuarios).guardar(guardado.capture());
         assertThat(guardado.getValue().claveHash().valor()).isEqualTo(HASH);
-        assertThat(claveEnClaro.getValue()).hasSize(20).matches("[A-Za-z2-9]+");
+        // ADR-115: la clave generada cumple la política, con una mayúscula y un signo siempre.
+        assertThat(claveEnClaro.getValue()).hasSize(20).matches("[A-Za-z2-9#%+-]+")
+                .containsPattern("[A-Z]").containsPattern("[#%+-]");
+        assertThat(new com.aguavigia.ctg.domain.ClaveEnClaro(claveEnClaro.getValue()).valor())
+                .isEqualTo(claveEnClaro.getValue());
     }
 
     @Test

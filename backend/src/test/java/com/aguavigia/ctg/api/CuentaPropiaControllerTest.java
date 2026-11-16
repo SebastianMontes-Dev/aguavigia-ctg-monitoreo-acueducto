@@ -40,7 +40,7 @@ class CuentaPropiaControllerTest {
 
     private static final String TOKEN = "token-de-prueba";
     private static final String CUERPO = """
-            {"claveActual":"la-clave-de-hoy-123","claveNueva":"la-clave-nueva-456"}""";
+            {"claveActual":"la-clave-de-hoy-123","claveNueva":"La-clave-nueva-456"}""";
 
     @Autowired
     private MockMvc mockMvc;
@@ -94,7 +94,7 @@ class CuentaPropiaControllerTest {
                 .andExpect(status().isNoContent());
 
         verify(cambiarClave).cambiar(eq(new UsuarioId(AutenticacionDePrueba.USUARIO_ID)), eq("la-clave-de-hoy-123"),
-                eq(new ClaveEnClaro("la-clave-nueva-456")), any());
+                eq(new ClaveEnClaro("La-clave-nueva-456")), any());
     }
 
     @Test

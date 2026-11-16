@@ -365,7 +365,7 @@ paths:
           description: Clave cambiada; todas las sesiones cerradas
         "400":
           description: "La clave actual no es correcta, la nueva no cumple la polí\
-            tica (12 a 128 caracteres) o es igual a la actual"
+            tica (9 a 128 caracteres, una mayúscula y un signo) o es igual a la actual"
         "423":
           description: Cuenta bloqueada por intentos fallidos
         "401":
@@ -1158,8 +1158,8 @@ paths:
       tags:
       - Cuentas
       summary: Pantalla del enlace para restablecer la clave
-      description: Muestra el formulario para elegir la clave nueva. No consume el
-        token.
+      description: "Muestra el formulario para elegir la clave nueva, que se escribe\
+        \ dos veces. No consume el token."
       operationId: pantallaRestablecer
       parameters:
       - name: token
@@ -1179,7 +1179,8 @@ paths:
       - Cuentas
       summary: Restablecer la clave desde el formulario de la pantalla
       description: "Mismo efecto que POST /api/cuentas/clave, pero recibe el formulario\
-        \ y responde HTML."
+        \ y responde HTML. `confirmacion` repite la clave: si falta o no coincide,\
+        \ la página vuelve con el error y no se consume el token."
       operationId: restablecerClave
       requestBody:
         content:
@@ -1194,6 +1195,8 @@ paths:
                   type: string
                 clave:
                   type: string
+                confirmacion:
+                  type: string
       responses:
         "200":
           description: OK
@@ -1206,7 +1209,8 @@ paths:
       tags:
       - Cuentas
       summary: Pantalla del enlace de invitación
-      description: Muestra el formulario para elegir la clave. No consume el token.
+      description: "Muestra el formulario para elegir la clave, que se escribe dos\
+        \ veces. No consume el token."
       operationId: pantallaInvitacion
       parameters:
       - name: token
@@ -1226,7 +1230,8 @@ paths:
       - Cuentas
       summary: Aceptar la invitación desde el formulario de la pantalla
       description: "Mismo efecto que POST /api/cuentas/invitacion, pero recibe el\
-        \ formulario y responde HTML."
+        \ formulario y responde HTML. `confirmacion` repite la clave: si falta o no\
+        \ coincide, la página vuelve con el error y no se consume el token."
       operationId: aceptarInvitacion
       requestBody:
         content:
@@ -1240,6 +1245,8 @@ paths:
                 token:
                   type: string
                 clave:
+                  type: string
+                confirmacion:
                   type: string
       responses:
         "200":
@@ -3374,7 +3381,8 @@ components:
         claveNueva:
           minLength: 1
           type: string
-          description: "La nueva: de 12 a 128 caracteres y distinta de la actual."
+          description: "La nueva: de 9 a 128 caracteres, con una mayuscula y un signo,\
+            \ y distinta de la actual."
       description: Cambiar la propia clave con la sesión iniciada
     SolicitudCorte:
       required:
@@ -3861,7 +3869,8 @@ components:
         clave:
           minLength: 1
           type: string
-          description: Minimo 12 caracteres. La politica completa vive en ClaveEnClaro.
+          description: "Al menos 9 caracteres, con una mayuscula y un signo. La politica\
+            \ completa vive en ClaveEnClaro."
         barrioId:
           type: string
           description: "Opcional: slug del barrio donde vives (uno de `GET /api/sectores`).\

@@ -43,7 +43,7 @@ public class CuentaPropiaController {
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Clave cambiada; todas las sesiones cerradas"),
             @ApiResponse(responseCode = "400", description = "La clave actual no es correcta, la nueva no cumple la política "
-                    + "(12 a 128 caracteres) o es igual a la actual"),
+                    + "(9 a 128 caracteres, una mayúscula y un signo) o es igual a la actual"),
             @ApiResponse(responseCode = "423", description = "Cuenta bloqueada por intentos fallidos")
     })
     @PostMapping("/clave")

@@ -1,5 +1,10 @@
 package com.aguavigia.ctg.api;
 
+import com.aguavigia.ctg.api.PaginaDeCortesia.Enlace;
+import com.aguavigia.ctg.api.PaginaDeCortesia.Errores;
+import com.aguavigia.ctg.api.PaginaDeCortesia.Formulario;
+import com.aguavigia.ctg.api.PaginaDeCortesia.Paso;
+import com.aguavigia.ctg.api.PaginaDeCortesia.Presentacion;
 import com.aguavigia.ctg.api.dto.SolicitudSuscripcion;
 import com.aguavigia.ctg.api.dto.SuscripcionRespuesta;
 import com.aguavigia.ctg.api.mapper.SuscripcionApiMapper;
@@ -15,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ProblemDetail;
@@ -28,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 /**
  * M4 — RF012-RF015: suscribirse, confirmar por doble opt-in y darse de baja en 1 clic. Los enlaces de los
  * correos son GET que solo muestran un botón; confirmar y cancelar son POST (`ADR-054`).
@@ -39,19 +47,39 @@ public class SuscripcionController {
 
     private static final String RUTA = "/api/suscripciones/";
 
+    private static final List<Paso> PASOS_CONFIRMACION = List.of(
+            new Paso("Pediste los avisos", "Eligiendo tus barrios en AguaVigía."),
+            new Paso("Confirmas tu correo", "Con el botón de esta página."),
+            new Paso("Recibes los avisos", "Cuando cambie el estado del servicio en tus barrios."));
+    private static final List<Paso> PASOS_BAJA = List.of(
+            new Paso("Recibías avisos", "Del estado del servicio en tus barrios."),
+            new Paso("Te das de baja", "Con el botón de esta página."),
+            new Paso("No llegan más correos", "Puedes volver a pedirlos cuando quieras."));
+    private static final Presentacion CONFIRMACION = new Presentacion("Avisos por correo", "Confirma tus avisos",
+            "Un paso más: confirma que quieres recibir los avisos del estado del servicio.", PASOS_CONFIRMACION, 1);
+    private static final Presentacion CONFIRMACION_LISTA = new Presentacion("Avisos por correo", "Suscripción confirmada",
+            "Ya vas a recibir un aviso cuando cambie el estado del servicio en tu sector.", PASOS_CONFIRMACION, 2);
+    private static final Presentacion BAJA = new Presentacion("Avisos por correo", "Darte de baja",
+            "Si sigues, dejarás de recibir avisos de AguaVigía para ese sector.", PASOS_BAJA, 1);
+    private static final Presentacion BAJA_LISTA = new Presentacion("Avisos por correo", "Baja confirmada",
+            "Ya no vas a recibir más avisos de AguaVigía para ese sector.", PASOS_BAJA, 2);
+
     private final SuscribirseUseCase suscribirse;
     private final ConfirmarSuscripcionUseCase confirmarSuscripcion;
     private final CancelarSuscripcionUseCase cancelarSuscripcion;
     private final SuscripcionApiMapper mapper;
+    private final String urlFrontend;
 
     public SuscripcionController(SuscribirseUseCase suscribirse,
                                   ConfirmarSuscripcionUseCase confirmarSuscripcion,
                                   CancelarSuscripcionUseCase cancelarSuscripcion,
-                                  SuscripcionApiMapper mapper) {
+                                  SuscripcionApiMapper mapper,
+                                  @Value("${aguavigia.app.url-frontend:http://localhost:5173}") String urlFrontend) {
         this.suscribirse = suscribirse;
         this.confirmarSuscripcion = confirmarSuscripcion;
         this.cancelarSuscripcion = cancelarSuscripcion;
         this.mapper = mapper;
+        this.urlFrontend = urlFrontend.replaceAll("/+$", "");
     }
 
     @Operation(summary = "Suscribirse a los avisos de uno o más sectores",
@@ -81,8 +109,9 @@ public class SuscripcionController {
     @ApiResponse(responseCode = "200", description = "Página con el botón")
     @GetMapping(value = "/confirmar", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> pantallaConfirmar(@RequestParam String token) {
-        return PaginaDeCortesia.formulario(HttpStatus.OK, "Confirma tu suscripción",
-                "Un paso más: confirma que quieres recibir los avisos del estado del servicio.", RUTA + "confirmar", token, false, "Confirmar mi suscripción");
+        return PaginaDeCortesia.formulario(HttpStatus.OK, CONFIRMACION, new Formulario(RUTA + "confirmar", token,
+                "¿Quieres recibir los avisos?", "Te escribimos solo cuando cambie el estado del servicio en tus barrios.",
+                "Confirmar mi suscripción", "Cada aviso trae un enlace para darte de baja.", false), Errores.NINGUNO);
     }
 
     @Operation(summary = "Confirmar la suscripción (doble opt-in)",
@@ -103,10 +132,11 @@ public class SuscripcionController {
         if (prefiereHtml(accept)) {
             try {
                 confirmarSuscripcion.confirmar(token);
-                return PaginaDeCortesia.resultado("Suscripción confirmada",
-                        "Listo. Ya vas a recibir un aviso cuando cambie el estado del servicio en tu sector.", true);
+                return PaginaDeCortesia.listo(CONFIRMACION_LISTA, "Listo",
+                        "Tu correo quedó confirmado para los avisos.", List.of(new Enlace("Ver el mapa", urlFrontend + "/")));
             } catch (IllegalArgumentException e) {
-                return PaginaDeCortesia.resultado("No pudimos confirmar tu suscripción", e.getMessage(), false);
+                return PaginaDeCortesia.fallo(CONFIRMACION, "No pudimos confirmar tu suscripción", e.getMessage(),
+                        new Enlace("Pide los avisos otra vez", urlFrontend + "/avisos"));
             }
         }
         var suscripcion = confirmarSuscripcion.confirmar(token);
@@ -121,8 +151,9 @@ public class SuscripcionController {
     @ApiResponse(responseCode = "200", description = "Página con el botón")
     @GetMapping(value = "/cancelar", produces = MediaType.TEXT_HTML_VALUE)
     public ResponseEntity<String> pantallaCancelar(@RequestParam String token) {
-        return PaginaDeCortesia.formulario(HttpStatus.OK, "Darte de baja",
-                "Si sigues, dejarás de recibir avisos de AguaVigía para ese sector.", RUTA + "cancelar", token, false, "Darme de baja");
+        return PaginaDeCortesia.formulario(HttpStatus.OK, BAJA, new Formulario(RUTA + "cancelar", token,
+                "¿Dejas de recibir los avisos?", "No te llegarán más correos de AguaVigía para ese sector.",
+                "Darme de baja", null, false), Errores.NINGUNO);
     }
 
     @Operation(summary = "Darse de baja en un clic (RF015)",
@@ -142,9 +173,11 @@ public class SuscripcionController {
         if (prefiereHtml(accept)) {
             try {
                 cancelarSuscripcion.cancelar(token);
-                return PaginaDeCortesia.resultado("Baja confirmada", "Ya no vas a recibir más avisos de AguaVigía para ese sector.", true);
+                return PaginaDeCortesia.listo(BAJA_LISTA, "Listo", "Ya no vas a recibir más avisos de AguaVigía para ese sector.",
+                        List.of(new Enlace("Ver el mapa", urlFrontend + "/")));
             } catch (IllegalArgumentException e) {
-                return PaginaDeCortesia.resultado("No pudimos procesar la baja", e.getMessage(), false);
+                return PaginaDeCortesia.fallo(BAJA, "No pudimos procesar la baja", e.getMessage(),
+                        new Enlace("Gestiona tus avisos", urlFrontend + "/avisos"));
             }
         }
         var suscripcion = cancelarSuscripcion.cancelar(token);
