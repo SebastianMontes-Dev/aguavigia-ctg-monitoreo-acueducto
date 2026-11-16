@@ -49,7 +49,7 @@ class AltaYRecuperacionDeCuentaTest {
     private static final ClaveHash HASH =
             new ClaveHash("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy");
     private static final CorreoElectronico CORREO = new CorreoElectronico("ana@ejemplo.org");
-    private static final ClaveEnClaro CLAVE = new ClaveEnClaro("clave-larga-y-variada");
+    private static final ClaveEnClaro CLAVE = new ClaveEnClaro("Clave-larga-y-variada");
     private static final ContextoDeAccion CONTEXTO = ContextoDeAccion.anonimo("10.0.0.1");
 
     private UsuarioRepository usuarios;

@@ -9,6 +9,6 @@ public record SolicitudCambioClave(
         @Schema(description = "La clave de hoy. Sin ella un token robado bastaría para cambiarla.")
         String claveActual,
         @NotBlank
-        @Schema(description = "La nueva: de 12 a 128 caracteres y distinta de la actual.")
+        @Schema(description = "La nueva: de 9 a 128 caracteres, con una mayuscula y un signo, y distinta de la actual.")
         String claveNueva) {
 }

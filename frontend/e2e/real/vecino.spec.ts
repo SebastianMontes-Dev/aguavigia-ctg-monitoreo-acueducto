@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test, type Page } from '@playwright/test'
-import { correoDe, puntoDentroDe, rutaEnCorreo } from './ayudantes'
+import { correoDe, enlaceEnCorreo, puntoDentroDe } from './ayudantes'
 
 // Un barrio grande: su umbral de vecinos es alto y un solo reporte de prueba no mueve su estado.
 const BARRIO = { id: 'san-pedro-martir', nombre: 'San Pedro Martir', busqueda: 'san pedro martir' }
@@ -16,7 +16,8 @@ async function ingresar(page: Page, correo: string, clave: string) {
 /**
  * Registro de vecino → enlace en Mailhog → página HTML del backend para elegir la clave → ingreso en la SPA → verificar el barrio con una
  * geolocalización simulada dentro del polígono → reportar y ver `CUENTA_VERIFICADA`. Pide `RATE_LIMIT_FACTOR_CUENTAS=10` en el backend:
- * `/api/cuentas/**` admite 10 peticiones cada 10 minutos por IP y este flujo gasta 3.
+ * `/api/cuentas/**` admite 10 peticiones cada 10 minutos por IP y este flujo gasta 4 (el registro, abrir el enlace y dos envíos,
+ * el primero con las claves distintas).
  */
 test('debeRegistrarseElegirLaClaveVerificarElBarrioYReportarComoVecino', async ({ page, request, context }) => {
   const correo = `vecino-${randomUUID()}@example.com`
@@ -44,12 +45,18 @@ test('debeRegistrarseElegirLaClaveVerificarElBarrioYReportarComoVecino', async (
   await ingresar(page, correo, clave)
   await expect(page.getByRole('alert').filter({ hasText: 'Correo o clave incorrectos' })).toBeVisible()
 
-  // 3. El enlace del correo abre la página HTML del backend: ahí se elige la clave y la cuenta queda activa.
+  // 3. El enlace del correo abre la página HTML del backend, en su propio origen como lo abre una persona: ahí se elige la
+  //    clave, escrita dos veces, y la cuenta queda activa.
   const cuerpo = await correoDe(request, correo, (texto) => texto.includes('/enlaces/invitacion?token='))
-  await page.goto(rutaEnCorreo(cuerpo, '/api/cuentas/enlaces/invitacion'))
-  await page.locator('#clave').fill(clave)
+  await page.goto(enlaceEnCorreo(cuerpo, '/api/cuentas/enlaces/invitacion'))
+  await page.getByLabel('Clave nueva').fill(clave)
+  await page.getByLabel('Repite la clave').fill(`${clave}-otra`)
   await page.getByRole('button', { name: 'Crear mi clave' }).click()
-  await expect(page.locator('body')).not.toContainText(/inválido|venci/i)
+  await expect(page.getByText('Las dos claves no coinciden')).toBeVisible()
+  await page.getByLabel('Clave nueva').fill(clave)
+  await page.getByLabel('Repite la clave').fill(clave)
+  await page.getByRole('button', { name: 'Crear mi clave' }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Tu cuenta quedó activa' })).toBeVisible()
 
   // 4. Ingreso en la SPA y perfil: el barrio aún sin verificar.
   await ingresar(page, correo, clave)

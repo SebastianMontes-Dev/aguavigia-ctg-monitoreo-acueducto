@@ -45,8 +45,9 @@ class SeguridadPorDefectoTest {
     void unaRutaPublicaDeclaradaDebeResponderConLasCabecerasDeSeguridad() throws Exception {
         mockMvc.perform(get("/api/sectores/prueba-rate-limit/sin-proteger"))
                 .andExpect(status().isOk())
-                .andExpect(header().string("Content-Security-Policy",
-                        org.hamcrest.Matchers.containsString("frame-ancestors 'none'")))
+                // Sin scripts en el resto de la API: solo las páginas que piden clave autorizan el suyo (ADR-115).
+                .andExpect(header().string("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'; "
+                        + "form-action 'self'; base-uri 'none'; frame-ancestors 'none'"))
                 .andExpect(header().string("Referrer-Policy", "no-referrer"))
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"));
     }

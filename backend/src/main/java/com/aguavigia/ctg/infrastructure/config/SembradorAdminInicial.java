@@ -127,10 +127,16 @@ public class SembradorAdminInicial {
         SecureRandom aleatorio = new SecureRandom();
         // Sin caracteres que se confunden al copiarlos del log (0/O, 1/l/I).
         String alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+        String mayusculas = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+        // Signos que no rompen la copia desde una consola ni hay que escapar en PowerShell o bash.
+        String signos = "#%+-";
         StringBuilder clave = new StringBuilder(20);
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 18; i++) {
             clave.append(alfabeto.charAt(aleatorio.nextInt(alfabeto.length())));
         }
+        // La política (ADR-115) pide una mayúscula y un signo: se garantizan en vez de esperar que el azar los ponga.
+        clave.insert(1 + aleatorio.nextInt(clave.length() - 1), mayusculas.charAt(aleatorio.nextInt(mayusculas.length())));
+        clave.insert(1 + aleatorio.nextInt(clave.length() - 1), signos.charAt(aleatorio.nextInt(signos.length())));
         return new ClaveEnClaro(clave.toString()).valor();
     }
 }

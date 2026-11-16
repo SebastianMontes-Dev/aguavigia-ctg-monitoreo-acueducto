@@ -45,8 +45,8 @@ class CambiarClaveServiceTest {
     private static final CorreoElectronico CORREO = new CorreoElectronico("ana@ejemplo.org");
     private static final UsuarioId ID = new UsuarioId("u-1");
     private static final ContextoDeAccion CONTEXTO = new ContextoDeAccion(ID, "10.0.0.1");
-    private static final String CLAVE_ACTUAL = "la-clave-de-hoy-123";
-    private static final ClaveEnClaro CLAVE_NUEVA = new ClaveEnClaro("la-clave-nueva-456");
+    private static final String CLAVE_ACTUAL = "La-clave-de-hoy-123";
+    private static final ClaveEnClaro CLAVE_NUEVA = new ClaveEnClaro("La-clave-nueva-456");
 
     private UsuarioRepository usuarios;
     private CifradorClavePort cifrador;

@@ -37,15 +37,22 @@ pasan por ahí.
 | Ruta | `GET` | `POST` (form) |
 |---|---|---|
 | `…/verificar?token=` | Pantalla con un botón «Confirmar mi correo». | Verifica y muestra el resultado. |
-| `…/invitacion?token=` | Formulario para fijar la clave. | Acepta la invitación con `token` y `clave`. |
-| `…/restablecer?token=` | Formulario para fijar la clave nueva. | Cambia la clave con `token` y `clave`. |
+| `…/invitacion?token=` | Formulario para fijar la clave, escrita dos veces. | Acepta la invitación con `token`, `clave` y `confirmacion`. |
+| `…/restablecer?token=` | Formulario para fijar la clave nueva, escrita dos veces. | Cambia la clave con `token`, `clave` y `confirmacion`. |
 
 **El `GET` nunca consume el token**: solo muestra la pantalla. Es a propósito, porque los antivirus de
 correo y las vistas previas abren los enlaces, y un `GET` que gastara el token dejaría al usuario con un
 enlace «ya usado» antes de haberlo visto. El token solo se gasta con el `POST`.
 
-Las páginas llevan `Cache-Control: no-store` y `<meta name="referrer" content="no-referrer">`, para que el
-token no quede en cachés ni se filtre por la cabecera `Referer`.
+Las páginas llevan `Cache-Control: no-store` y `Referrer-Policy: same-origin` (cabecera y `<meta>`), para que el
+token no quede en cachés ni salga hacia otro sitio por la cabecera `Referer`. **No uses `no-referrer` aquí:** con
+esa política el navegador manda `Origin: null` en el `POST` del formulario y el CORS responde 403 «Invalid CORS
+request» (`ADR-114`). Si `confirmacion` falta o no coincide con `clave`, la página vuelve con el error y el token
+sigue sin usarse.
+
+Las dos páginas que piden clave traen un botón con un ojo dentro de cada campo para ver lo escrito (`ADR-115`). Su
+script va en línea y se autoriza por hash: esas respuestas llevan su propia `Content-Security-Policy`, la misma de la
+API más `script-src 'sha256-…'`. Sin JavaScript el botón no aparece y el formulario funciona igual.
 
 ### Si el frontend nuevo sirve sus propias pantallas
 

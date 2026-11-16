@@ -83,8 +83,9 @@ class MailCuentaAdapterTest {
         verify(mailSender).send(captor.capture());
         String cuerpo = captor.getValue().getContent().toString();
         assertThat(cuerpo).contains(URL_PUBLICA + "/api/cuentas/enlaces/invitacion?token=tok-activ")
-                .doesNotContain("panel").doesNotContain("administrador");
-        assertThat(captor.getValue().getSubject()).doesNotContain("panel");
+                // Sin distinguir mayúsculas: la cabecera anterior decía «Panel del veedor» y se colaba en este correo.
+                .doesNotContainIgnoringCase("panel").doesNotContainIgnoringCase("administrador");
+        assertThat(captor.getValue().getSubject()).doesNotContainIgnoringCase("panel");
     }
 
     @Test
@@ -99,6 +100,28 @@ class MailCuentaAdapterTest {
         adaptador.enviarEnlaceDeRestablecimiento(usuario("Ana"), "tok-reset");
 
         assertThat(cuerpoEnviado()).contains(URL_PUBLICA + "/api/cuentas/enlaces/restablecer?token=tok-reset");
+    }
+
+    @Test
+    void elCorreoDeRestablecimientoNoDebeHablarDelPanelPorqueTambienLoRecibenLosVecinos() throws Exception {
+        adaptador.enviarEnlaceDeRestablecimiento(vecino("Vecina"), "tok-reset");
+
+        assertThat(cuerpoEnviado()).doesNotContainIgnoringCase("panel")
+                .contains("se cierran todas las sesiones abiertas");
+    }
+
+    @Test
+    void elCorreoDebeLlevarLaVigenciaYLaDireccionDelEnlaceEnLaCajaDeAyuda() throws Exception {
+        adaptador.enviarActivacionDeVecino(vecino("Vecina"), "tok-activ");
+
+        String cuerpo = cuerpoEnviado();
+        assertThat(cuerpo).contains("AguaVigía · Cartagena")
+                .contains("El enlace vence en ")
+                .contains("word-break:break-all")
+                .contains("Crear mi clave &rarr;");
+        // La dirección va dos veces: en el botón y escrita en la caja, por si el botón no abre.
+        assertThat(cuerpo.split(java.util.regex.Pattern.quote("/api/cuentas/enlaces/invitacion?token=tok-activ"), -1))
+                .hasSize(3);
     }
 
     @Test
