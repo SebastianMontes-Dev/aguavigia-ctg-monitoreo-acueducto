@@ -127,8 +127,10 @@ test('debeExplicarCadaRechazoDelIngresoSinDecirQueCampoFallo', async ({ page }) 
 
 test('debeVolverAlIngresoConAvisoCuandoLaSesionTermina', async ({ page }) => {
   await simularPanel(page, { yo: (route) => route.fulfill(problema(401, 'sesion-sin-cuenta', 'Sesión revocada')) })
-  await page.goto('/panel/ingreso')
-  await page.evaluate(() => {
+  // Se siembra antes de abrir la página: escribir en sessionStorage estando en /panel/ingreso provoca que un re-render redirija antes de tiempo y limpie el token en carrera con page.goto('/panel').
+  await page.addInitScript(() => {
+    if (window.name === 'sesion-sembrada') return
+    window.name = 'sesion-sembrada'
     sessionStorage.setItem('aguavigia.panel.token', 'revocado')
     sessionStorage.setItem('aguavigia.panel.alcance', 'COMPLETO')
   })
