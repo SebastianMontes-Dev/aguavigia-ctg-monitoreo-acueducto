@@ -2,6 +2,14 @@
 
 Todos los cambios notables de AguaVigía CTG. Las fechas son de Cartagena. El detalle de cada decisión está en [`docs/07-decisiones-clave.md`](docs/07-decisiones-clave.md).
 
+## [1.0.2] — 2026-11-17
+
+Entrega solo de documentación (`release/1.0.2` desde `develop`). No cambia el comportamiento del sistema.
+
+### Cambiado
+- **README preparado para la presentación del proyecto:** tabla de integrantes, versión vigente, tablero de Power BI, instrucciones para correr el frontend y las operaciones de la API (91).
+- Dependabot propone sus actualizaciones contra `develop`.
+
 ## [1.0.1] — 2026-11-16
 
 Hotfix sobre la 1.0.0 (`hotfix/1.0.1` desde `main`).
