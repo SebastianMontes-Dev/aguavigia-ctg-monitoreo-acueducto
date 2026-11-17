@@ -15,13 +15,13 @@
 
 ## Integrantes
 
-| Integrante | Rol en el proyecto |
-|---|---|
-| **Sebastian Andres Montes Olivera** | Backend: arquitectura, API, bases de datos, ingesta y simulación |
-| **Yordi Pardo Pajaro** | Frontend: interfaz web (React), diseño y accesibilidad |
-| **Carlos Mario Bechara Arias** | Integrante del equipo |
-| **Jose Daniel Zambrano Luna** | Integrante del equipo |
-| **Rafael Eduardo Sarmiento Peña** | Integrante del equipo |
+Proyecto desarrollado en equipo; todos los integrantes participaron en su construcción.
+
+- Carlos Mario Bechara Arias
+- Yordi Pardo Pajaro
+- Jose Daniel Zambrano Luna
+- Rafael Eduardo Sarmiento Peña
+- Sebastian Andres Montes Olivera
 
 ## El problema
 
