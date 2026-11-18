@@ -9,19 +9,19 @@
 ![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
 ![Redis 7](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.1-0F766E)
+![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.2-0F766E)
 
 > Proyecto académico e independiente: no está afiliado a Aguas de Cartagena S.A. E.S.P. ni a ninguna entidad distrital. Corre en local.
 
 ## Integrantes
 
-| Integrante | Rol en el proyecto |
-|---|---|
-| **Sebastian Andres Montes Olivera** | Backend: arquitectura, API, bases de datos, ingesta y simulación |
-| **Yordi Pardo Pajaro** | Frontend: interfaz web (React), diseño y accesibilidad |
-| **Carlos Mario Bechara Arias** | Integrante del equipo |
-| **Jose Daniel Zambrano Luna** | Integrante del equipo |
-| **Rafael Eduardo Sarmiento Peña** | Integrante del equipo |
+Proyecto desarrollado en equipo; todos los integrantes participaron en su construcción.
+
+- Carlos Mario Bechara Arias
+- Yordi Pardo Pajaro
+- Jose Daniel Zambrano Luna
+- Rafael Eduardo Sarmiento Peña
+- Sebastian Andres Montes Olivera
 
 ## El problema
 
@@ -129,7 +129,7 @@ Todo está en [`docs/`](docs/README.md), con una guía por tema:
 
 ## Estado del proyecto
 
-**Versión 1.0.1.** El backend y el frontend (fases FE0 a FE7) están construidos y documentados, y la copia analítica en PostgreSQL tiene sus tres fases. La 1.0.1 corrige los formularios de los enlaces del correo (activar cuenta, restablecer clave) y endurece la política de clave. Los sensores IoT están construidos pero inactivos a propósito. El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md).
+**Versión 1.0.2.** El backend y el frontend (fases FE0 a FE7) están construidos y documentados, y la copia analítica en PostgreSQL tiene sus tres fases. La 1.0.1 corrigió los formularios de los enlaces del correo y endureció la política de clave; la 1.0.2 solo actualiza la documentación de entrada (README). Los sensores IoT están construidos pero inactivos a propósito. El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md).
 
 El trabajo sigue **Gitflow**: `main` y `develop` están protegidas y todo cambio entra por Pull Request con revisión y CI en verde.
 
