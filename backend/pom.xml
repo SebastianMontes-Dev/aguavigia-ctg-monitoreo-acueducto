@@ -19,7 +19,7 @@
 
   <groupId>com.aguavigia</groupId>
   <artifactId>ctg-backend</artifactId>
-  <version>1.0.2</version>
+  <version>1.0.3</version>
   <name>ctg-backend</name>
   <description>AguaVigia CTG - backend</description>
 
