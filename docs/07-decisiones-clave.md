@@ -524,7 +524,7 @@ que venza el bloqueo (molestia, no brecha); no hay enfriamiento por cuenta en el
 - **Pierde.** Un servicio más que operar; la vista puede ir hasta 5 minutos por detrás de Mongo; la fórmula del Índice existe dos veces (Java/Mongo y SQL), y por eso hay una prueba de paridad
   (`ParidadMongoPostgresIT`) que compara cortes variados —parciales, anulados, expirados, antiguos, de fin de mes y con fracciones de segundo— en las dos bases.
 - **Se revierte** quitando el servicio, el paquete `persistence/sql` y las rutas `/api/analitica/**`; Mongo no se entera.
-- **Pendiente (fases 2 y 3, [09](09-postgresql-fase-1.md) §10):** el vigilante completo de integridad, la bitácora inmutable con respaldo restaurable y las vistas de datos abiertos.
+- **Pendiente (fases 2 y 3, [09](09-postgresql-fase-1.md) §10):** el vigilante completo de integridad, la bitácora inmutable con respaldo restaurable y las vistas de datos abiertos. *Cerrado el 2026-11-06 por el ADR-113 (§17), salvo las vistas de datos abiertos más allá del rol de solo lectura.*
 
 ## 6. Lectura del cumplimiento en la ficha del barrio (2026-10-25)
 

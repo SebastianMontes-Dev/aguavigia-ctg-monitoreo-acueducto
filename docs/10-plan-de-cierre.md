@@ -1,6 +1,6 @@
 # 10 · Plan de cierre: lo que falta para presentar el proyecto entero
 
-**Estado: propuesto el 2026-11-06 (hora de Cartagena), sin ejecutar.** Parte de `origin/develop` en `3d48f238` (FE0–FE7 del frontend ya integradas) y de `origin/main` en `877a4871`.
+**Estado (2026-11-08): ejecutado y entregado como `v1.0.0`; lo único que sigue abierto está al final de §9.** Propuesto el 2026-11-06 (hora de Cartagena). Parte de `origin/develop` en `3d48f238` (FE0–FE7 del frontend ya integradas) y de `origin/main` en `877a4871`.
 Cierra tres frentes: **(A)** los pendientes que dejó Yordy y los que ya estaban abiertos, **(B)** PostgreSQL de punta a punta (fases 2 y 3 de
 [09](09-postgresql-fase-1.md) §10) y **(C)** un volumen de datos aleatorios centrado en **reportes** y no en cuentas, que alimenta la simulación.
 Al terminar, `main` lleva la etiqueta `v1.0.0` y el sistema arranca con un solo `docker compose up`.
@@ -209,3 +209,10 @@ Los pasos 2 a 7 están hechos y verificados, cada uno en su rama local (apiladas
 - La prueba de los cinco segundos con otra persona (A5).
 - Los PR, la revisión y el CI en GitHub de cada rama; el paso 9 (auditoría final) y el 10-11 (release `1.0.0` y etiqueta `v1.0.0`).
 - Ver correr en GitHub Actions el cambio del paso 2.
+
+## 10. Cierre (2026-11-08)
+
+- Los PR #134, #135 y #136 (pasos 2 a 7 y este documento) se fusionaron a `develop`; `release/1.0.0` entró a `main` por el #137 con la etiqueta anotada `v1.0.0`, el #138 devolvió `main` a `develop` y el #139 apunta Dependabot a `develop`. Issues #84, #66 y #67 cerrados; el #133 de Dependabot, cerrado. No queda ningún PR abierto.
+- **Paso 9 hecho:** informe en [11 · Auditoría final](11-auditoria-final.md): veredicto *terminado con reservas*, sin hallazgos Bloqueantes ni Altos, y cuatro correcciones documentales. Es una auditoría interna parcial; el prompt completo sigue disponible.
+- **Hotfix 1.0.1 (2026-11-16):** un fallo de la 1.0.0 que la auditoría no vio (formularios de los enlaces del correo, ADR-114 y 115); ver H-6 en [11](11-auditoria-final.md). Etiqueta `v1.0.1` y retrofusión a `develop` hechas.
+- **Sigue abierto (no es de esta sesión):** la prueba de los cinco segundos con otra persona (A5), reducir las 30 000 cuentas sintéticas de la base real (destructivo, con copia previa), la rama remota `chore/launch-json-frontend` (A7) y la auditoría independiente completa si se quiere.
