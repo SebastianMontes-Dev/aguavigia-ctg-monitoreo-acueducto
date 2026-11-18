@@ -16,12 +16,19 @@
     cursor: pointer;
   }
 
-  .principal[data-hovered] {
+  .principal[data-hovered]:not([data-disabled]) {
     box-shadow: inset 0 0 0 2px var(--sobre-cardenillo);
   }
 
+  /* Apagado: se ve apagado (sin brillo, sin hover, cursor de "no disponible"). */
   .principal[data-disabled] {
-    cursor: progress;
+    opacity: 0.45;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .principal[data-disabled] .flecha {
+    transform: none;
   }
 
   .principal[data-focus-visible],
@@ -81,6 +88,7 @@
 
   .secundario[data-disabled] {
     color: var(--tinta-2);
-    cursor: progress;
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 }
