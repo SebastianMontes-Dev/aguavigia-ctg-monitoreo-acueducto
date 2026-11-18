@@ -2,6 +2,23 @@
 
 Todos los cambios notables de AguaVigía CTG. Las fechas son de Cartagena. El detalle de cada decisión está en [`docs/07-decisiones-clave.md`](docs/07-decisiones-clave.md).
 
+## [1.0.3] — 2026-11-17
+
+Cierre del proyecto (`release/1.0.3` desde `develop`): todo lo pendiente queda en `main`.
+
+### Corregido
+- **Ubicación del vecino en equipos sin GPS:** la lectura de alta precisión espera 8 s y, si se agota o falla (salvo permiso negado), se reintenta con Wi-Fi/red, que basta para elegir barrio.
+- **Los botones desactivados se ven apagados** (opacidad, sin brillo al pasar el ratón y cursor de no disponible) en lugar del cursor de espera.
+
+### Añadido
+- **Informe de la auditoría final** (`docs/11-auditoria-final.md`) y corrección de la deriva documental que encontró.
+- **Entregables del proyecto de aula** en `Proyecto de aula/`: anexos 1 a 3, entrega del tablero de Power BI, topología WAN en Packet Tracer y su informe.
+- **Diagramas y guiones de la exposición** en `docs/diagramas/`: modelos de datos NoSQL (MongoDB) y SQL (PostgreSQL).
+- Configuraciones `frontend-dev` y `frontend-sim` en `.claude/launch.json`.
+
+### Cambiado
+- Dependencias: `mongodb` 7.9.0 en `scripts/` y Maven 3.10.1 en el wrapper del backend.
+
 ## [1.0.2] — 2026-11-17
 
 Entrega solo de documentación (`release/1.0.2` desde `develop`). No cambia el comportamiento del sistema.

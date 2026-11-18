@@ -186,7 +186,7 @@ Una sesión de Claude no puede hacerla: necesita a una persona que no haya visto
 | Simulación (`simulador iniciar --velocidad 300`) | 54 de 54 aserciones |
 | Capturas en 4 anchos, claro, oscuro y movimiento reducido | 408, miradas las principales y pasadas por `revisar-diseno` (§7) |
 
-**Lo que sigue sin hacerse:** la prueba de los cinco segundos con otra persona (§8) y que el job «backend real» del CI pase `PANEL_CORREO` y `PANEL_CLAVE` (propuesta en §6, para Sebastian).
+**Lo que sigue sin hacerse:** la prueba de los cinco segundos con otra persona (§8) (lo del job «backend real» del CI con `PANEL_CORREO` y `PANEL_CLAVE` se aplicó en el PR #134 y corre en Actions).
 
 ## Terminado cuando
 

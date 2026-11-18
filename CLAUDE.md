@@ -18,7 +18,7 @@ Frontend: React 19 + Vite (contrato: `backend/openapi.yaml`; guía en `docs/api/
 
 **MongoDB es la base principal y la única fuente de verdad; no se cambia.** PostgreSQL 17 es una **copia analítica derivada** del Índice de Cumplimiento
 (ADR-100, fase 1 ejecutada): un job la llena desde Mongo cada 5 min, Mongo nunca lee de ella y, si cae, el sistema sigue igual. Rutas `/api/analitica/**`
-(503 si no está). Detalle y qué queda para las fases 2 y 3: [`docs/09-postgresql-fase-1.md`](docs/09-postgresql-fase-1.md).
+(503 si no está). Las fases 2 y 3 (reportes, vigilante, bitácora inmutable, rol de solo lectura) se hicieron en ADR-112 y 113. Detalle: [`docs/09-postgresql-fase-1.md`](docs/09-postgresql-fase-1.md).
 
 ## Comandos
 

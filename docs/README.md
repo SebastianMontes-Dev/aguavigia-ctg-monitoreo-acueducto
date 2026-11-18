@@ -11,14 +11,15 @@ Guías por tema, escritas conforme se valida cada parte del backend y contrastad
 | 04 · Flujos | Cubierto en la parte D de la guía 01 y en [`api/flujos-de-usuario.md`](api/flujos-de-usuario.md) |
 | [05 · Seguridad y claves](05-seguridad-y-claves.md) | Hecha; pendientes en §5 |
 | [06 · Ética de datos](06-etica-de-datos.md) | Hecha; pendientes en §3 |
-| [07 · Decisiones clave](07-decisiones-clave.md) | Hecha (ADR-001 a 100; ojo con la nota de numeración) |
+| [07 · Decisiones clave](07-decisiones-clave.md) | Hecha (ADR-001 a 115; ojo con la nota de numeración) |
 | [08 · Guion de la presentación](frontend/guion-demo.md) | Escrito (2026-11-03): ciudadano reporta con foto → el veedor modera → el consenso cambia el mapa en vivo → el corte se cierra → el Índice se mueve → un suscriptor responde «ya volvió»; con alternativa en modo simulación |
-| [09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) | **Ejecutada y cerrada** (2026-10-15; CI verde el 2026-10-18): copia analítica del Índice de Cumplimiento; fases 2 y 3 sin hacer |
+| [09 · PostgreSQL, fase 1](09-postgresql-fase-1.md) | **Ejecutada y cerrada** (2026-10-15; CI verde el 2026-10-18): copia analítica del Índice de Cumplimiento; las fases 2 y 3 (reportes, vigilante, bitácora inmutable, rol de solo lectura) se hicieron el 2026-11-06 (ADR-112 y 113) |
+| [11 · Auditoría final del backend](11-auditoria-final.md) | 2026-11-08: auditoría interna parcial; *terminado con reservas*, sin hallazgos Bloqueantes ni Altos |
 | [Guía para Yordy](frontend/guia-para-yordy.md) | **Empieza aquí si trabajas el frontend** (2026-10-18): estado de hoy, todo lo que el backend ya hace, entorno y plan fase por fase |
 | [Plan del frontend (FE0–FE7)](frontend/README.md) | Plan del 2026-10-06; **FE0 a FE7 construidas y en `develop`** (FE7 por el [#131](https://github.com/SebastianMontes-Dev/aguavigia-ctg-monitoreo-acueducto/pull/131), 2026-11-03). Quedan por comprobar la prueba de los cinco segundos con otra persona y las claves del panel en el job «backend real» del CI |
 | [El rediseño vigente y lo que falta](frontend/rediseno-vigente.md) | 2026-10-30: lo que trabajó el rediseño (ADR-103 a 106), las piezas que se reutilizan, las reglas que heredan FE2–FE7 y las decisiones por tomar para el panel |
 | [Prompt para continuar el frontend en la nube](frontend/prompt-sesion-nube.md) | 2026-10-25: un solo prompt para cualquier fase; toma la siguiente de la tabla «Fases» y termina en un PR |
-| [Prompt de auditoría de cierre del backend](prompts/auditoria-final-backend.md) | Actualizado el 2026-10-18 (ADR-100 y PostgreSQL); listo para usar en una sesión nueva, aún sin ejecutar |
+| [Prompt de auditoría de cierre del backend](prompts/auditoria-final-backend.md) | Actualizado el 2026-11-08 (ADR-100 a 113; los ADR-114 y 115 son del hotfix 1.0.1); ejecutado el 2026-11-08, informe en [11](11-auditoria-final.md) |
 
 **Arranque único.** `docker compose up` levanta todo, carga los 211 barrios y el backend crea las cuentas sintéticas (ADR-094); la guía 01 hace lo mismo paso a paso.
 

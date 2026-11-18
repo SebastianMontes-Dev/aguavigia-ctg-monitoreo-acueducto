@@ -13,7 +13,8 @@ export type ResultadoUbicacion =
 // Un barrio de Cartagena mide pocos cientos de metros: con más error que esto, el barrio sería una adivinanza.
 export const PRECISION_MAXIMA_M = 1000
 
-const OPCIONES: PositionOptions = { enableHighAccuracy: true, timeout: 15_000, maximumAge: 60_000 }
+const OPCIONES: PositionOptions = { enableHighAccuracy: true, timeout: 8_000, maximumAge: 60_000 }
+const OPCIONES_RED: PositionOptions = { enableHighAccuracy: false, timeout: 15_000, maximumAge: 5 * 60_000 }
 
 export function hayGeolocalizacion(): boolean {
   return typeof navigator !== 'undefined' && 'geolocation' in navigator
@@ -22,17 +23,23 @@ export function hayGeolocalizacion(): boolean {
 export function pedirUbicacion(geolocalizacion: Geolocation | undefined = hayGeolocalizacion() ? navigator.geolocation : undefined): Promise<ResultadoUbicacion> {
   if (!geolocalizacion) return Promise.resolve({ tipo: 'no-disponible' })
   return new Promise((resolver) => {
-    geolocalizacion.getCurrentPosition(
+    const leer = (opciones: PositionOptions, alFallar?: () => void) => geolocalizacion.getCurrentPosition(
       ({ coords }) => resolver(coords.accuracy > PRECISION_MAXIMA_M
         ? { tipo: 'imprecisa', metros: Math.round(coords.accuracy) }
         : { tipo: 'ubicada', coordenada: { latitud: coords.latitude, longitud: coords.longitude }, precisionMetros: Math.round(coords.accuracy) }),
-      (error) => resolver(
-        error.code === error.PERMISSION_DENIED ? { tipo: 'denegada' }
-          : error.code === error.TIMEOUT ? { tipo: 'agotada' }
-            : { tipo: 'no-disponible' },
-      ),
-      OPCIONES,
+      (error) => {
+        console.warn('[ubicacion] fallo', { codigo: error.code, mensaje: error.message, altaPrecision: opciones.enableHighAccuracy })
+        // Sin GPS (PC de escritorio) la alta precisión se agota: se reintenta con Wi-Fi/red, que basta para elegir barrio.
+        if (alFallar && error.code !== error.PERMISSION_DENIED) return alFallar()
+        resolver(
+          error.code === error.PERMISSION_DENIED ? { tipo: 'denegada' }
+            : error.code === error.TIMEOUT ? { tipo: 'agotada' }
+              : { tipo: 'no-disponible' },
+        )
+      },
+      opciones,
     )
+    leer(OPCIONES, () => leer(OPCIONES_RED))
   })
 }
 
