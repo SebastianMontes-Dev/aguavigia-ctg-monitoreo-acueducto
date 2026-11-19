@@ -22,6 +22,7 @@ Guías por tema, escritas conforme se valida cada parte del backend y contrastad
 | [Prompt de auditoría de cierre del backend](prompts/auditoria-final-backend.md) | Actualizado el 2026-11-08 (ADR-100 a 113; los ADR-114 y 115 son del hotfix 1.0.1); ejecutado el 2026-11-08, informe en [11](11-auditoria-final.md) |
 
 **Arranque único.** `docker compose up` levanta todo, carga los 211 barrios y el backend crea las cuentas sintéticas (ADR-094); la guía 01 hace lo mismo paso a paso.
+También levanta el frontend (nginx con la SPA compilada y el proxy a `/api`) en http://localhost:5173, el mismo puerto de `npm run dev`: no corras los dos a la vez.
 
 **Simulación.** `docker compose --profile simulacion up -d --build` levanta una segunda instancia (API en 8082, base `aguavigia_sim`) para ensayar el sistema con un guion
 acelerado; no toca la instancia real. `node scripts/simulacion/preparar.mjs` genera su clave en `.env`; luego

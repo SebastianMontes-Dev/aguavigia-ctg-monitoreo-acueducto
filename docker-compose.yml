@@ -1,7 +1,8 @@
 # Un solo comando deja todo listo (ADR-094). Sin .env: el backend genera su secreto de sesión y la clave del primer ADMIN,
 # que se imprime una sola vez en el log del backend.
 #
-#   docker compose up -d --build            → Mongo, réplica, Redis, Mailhog, PostgreSQL (copia analítica, ADR-100) y backend, y el `sembrador`, que carga los 211 barrios.
+#   docker compose up -d --build            → Mongo, réplica, Redis, Mailhog, PostgreSQL (copia analítica, ADR-100), backend y frontend (http://localhost:5173),
+#                                             y el `sembrador`, que carga los 211 barrios.
 #                                             El backend crea el ADMIN y, en segundo plano, 300 cuentas SINTÉTICAS de vecino
 #                                             (lo único inventado: se dicen sintéticas y la API lo declara en /api/sistema/modo).
 #                                             No hay reportes, cortes ni estados inventados: el mapa muestra lo que dicen los
@@ -316,6 +317,28 @@ services:
         condition: service_healthy
     networks:
       - aguavigia
+
+  # El frontend (frontend/Dockerfile): la SPA compilada y servida por nginx, que además hace de proxy hacia el backend (/api) igual que
+  # el de Vite en desarrollo. Queda en http://localhost:5173, el mismo puerto de `npm run dev`: no corras los dos a la vez.
+  frontend:
+    image: aguavigia/frontend:local
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aguavigia-frontend
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - aguavigia
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   # Visor web de Mongo para enseñar dónde se guarda cada dato. Solo con el perfil demo y solo en este equipo (127.0.0.1).
   mongo-express:
