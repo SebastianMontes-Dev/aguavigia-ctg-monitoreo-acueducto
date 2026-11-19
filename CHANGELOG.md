@@ -2,6 +2,13 @@
 
 Todos los cambios notables de AguaVigía CTG. Las fechas son de Cartagena. El detalle de cada decisión está en [`docs/07-decisiones-clave.md`](docs/07-decisiones-clave.md).
 
+## [1.0.4] — 2026-11-19
+
+Entrega solo de documentación (`hotfix/1.0.4` desde `main`). No cambia el comportamiento del sistema.
+
+### Añadido
+- **Enlace al despliegue en Render** en el README: <https://aguavigia-ctg.onrender.com/>.
+
 ## [1.0.3] — 2026-11-17
 
 Cierre del proyecto (`release/1.0.3` desde `develop`): todo lo pendiente queda en `main`.

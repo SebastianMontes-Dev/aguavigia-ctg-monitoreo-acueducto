@@ -9,9 +9,12 @@
 ![PostgreSQL 17](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)
 ![Redis 7](https://img.shields.io/badge/Redis-7-DC382D?logo=redis&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
-![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.3-0F766E)
+![Versión](https://img.shields.io/badge/versi%C3%B3n-1.0.4-0F766E)
+[![Deploy en Render](https://img.shields.io/badge/deploy-Render-46E3B7?logo=render&logoColor=white)](https://aguavigia-ctg.onrender.com/)
 
-> Proyecto académico e independiente: no está afiliado a Aguas de Cartagena S.A. E.S.P. ni a ninguna entidad distrital. Corre en local.
+**Despliegue en línea:** [aguavigia-ctg.onrender.com](https://aguavigia-ctg.onrender.com/) (Render).
+
+> Proyecto académico e independiente: no está afiliado a Aguas de Cartagena S.A. E.S.P. ni a ninguna entidad distrital. Está desplegado en Render y también se puede levantar en local con Docker Compose.
 
 ## Integrantes
 
@@ -129,7 +132,9 @@ Todo está en [`docs/`](docs/README.md), con una guía por tema:
 
 ## Estado del proyecto
 
-**Versión 1.0.3.** El backend y el frontend (fases FE0 a FE7) están construidos y documentados, y la copia analítica en PostgreSQL tiene sus tres fases. La 1.0.1 corrigió los formularios de los enlaces del correo y endureció la política de clave; la 1.0.2 solo actualizó la documentación de entrada (README), y la 1.0.3 cierra el proyecto con la auditoría final, los entregables del proyecto de aula y un arreglo de la ubicación del vecino. Los sensores IoT están construidos pero inactivos a propósito. El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md).
+**Versión 1.0.4.** El backend y el frontend (fases FE0 a FE7) están construidos y documentados, y la copia analítica en PostgreSQL tiene sus tres fases. La 1.0.1 corrigió los formularios de los enlaces del correo y endureció la política de clave; la 1.0.2 solo actualizó la documentación de entrada (README), la 1.0.3 cierra el proyecto con la auditoría final, los entregables del proyecto de aula y un arreglo de la ubicación del vecino, y la 1.0.4 solo agrega el enlace al despliegue en Render. Los sensores IoT están construidos pero inactivos a propósito. El historial de cambios está en [`CHANGELOG.md`](CHANGELOG.md).
+
+La plataforma está desplegada en Render: <https://aguavigia-ctg.onrender.com/>.
 
 El trabajo sigue **Gitflow**: `main` y `develop` están protegidas y todo cambio entra por Pull Request con revisión y CI en verde.
 
